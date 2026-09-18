@@ -1,0 +1,39 @@
+name: Feature request
+description: Something somebody wants that the repository does not do yet.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Intent is written down before code. Describe what somebody wants rather
+        than how it would be built, and we will turn it into a criterion in
+        `hi/` before anybody writes any of it. See CONTRIBUTING.md.
+  - type: textarea
+    id: want
+    attributes:
+      label: What somebody wants
+      description: One or two plain sentences about the outcome, not the implementation.
+      placeholder: I want to pay a reserve out quarterly rather than weekly.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What goes wrong today, or what is impossible to promise without it.
+    validations:
+      required: true
+  - type: textarea
+    id: existing
+    attributes:
+      label: Criteria you have read
+      description: Which sentences in hi/ this sits next to, or contradicts. `hi ls` is the whole list.
+      placeholder: Closest is RESERVE-2.a, which says the durations are configuration.
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you have considered instead
+    validations:
+      required: false

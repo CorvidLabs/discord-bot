@@ -1,0 +1,60 @@
+name: Bug report
+description: Something behaves differently from what the spec or the criteria say.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not report a security finding here. Anything touching key
+        handling, the payout path or the verification webhook goes through a
+        private advisory instead. See SECURITY.md.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+      placeholder: The residue printed on the card was one unit short of the reconciliation.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: The smallest sequence that shows it. A failing test is ideal.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Commit or tag
+      description: Which revision you were on.
+      placeholder: main at abc1234
+    validations:
+      required: true
+  - type: input
+    id: toolchain
+    attributes:
+      label: Swift version and platform
+      placeholder: Swift 6.0 on macOS 15
+    validations:
+      required: false
+  - type: input
+    id: criterion
+    attributes:
+      label: Criterion or spec section
+      description: If a promise in hi/ or specs/ is broken, name it by id.
+      placeholder: RESERVE-5.d
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Output
+      description: Test output or a stack trace. This is rendered as code, so no backticks are needed.
+      render: text
+    validations:
+      required: false
