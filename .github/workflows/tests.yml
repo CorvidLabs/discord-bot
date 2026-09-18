@@ -8,8 +8,10 @@ on:
       - "Tests/**"
       - "Package.swift"
       - ".github/workflows/tests.yml"
+  # Every pull request, not only those targeting main: work on this repository
+  # arrives as a stack of branches, and a stacked pull request needs the same
+  # gate as the one at the bottom of the stack.
   pull_request:
-    branches: [main]
     paths:
       - "Sources/**"
       - "Tests/**"
