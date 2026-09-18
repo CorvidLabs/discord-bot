@@ -1,5 +1,23 @@
+# Swift Package Manager
 .build/
 .swiftpm/
+Package.resolved
+
+# Xcode
 *.xcodeproj
+*.xcworkspace
 DerivedData/
+xcuserdata/
+*.xcuserstate
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# macOS
 .DS_Store
+
+# Editors
+*.swp
+*~
