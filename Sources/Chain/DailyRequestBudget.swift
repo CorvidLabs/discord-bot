@@ -45,6 +45,22 @@ public struct DailyRequestBudget: Sendable, Equatable {
         return reservedToday >= limit ? 0 : limit - reservedToday
     }
 
+    /// Requests left on the day `now` falls in, or nil when there is no budget.
+    ///
+    /// Nil rather than zero, unlike ``remaining``. A consumer that has to take
+    /// its whole allowance in one piece asks this before it starts, and for
+    /// that question "no ceiling" and "no room" are opposite answers that a
+    /// zero cannot tell apart.
+    ///
+    /// It also answers for the day `now` falls in rather than the day the
+    /// counter was last touched, so a process asked at one minute past midnight
+    /// is told about today rather than about yesterday.
+    public func remaining(at now: Date) -> UInt64? {
+        guard limit > 0 else { return nil }
+        guard UTCDay.start(of: now) == currentDayStart else { return limit }
+        return remaining
+    }
+
     // MARK: - Initializers
 
     /// - Parameters:
@@ -70,6 +86,15 @@ public struct DailyRequestBudget: Sendable, Equatable {
         /// The budget is spent. The caller pauses until `until`, the same pause
         /// a provider's own refusal causes.
         case exhausted(until: Date)
+
+        /// The day has requests left, but fewer than a reservation that has to
+        /// be taken whole asked for. Nothing was reserved.
+        ///
+        /// Deliberately not ``exhausted``. The budget is not spent, and what is
+        /// left belongs to every caller that can use it a request at a time.
+        /// Pausing the process because one indivisible consumer did not fit
+        /// would hand the rest of the day to nobody.
+        case notEnoughBudget(requested: UInt64, remaining: UInt64)
     }
 
     /// Reserves one request against today's budget.
@@ -78,18 +103,48 @@ public struct DailyRequestBudget: Sendable, Equatable {
     /// Counting afterwards lets a hundred concurrent requests all pass a check
     /// that says ninety-nine are left.
     public mutating func reserve(now: Date = Date()) -> Decision {
+        reserve(count: 1, now: now)
+    }
+
+    /// Reserves `count` requests against today's budget, all of them or none.
+    ///
+    /// For work that cannot be half done. A payout run reads and sends
+    /// thousands of times and either completes the list or leaves somebody out
+    /// of it, so finding the ceiling half way down the list is the failure the
+    /// whole run was arranged to avoid. Taking the requests up front turns that
+    /// into a refusal before the first one leaves.
+    ///
+    /// All or nothing in both directions: a reservation that does not fit takes
+    /// nothing at all, so the remainder is still there for the callers that
+    /// work one request at a time. There is no way to hand a reservation back,
+    /// which is deliberate. A budget that can be returned is a budget two
+    /// consumers can each believe they hold, and the return is the write a
+    /// crash skips. A caller that reserves more than it uses has under-used the
+    /// day, which is the recoverable direction.
+    public mutating func reserve(count: UInt64, now: Date = Date()) -> Decision {
         rollDayIfNeeded(now: now)
 
+        // Reserving nothing changes nothing, and must not be the call that
+        // trips a pause on a process that was never going to send anything.
+        guard count > 0 else {
+            return .allowed(used: reservedToday, limit: limit, crossedThreshold: nil)
+        }
+
         guard limit > 0 else {
-            reservedToday &+= 1
+            let (sum, overflow) = reservedToday.addingReportingOverflow(count)
+            reservedToday = overflow ? UInt64.max : sum
             return .allowed(used: reservedToday, limit: 0, crossedThreshold: nil)
         }
 
-        guard reservedToday < limit else {
+        let left = remaining
+        guard left > 0 else {
             return .exhausted(until: UTCDay.nextMidnight(after: now))
         }
+        guard count <= left else {
+            return .notEnoughBudget(requested: count, remaining: left)
+        }
 
-        reservedToday += 1
+        reservedToday += count
 
         // Integer percentage consumed, floored. Computed in `Double` so a very
         // large limit cannot overflow the multiplication and trap.

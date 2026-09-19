@@ -213,6 +213,20 @@ afterwards.
 
 - Covered by `ChainConfigurationTests.swift` (ADOPT-2).
 
+### REQ-chain-019
+
+A caller whose work cannot be half done SHALL be able to reserve a whole job's
+requests in one piece. `RequestGovernor.reserveRequests(_:now:)` SHALL take all
+of them or none; a reservation larger than what is left of the day SHALL be
+refused with `ChainError.requestBudgetCannotCover` without spending a request,
+without pausing, and without recording a notice, so the remainder still reaches
+the callers that read one request at a time. A day with nothing left SHALL pause
+as a single request would. There SHALL be no way to hand a reservation back, and
+`remainingRequests` SHALL answer nil rather than zero when no budget is set.
+
+- Covered by `RequestGovernorTests.swift` and `RequestBudgetTests.swift`
+  (SEE-9, RESERVE-7.d, RUN-8.a).
+
 ## Constraints
 
 - Swift 6 with strict concurrency enabled. Every type crossing a concurrency

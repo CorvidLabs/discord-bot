@@ -649,7 +649,7 @@ public enum Blackjack: Sendable {
     /// `left * right`, clamped at `Int.max` instead of trapping.
     ///
     /// Both sides are stakes and multipliers here, so only the top end can run
-    /// away. ``Chips/applying(_:to:)`` and ``Chips/dailyStipend(_:perks:)`` clamp
+    /// away. ``Chips/applying(_:to:)`` and ``Chips/dailyClaim(_:perks:)`` clamp
     /// for the same stated reason: a total that traps is a table nobody can play.
     private static func saturatingMultiply(_ left: Int, _ right: Int) -> Int {
         let (product, overflow) = left.multipliedReportingOverflow(by: right)

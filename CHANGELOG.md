@@ -59,6 +59,24 @@ compare against.
 
 ### Changed
 
+These three are source-breaking for anything already compiled against the
+library products. Nothing has been released, so nothing outside this
+repository can be affected yet, but they are written down because the point of
+this file is that somebody can tell.
+
+- **`Games`**: `Chips.dailyStipend(_:perks:) -> Int` is now
+  `Chips.dailyClaim(_:perks:) -> Chips.DailyClaim`. The old signature could
+  only say how many chips, so a caller could not tell a claim that was refused
+  because it had already happened today from one that paid nothing.
+- **`Reserve`**: `ReservePlanner.requireWithinLimits(plan:limits:)` takes a
+  `now: Date`, with no default. A spending ceiling belongs to a period, and a
+  check that cannot see the clock cannot tell whether the ceiling it was handed
+  still describes the period the payment will land in.
+- **`Reserve`** and **`Chain`**: `ReserveError` gains `spendLimitsExpired` and
+  `ChainError` gains `requestBudgetCannotCover`. Both break an exhaustive
+  switch.
+
+
 - `Package.resolved` is committed instead of ignored, so two clones of one
   commit build the same code (TRUST-4).
 - The `swift-algorand` dependency is `.upToNextMinor(from: "0.4.0")` instead of

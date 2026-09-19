@@ -533,7 +533,11 @@ struct ReserveRunnerTests {
         )
 
         let before = await store.rowCount
-        let plan = try await runner.rehearse(streamId: Fixture.members, recipients: holders(4))
+        let plan = try await runner.rehearse(
+            streamId: Fixture.members,
+            recipients: holders(4),
+            now: Self.now
+        )
         #expect(plan.entries.count == 4)
         #expect(plan.perUnitBaseUnits == 269_230_769_230)
         #expect(plan.totalBaseUnits == 269_230_769_230 * 4)
@@ -574,7 +578,123 @@ struct ReserveRunnerTests {
             gate: ReserveGate()
         )
         await #expect(throws: ReserveError.overPaymentLimit(requested: 269_231, limit: 10)) {
-            _ = try await runner.rehearse(streamId: Fixture.members, recipients: holders(1))
+            _ = try await runner.rehearse(
+                streamId: Fixture.members,
+                recipients: holders(1),
+                now: Self.now
+            )
+        }
+    }
+
+    @Test("Limits from a period that has ended are refused before anything is paid (RESERVE-7.d)")
+    func expiredLimitsRefuseBeforeFirstPayment() async throws {
+        let store = InMemoryReserveStore()
+        try await activated(store: store)
+        // Last week's figures, cached or read from a stale row: ample room by
+        // its own account, and about a week that is over. What it says is left
+        // says nothing about this week, and the paying account is the one that
+        // would have found out, half way down the list.
+        let lastWeek = Self.now.addingTimeInterval(-7 * 24 * 60 * 60)
+        let ended = ReservePeriod.isoWeekEnd(lastWeek)
+        let payer = RecordingPayer(
+            store: store,
+            limits: ReserveSpendLimits(
+                maxPerPaymentWholeUnits: 1_000_000,
+                maxPerPeriodWholeUnits: 30_000_000,
+                spentThisPeriodWholeUnits: 0,
+                periodKey: ReservePeriod.isoWeek(lastWeek),
+                periodEnd: ended
+            )
+        )
+        let runner = ReserveRunner(
+            configuration: try Fixture.reserve(),
+            store: store,
+            payer: payer,
+            gate: ReserveGate()
+        )
+
+        await #expect(
+            throws: ReserveError.spendLimitsExpired(
+                periodKey: ReservePeriod.isoWeek(lastWeek),
+                periodEnd: ended,
+                now: Self.now
+            )
+        ) {
+            _ = try await runner.run(
+                streamId: Fixture.members,
+                recipients: holders(3),
+                periodKey: Self.week,
+                now: Self.now
+            )
+        }
+        #expect(await payer.attempts.isEmpty)
+        #expect(try await store.loadEpoch(streamId: Fixture.members, epoch: 1).paidAccounts.isEmpty)
+        #expect(try await store.loadState().nextEpoch(Fixture.members) == 1)
+        // The epoch is not lost, only postponed: the period was never claimed.
+        #expect(try await store.loadState().lastPeriodKey(Fixture.members) == nil)
+    }
+
+    @Test("Limits the host did not date are checked for size and nothing else")
+    func undatedLimitsStillRun() async throws {
+        let store = InMemoryReserveStore()
+        try await activated(store: store)
+        let payer = RecordingPayer(
+            store: store,
+            limits: ReserveSpendLimits(
+                maxPerPaymentWholeUnits: 1_000_000,
+                maxPerPeriodWholeUnits: 30_000_000,
+                spentThisPeriodWholeUnits: 0,
+                periodKey: Self.week
+            )
+        )
+        let runner = ReserveRunner(
+            configuration: try Fixture.reserve(),
+            store: store,
+            payer: payer,
+            gate: ReserveGate()
+        )
+        let outcome = try await runner.run(
+            streamId: Fixture.members,
+            recipients: holders(2),
+            periodKey: Self.week,
+            now: Self.now
+        )
+        #expect(outcome.paidCount == 2)
+    }
+
+    @Test("A rehearsal refuses expired limits exactly as the run does (RESERVE-7.a)")
+    func rehearsalRefusesExpiredLimits() async throws {
+        let store = InMemoryReserveStore()
+        try await activated(store: store)
+        let ended = Self.now.addingTimeInterval(-60)
+        let payer = RecordingPayer(
+            store: store,
+            limits: ReserveSpendLimits(
+                maxPerPaymentWholeUnits: 1_000_000,
+                maxPerPeriodWholeUnits: 30_000_000,
+                spentThisPeriodWholeUnits: 0,
+                periodKey: "an-ended-period",
+                periodEnd: ended
+            )
+        )
+        let runner = ReserveRunner(
+            configuration: try Fixture.reserve(),
+            store: store,
+            payer: payer,
+            gate: ReserveGate()
+        )
+        await #expect(
+            throws: ReserveError.spendLimitsExpired(
+                periodKey: "an-ended-period",
+                periodEnd: ended,
+                now: Self.now
+            )
+        ) {
+            _ = try await runner.rehearse(
+                streamId: Fixture.members,
+                recipients: holders(1),
+                now: Self.now
+            )
         }
     }
 

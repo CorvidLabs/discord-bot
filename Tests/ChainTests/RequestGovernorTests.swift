@@ -58,6 +58,104 @@ internal struct RequestGovernorTests {
         #expect(snapshot.usedRequests == 1)
     }
 
+    // MARK: - Work that cannot be half done
+
+    @Test("Work that cannot be half done takes its requests up front or does not start")
+    internal func bulkReservationIsAllOrNothing() async throws {
+        let governor = RequestGovernor(limit: 100)
+        try await governor.reserveRequests(60, now: Self.noon)
+        #expect(await governor.snapshot(now: Self.noon).usedRequests == 60)
+        #expect(await governor.remainingRequests(now: Self.noon) == 40)
+    }
+
+    @Test("A reservation the day cannot cover spends nothing and pauses nothing (SEE-9)")
+    internal func bulkRefusalLeavesTheDayAlone() async throws {
+        let governor = RequestGovernor(limit: 100)
+        try await governor.reserveRequests(96, now: Self.noon)
+
+        // The payout needs all ten or it under-pays a list it cannot go back
+        // over. Four are left.
+        await #expect(throws: ChainError.requestBudgetCannotCover(requested: 10, remaining: 4)) {
+            try await governor.reserveRequests(10, now: Self.noon)
+        }
+        // Nothing was taken, so the refusal costs the day nothing.
+        #expect(await governor.snapshot(now: Self.noon).usedRequests == 96)
+        // And nothing is paused: the four that are left belong to the sweep,
+        // which reads one account at a time and can stop anywhere.
+        #expect(await governor.pausedUntil(now: Self.noon) == nil)
+        try await governor.reserveRequest(now: Self.noon)
+        #expect(await governor.snapshot(now: Self.noon).usedRequests == 97)
+    }
+
+    @Test("A day with nothing left pauses whatever size the reservation was")
+    internal func bulkOnASpentDayPauses() async throws {
+        let governor = RequestGovernor(limit: 2)
+        try await governor.reserveRequests(2, now: Self.noon)
+        await #expect(throws: ChainError.requestBudgetSpent(until: UTCDay.nextMidnight(after: Self.noon))) {
+            try await governor.reserveRequests(5, now: Self.noon)
+        }
+        #expect(await governor.snapshot(now: Self.noon).pauseReason == .budgetSpent)
+    }
+
+    @Test("A refusal to cover the work is not the provider refusing, and trips nothing")
+    internal func bulkRefusalIsNotAQuotaRefusal() async throws {
+        let refusal = ChainError.requestBudgetCannotCover(requested: 10, remaining: 4)
+        #expect(ChainError.isProviderQuotaRefusal(refusal) == false)
+        let governor = RequestGovernor(limit: 0)
+        _ = await governor.recordRequestFailure(refusal, now: Self.noon)
+        #expect(await governor.pausedUntil(now: Self.noon) == nil)
+    }
+
+    @Test("A reservation that leaps over the write interval is still written down (RUN-8.a)")
+    internal func bulkReservationIsPersisted() async throws {
+        let store = InMemoryRequestBudgetStore()
+        let governor = RequestGovernor(limit: 1_000, persistEvery: 25, store: store, now: Self.noon)
+        // 31 is not a multiple of 25, which is exactly how a restart used to
+        // hand the day back a budget a payout had already spent.
+        try await governor.reserveRequests(31, now: Self.noon)
+        await governor.flushPersistence()
+        #expect(await store.storedUsage?.usedRequests == 31)
+    }
+
+    @Test("With no budget set, what is left is unlimited rather than nothing")
+    internal func remainingWithoutABudget() async throws {
+        let governor = RequestGovernor(limit: 0)
+        #expect(await governor.remainingRequests(now: Self.noon) == nil)
+        // Nothing to run out of, so a job of any size starts.
+        try await governor.reserveRequests(10_000, now: Self.noon)
+        #expect(await governor.remainingRequests(now: Self.noon) == nil)
+    }
+
+    @Test("What is left is what is left of today, not of the day the counter last moved")
+    internal func remainingRollsWithTheDay() async throws {
+        let governor = RequestGovernor(limit: 10)
+        try await governor.reserveRequests(10, now: Self.noon)
+        #expect(await governor.remainingRequests(now: Self.noon) == 0)
+        #expect(await governor.remainingRequests(now: UTCDay.nextMidnight(after: Self.noon)) == 10)
+    }
+
+    @Test("Reserving nothing takes nothing and does not pause a spent day")
+    internal func reservingNothingIsANoOp() async throws {
+        let governor = RequestGovernor(limit: 1)
+        try await governor.reserveRequest(now: Self.noon)
+        try await governor.reserveRequests(0, now: Self.noon)
+        #expect(await governor.snapshot(now: Self.noon).usedRequests == 1)
+        #expect(await governor.pausedUntil(now: Self.noon) == nil)
+    }
+
+    @Test("A reservation that crosses several thresholds at once says so once")
+    internal func bulkCrossesThresholdsOnce() async throws {
+        let governor = RequestGovernor(limit: 100)
+        try await governor.reserveRequests(95, now: Self.noon)
+        let crossings = await governor.notices().compactMap { notice -> Int? in
+            if case .budgetThresholdCrossed(let percent, _, _) = notice.kind { return percent }
+            return nil
+        }
+        // One line an operator reads, naming the highest mark passed, rather
+        // than three lines about a single jump.
+        #expect(crossings == [90])
+    }
+
     // MARK: - The provider refusing
 
     @Test("A provider refusing on quota pauses everything, not just the caller that saw it")

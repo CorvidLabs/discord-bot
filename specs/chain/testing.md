@@ -4,9 +4,9 @@ spec: chain.spec.md
 
 ## Automated Testing
 
-`swift test --filter ChainTests` runs this target's suite: 175 tests in 13
-suites, all offline. The whole package runs 561 tests in 39 suites, across
-`Reserve` (105), `Gating` (126), `Games` (155) and `Chain` (175).
+`swift test --filter ChainTests` runs this target's suite: 184 tests in 13
+suites, all offline. The whole package runs 594 tests in 39 suites, across
+`Reserve` (110), `Gating` (133), `Games` (167) and `Chain` (184).
 
 | Test File | Type | What It Covers |
 |-----------|------|----------------|
@@ -38,6 +38,7 @@ suites, all offline. The whole package runs 561 tests in 39 suites, across
 | REQ-chain-007 | `IncompleteReadingTests.swift` | "Holding one of them grants the role even when another wallet could not be read"; "A wallet that could not be read never takes a collection role away"; "A complete read of somebody holding none of them does take the role away"; "A catalogue that did not answer decides nothing either way"; "A failed read is never written down as a wallet that holds nothing"; "A completed read is written down, including a wallet that really holds nothing" |
 | REQ-chain-008 | `RequestGovernorTests.swift` | "Reading and signing spend the same budget, so the number is the whole process"; "A spent budget refuses the next request before it leaves the process"; "A provider refusing on quota pauses everything, not just the caller that saw it"; "An operator can lift a pause that turned out to be wrong"; "Lifting a pause does not hand back a budget that really is spent"; "A pause ends by itself when the day rolls over" |
 | REQ-chain-009 | `RequestGovernorTests.swift`, `RequestBudgetTests.swift` | "A restart picks the day's count back up instead of starting over"; "A crash loop cannot loosen the ceiling one restart at a time"; "The count is written every so often rather than on every single request"; "The count is written the moment the budget runs out, not only on a schedule"; "A count that cannot be read refuses to start rather than starting the day again"; "Yesterday's count is not spent against today"; "A restored count never undoes requests this process has already made" |
+| REQ-chain-019 | `RequestGovernorTests.swift` | "Work that cannot be half done takes its requests up front or does not start"; "A reservation the day cannot cover spends nothing and pauses nothing (SEE-9)"; "A day with nothing left pauses whatever size the reservation was"; "A refusal to cover the work is not the provider refusing, and trips nothing"; "A reservation that leaps over the write interval is still written down (RUN-8.a)"; "With no budget set, what is left is unlimited rather than nothing"; "What is left is what is left of today, not of the day the counter last moved"; "Reserving nothing takes nothing and does not pause a spent day"; "A reservation that crosses several thresholds at once says so once" |
 | REQ-chain-010 | `RateLimiterTests.swift` | "An hour of idleness does not buy an hour of requests to spend at once"; "Time going backwards leaves the bucket alone rather than emptying it"; "A rate too small to hold a single request is raised to one rather than stopping everything"; "A batch bigger than the bucket is taken a bucketful at a time rather than never"; "The limiter takes its rate from configuration rather than a number in the source" |
 | REQ-chain-011 | `ChainHealthTests.swift` | "A listener that is up but has not connected yet does not report as working"; "Everything it has to reach, reached, is what ok means"; "The headers copied as proof are the ones an operator configured"; "Proof appears in the answer, and is escaped rather than trusted"; "A probe that failed never invents a success"; "Proof that has gone stale is dropped rather than served as though it were current" |
 | REQ-chain-012 | `RequestGovernorTests.swift` | "A problem that started overnight is still there to read in the morning"; "A pause is announced once, not once for every request it refuses"; "Draining the notices hands them over once and leaves nothing behind"; "A host that never reads its notices cannot grow them without limit" |

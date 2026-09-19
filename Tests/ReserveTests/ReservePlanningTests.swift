@@ -10,6 +10,7 @@ import Testing
 struct ReservePlanningTests {
 
     private static let epochStart = Date(timeIntervalSince1970: 0)
+    private static let now = Date(timeIntervalSince1970: 1_758_000_000)
 
     // MARK: - Counting eligible slots
 
@@ -489,7 +490,8 @@ struct ReservePlanningTests {
         #expect(throws: ReserveError.overPaymentLimit(requested: 269_231, limit: 1_000)) {
             try planner.requireWithinLimits(
                 plan: plan,
-                limits: limits(perPayment: 1_000, perPeriod: 400_000_000, spent: 0)
+                limits: limits(perPayment: 1_000, perPeriod: 400_000_000, spent: 0),
+                now: Self.now
             )
         }
         // Fits the raw period ceiling, but the period is already part spent,
@@ -497,15 +499,81 @@ struct ReservePlanningTests {
         #expect(throws: (any Error).self) {
             try planner.requireWithinLimits(
                 plan: plan,
-                limits: limits(perPayment: 300_000, perPeriod: 60_000_000, spent: 10_000_000)
+                limits: limits(perPayment: 300_000, perPeriod: 60_000_000, spent: 10_000_000),
+                now: Self.now
             )
         }
         #expect(throws: Never.self) {
             try planner.requireWithinLimits(
                 plan: plan,
-                limits: limits(perPayment: 300_000, perPeriod: 400_000_000, spent: 10_000_000)
+                limits: limits(perPayment: 300_000, perPeriod: 400_000_000, spent: 10_000_000),
+                now: Self.now
             )
         }
+    }
+
+    @Test("A ceiling is checked for being current before it is checked for being big enough")
+    func expiredLimitsCheckedFirst() throws {
+        let planner = try Fixture.planner()
+        let plan = ReserveEpochPlan(
+            streamId: Fixture.members,
+            schedule: Fixture.sixMonths(),
+            epoch: 1,
+            perUnitBaseUnits: 269_230_769_230,
+            entries: [
+                ReserveEpochEntry(
+                    recipientId: "R1",
+                    account: "ACCOUNT-0001",
+                    units: 1,
+                    baseUnitsAmount: 269_230_769_230,
+                    claimedHoldingIds: ["H1"]
+                )
+            ],
+            skipped: []
+        )
+        func limits(endingAt periodEnd: Date) -> ReserveSpendLimits {
+            ReserveSpendLimits(
+                maxPerPaymentWholeUnits: 1,
+                maxPerPeriodWholeUnits: 1,
+                spentThisPeriodWholeUnits: 0,
+                periodKey: "2026-W38",
+                periodEnd: periodEnd
+            )
+        }
+        // The period ends on the instant the run starts, so the run is in the
+        // next one. The size checks would refuse this plan too, and the point
+        // is that they are not what answers: a stale ceiling is refused for
+        // being stale, whichever way its numbers happen to fall.
+        #expect(
+            throws: ReserveError.spendLimitsExpired(
+                periodKey: "2026-W38",
+                periodEnd: Self.now,
+                now: Self.now
+            )
+        ) {
+            try planner.requireWithinLimits(plan: plan, limits: limits(endingAt: Self.now), now: Self.now)
+        }
+        // A second before the boundary the figures still describe the period
+        // the run is in, and the ordinary size check answers.
+        #expect(throws: ReserveError.overPaymentLimit(requested: 269_231, limit: 1)) {
+            try planner.requireWithinLimits(
+                plan: plan,
+                limits: limits(endingAt: Self.now.addingTimeInterval(1)),
+                now: Self.now
+            )
+        }
+    }
+
+    @Test("Limits with no stated end are never called expired")
+    func undatedLimitsAreNotExpired() {
+        let undated = ReserveSpendLimits(
+            maxPerPaymentWholeUnits: 10,
+            maxPerPeriodWholeUnits: 100,
+            spentThisPeriodWholeUnits: 0,
+            periodKey: "2026-W38"
+        )
+        #expect(undated.describesPeriod(at: Self.now))
+        #expect(undated.describesPeriod(at: Self.now.addingTimeInterval(10_000_000)))
     }
 
     @Test("What is left of a period never goes below zero")
