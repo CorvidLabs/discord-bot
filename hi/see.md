@@ -23,6 +23,7 @@ What the bot made of my settings at startup belongs to ADOPT, and reading the se
 
 - **SEE-1**  I can tell whether the bot is really working from one check, without opening Discord to find out
   - **SEE-1.a**  A check that comes back fine never means only that a process is alive somewhere
+  - **SEE-1.b**  Checking never costs me the thing I am checking on: the check does not spend the day's budget for reading the chain, and it still answers once that budget is gone
 - **SEE-2**  I can tell whether the last sweep of everyone's roles finished, and when
   - **SEE-2.a**  When someone's roles did not change I can tell whether we held them on purpose or simply missed them
 - **SEE-4**  If Discord keeps refusing a role I am told once and it stops being retried forever

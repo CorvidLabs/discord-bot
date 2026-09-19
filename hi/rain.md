@@ -13,6 +13,8 @@ So the guiding feeling is: no surprises, and no half-finished payouts. You see t
 
 A payout is also a long job with money on the end of it. It spends requests to the chain, it spends writes to the bot's own records, and it can outlive the reply that started it. So there is a rehearsal that sends nothing and says what the real run would cost, and a finished run reaches the person who asked for it even after the reply they started has expired. Losing the report is survivable. Losing the record of who was paid is not.
 
+Those requests come out of a day's budget the payout does not own. The sweep that keeps everybody's roles right is spending the same budget, and so is every member pressing a button. A payout is the one caller among them that cannot be half done, so whether the day can afford the whole of it is a question to settle before the first payment rather than one to discover at the two hundredth.
+
 The part that only matters because other people run this: the bot has no opinion about which collections exist. Whether a payout is one payment per holder or one payment for every item somebody holds is a thing the operator declares, never something inferred from a collection's name. Guess it, and a collection of four thousand pieces is paid like a single pass, or a single pass is paid four thousand times, and both are a great deal of money going the wrong way.
 
 The fixed pot that some of these payouts come out of is a separate family. reserve.md says how a finite reserve is divided, why the division never moves, how an epoch refuses to be paid twice, and why a list handed to it with holes in it is refused rather than paid. This family is about the paying itself, whether it comes from that pot or from an operator deciding today to pay everybody something, and about the bot noticing its own picture of who holds what has gone stale before it builds a list at all. The spending ceilings, what a number in one means and who is allowed to move money past them, belong to SPEND.
@@ -47,6 +49,9 @@ The fixed pot that some of these payouts come out of is a separate family. reser
 - **RAIN-15**  A payout is counted in my token's own units, at whatever precision my token has
   - **RAIN-15.a**  The amount I type and the figure a member reads mean the same thing, and neither assumes a number of decimals my token does not have
   - **RAIN-15.b**  An amount too large to hold refuses rather than wrapping round into a small one
+- **RAIN-16**  A payout that cannot afford the chain requests it will need does not start
+  - **RAIN-16.a**  Affording it is measured against what is left of the day's budget for reading the chain at that moment, not against the whole day's, and a payout that will not fit pays nobody
+  - **RAIN-16.b**  A payout I was allowed to start is not stopped part way down the list by a sweep, a timer or a member pressing a button spending what it was counted on having
 
 ## Retired
 

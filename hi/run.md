@@ -15,7 +15,7 @@ The other half is the update. A version that comes up broken must not be allowed
 
 And when the bot speaks on somebody's behalf, the record has to say who asked for it. A message from a bot carries no author. Without a line written down before it goes out there is no answer at all to "who told it to say that", and nobody asks that on a good day.
 
-Whether it is really working, and what it did last night, belong to SEE. What can be configured at all belongs to ADOPT, and the page an admin changes a setting on belongs to CATALOG. This family is the deploy, the moment of changing a setting, and the things the bot says out loud.
+Whether it is really working, and what it did last night, belong to SEE. What can be configured at all belongs to ADOPT, and the page an admin changes a setting on belongs to CATALOG. This family is the deploy, the moment of changing a setting, and the things the bot says out loud. It is also the restart and everything that should stand in for one: a bot that stopped itself and has to be started again, and a bot that one member at a keyboard could stop for everybody.
 
 ## Criteria
 
@@ -29,9 +29,13 @@ Whether it is really working, and what it did last night, belong to SEE. What ca
   - **RUN-7.a**  The copy already serving my server is the one that keeps serving it, and the extra one is the one that stops
 - **RUN-8**  A bot that restarts over and over does not keep redoing the work the last start already finished
   - **RUN-8.a**  A restart does not spend the day's allowance for reading the chain again on a sweep that has only just run
+  - **RUN-8.b**  A restart does not hand it a fresh day's budget for reading the chain either: what was spent today is still spent when it comes back up
 - **RUN-9**  A new version tells me what has to change before I take it, rather than once it is the only copy running
   - **RUN-9.a**  A version that needs a setting I do not have refuses to start and names the setting, instead of starting and quietly behaving differently
   - **RUN-9.b**  Nothing a new version needs of me is discovered at the first sweep, or at the first payment
+- **RUN-10**  When it has stopped itself over something that turns out to be wrong, I can start it reading the chain again without restarting it
+  - **RUN-10.a**  Starting it again by hand does not hand it a second day's budget for reading the chain, so a wrong refusal cannot be turned into extra requests by anybody who works that out
+- **RUN-11**  No one member, however fast they type, can spend the day's budget for reading the chain on their own
 
 ## Retired
 

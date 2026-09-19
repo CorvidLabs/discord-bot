@@ -17,6 +17,8 @@ Before the signature there is a decision, and it is being made about a server ru
 
 Unlinking is the small version of leaving. The larger one is walking away from the server, or asking outright to be forgotten, and that has to take everything with it rather than the wallet alone: what was cached about what they hold, what the games remember of them, the timezone they typed in once. The one exception is the record of money that actually moved, which cannot be unwritten without breaking the count it feeds, and even that should name a person no more than it has to.
 
+That record is not the only thing that wants to outlive a request to be forgotten, and the other one is harder to defend: while a payout is part way through, something has to say who has already been paid in it, and that something is read before the next payment rather than written after one, so forgetting somebody in that window pays them a second time. Both promises are real, and neither gets to quietly win. The resolution worth holding to is that what is kept there is the least that can recognise a share already taken, that it cannot be read back as a person, and that it stops being kept the moment the payout closes.
+
 ## Criteria
 
 - **VERIFY-1**  I can prove a wallet is mine without handing anyone a key
@@ -31,6 +33,10 @@ Unlinking is the small version of leaving. The larger one is walking away from t
 - **VERIFY-7**  If I leave the server, or ask to be forgotten, everything kept about me goes: my wallets, what was cached about what I hold, my record in the games, the timezone I saved
   - **VERIFY-7.a**  I can see everything held about me before I decide, so it is a forgetting I can check rather than one I have to believe
   - **VERIFY-7.b**  Whatever the record of money moved has to keep names me no more than it has to
+- **VERIFY-8**  If I ask to be forgotten while a payout is part way through, it is still a forgetting, and it does not pay me twice on the way out
+  - **VERIFY-8.a**  The one thing kept until that payout ends is the least that can stop a second payment, it cannot be read back as me, and it goes when the payout does
+  - **VERIFY-8.b**  Proving the same wallet again before that payout ends does not collect a share I have already had
+  - **VERIFY-8.c**  I am told that one thing outlives my request and when it ends, rather than being told everything went while something had not
 
 ## Retired
 

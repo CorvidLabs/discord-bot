@@ -34,6 +34,8 @@ and it is never swallowed either: it is stated, and what was paid plus what was
 held back equals the share exactly, so every smallest unit can be accounted for
 by somebody checking with a calculator.
 
+There is a fourth thing and it is not arithmetic. The row that stops a second payment is read before the next payment rather than written after one, which makes it a guard rather than a record of money moved, and it cannot be defended as a record when somebody asks to be forgotten in the middle of an epoch. It stays true alongside that request by holding only enough to recognise a share already taken, in a form nobody can read back as a person, and by being let go once the epoch closes.
+
 Nothing here sends anything, stores anything, or talks to anybody. It works out
 what is owed and remembers what has been settled. Who holds the money and where
 the records live belong to whoever is using it.
@@ -92,3 +94,6 @@ the records live belong to whoever is using it.
   - **RESERVE-9.a**  The stated example figures are checked in smallest units, not approximated
   - **RESERVE-9.b**  A transfer inside an epoch, a half-finished epoch and a second concurrent run each have a test that would fail if the guard were removed
   - **RESERVE-9.c**  The residue reconciliation is checked for every stream on every schedule
+- **RESERVE-10**  Somebody asking to be forgotten in the middle of an epoch does not turn into a second payment to them
+  - **RESERVE-10.a**  What stops a second payment holds only enough to recognise a share already taken, in a form that cannot be read back as who took it, so honouring a forgetting is not giving the guard up
+  - **RESERVE-10.b**  Which of an epoch's rows a store may erase on request, and which it must keep until the epoch closes, is something the engine states rather than something left to whoever implements it
