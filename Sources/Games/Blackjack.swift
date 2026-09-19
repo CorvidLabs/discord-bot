@@ -188,6 +188,10 @@ public enum Blackjack: Sendable {
     /// side skips the playing phase entirely, which is why this can return a
     /// positive delta even though it is the action that takes the stake.
     ///
+    /// A stake arriving on a hand that is already in play, or already over, is
+    /// refused the same way: one line naming the phase the table is in, so a
+    /// duplicate tap answers something rather than re-rendering itself.
+    ///
     /// - Parameters:
     ///   - state: The table as it stands.
     ///   - amount: Chips to stake.
@@ -199,7 +203,7 @@ public enum Blackjack: Sendable {
         context: inout GameContext
     ) -> ReduceResult<BlackjackState> {
         guard state.phase == .betting else {
-            return ReduceResult(state: state, chipDelta: 0)
+            return refusing(state, wrongPhaseLine(state.phase))
         }
         let bet = amount
         guard bet >= Chips.minimumBet else {
@@ -260,12 +264,15 @@ public enum Blackjack: Sendable {
     ///
     /// Always `chipDelta: 0`. A bust pays nothing rather than debiting again,
     /// because ``deal(_:amount:context:)`` took the stake when it dealt the hand.
+    ///
+    /// A hit that arrives before a bet or after the hand is over comes back with
+    /// the phase named on the message and nothing else touched.
     public static func hit(
         _ state: BlackjackState,
         context: inout GameContext
     ) -> ReduceResult<BlackjackState> {
         guard state.phase == .playing else {
-            return ReduceResult(state: state, chipDelta: 0)
+            return refusing(state, wrongPhaseLine(state.phase))
         }
         let drawn = take(state.shoe, count: 1, context: &context)
         var updated = state
@@ -292,12 +299,15 @@ public enum Blackjack: Sendable {
     ///
     /// The delta is the payout on its own: the stake left on the deal, so an
     /// even-money win returns `bet * 2` and lands the player one stake up.
+    ///
+    /// A stand from the wrong phase comes back with the phase named on the
+    /// message and nothing else touched.
     public static func stand(
         _ state: BlackjackState,
         context: inout GameContext
     ) -> ReduceResult<BlackjackState> {
         guard state.phase == .playing else {
-            return ReduceResult(state: state, chipDelta: 0)
+            return refusing(state, wrongPhaseLine(state.phase))
         }
         let played = dealerPlay(dealer: state.dealer, shoe: state.shoe, context: &context)
         let settled = settleWith(player: state.player, dealer: played.dealer, bet: state.bet)
@@ -322,29 +332,17 @@ public enum Blackjack: Sendable {
         _ state: BlackjackState,
         context: inout GameContext
     ) -> ReduceResult<BlackjackState> {
-        // Say why. Returning the state untouched re-renders an identical card, so a
-        // refused double looked exactly like a button that did nothing at all.
         guard state.phase == .playing else {
-            var refused = state
-            refused.message = state.phase == .betting
-                ? "Put a bet down first."
-                : "That hand is over. Deal the next one."
-            return ReduceResult(state: refused, chipDelta: 0)
+            return refusing(state, wrongPhaseLine(state.phase))
         }
         guard !state.doubled else {
-            var refused = state
-            refused.message = "Already doubled. One card is all a double gets."
-            return ReduceResult(state: refused, chipDelta: 0)
+            return refusing(state, "Already doubled. One card is all a double gets.")
         }
         guard state.player.count == 2 else {
-            var refused = state
-            refused.message = "Doubling is only on your first two cards."
-            return ReduceResult(state: refused, chipDelta: 0)
+            return refusing(state, "Doubling is only on your first two cards.")
         }
         guard context.player.chips >= state.bet else {
-            var refused = state
-            refused.message = "Not enough chips to double."
-            return ReduceResult(state: refused, chipDelta: 0)
+            return refusing(state, "Not enough chips to double.")
         }
         let extra = state.bet
         let drawn = take(state.shoe, count: 1, context: &context)
@@ -379,12 +377,15 @@ public enum Blackjack: Sendable {
     /// The shoe survives on purpose: a hand should not be dealt from a brand new
     /// deck every time, and carrying it over is what makes the refill thresholds
     /// mean anything.
+    ///
+    /// Asked for before the hand has settled, it names the phase on the message
+    /// and leaves the table, the chips and the stream alone.
     public static func next(
         _ state: BlackjackState,
         context: inout GameContext
     ) -> ReduceResult<BlackjackState> {
         guard state.phase == .settled else {
-            return ReduceResult(state: state, chipDelta: 0)
+            return refusing(state, wrongPhaseLine(state.phase))
         }
         var fresh = initial(context: &context)
         fresh.shoe = state.shoe
@@ -555,6 +556,43 @@ public enum Blackjack: Sendable {
     }
 
     // MARK: - Private Methods
+
+    /// The table back exactly as it arrived, but for one line saying why.
+    ///
+    /// Every refusal in this type goes through here, so no press can answer with a
+    /// card identical to the one that was pressed. That was found once on
+    /// ``double(_:context:)``, where a refusal returned the state untouched and
+    /// re-rendered a card nothing had changed on, which is indistinguishable from
+    /// a button that does not work. The wrong-phase guards had the same shape: a
+    /// second tap on Hit, or a tap on a card the table has moved on from, changed
+    /// nothing at all and said nothing at all.
+    ///
+    /// One line, and never a chip or a draw: the message is the only field this
+    /// writes.
+    private static func refusing(
+        _ state: BlackjackState,
+        _ line: String
+    ) -> ReduceResult<BlackjackState> {
+        var refused = state
+        refused.message = line
+        return ReduceResult(state: refused, chipDelta: 0)
+    }
+
+    /// What to say to an action that arrived in a phase it is not legal in.
+    ///
+    /// Named for the phase the table is actually in rather than for the button
+    /// that was pressed, because that is the thing the member cannot see and the
+    /// thing that tells them what to press instead.
+    private static func wrongPhaseLine(_ phase: BlackjackPhase) -> String {
+        switch phase {
+        case .betting:
+            return "Put a bet down first."
+        case .playing:
+            return "That hand is still in play."
+        case .settled:
+            return "That hand is over. Deal the next one."
+        }
+    }
 
     private static let title: String = "Blackjack"
     private static let bettingColor: Int = 0x1c1a18

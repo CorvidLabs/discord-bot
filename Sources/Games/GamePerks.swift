@@ -116,6 +116,11 @@ public struct CollectionPerk: Sendable, Equatable, Identifiable {
     // MARK: - Properties
 
     /// The collection id this applies to, matched against ``GameHoldings``.
+    ///
+    /// Normalised: lowercase, and letters, digits and underscores only.
+    /// ``GamePerks/init(_:)`` refuses any other shape, because the holdings this
+    /// is compared against are normalised before they get here and an exact match
+    /// against a differently spelled id is a perk that never fires.
     public let id: String
 
     /// What a member reads when this perk fires.
@@ -206,6 +211,22 @@ public struct GamePerks: Sendable, Equatable {
 
     /// Builds a perk set, refusing anything a host would rather hear about now.
     ///
+    /// **A collection id must arrive normalised: lowercase, and nothing in it but
+    /// letters, digits and underscores.** The ids here are matched exactly, and
+    /// they come from the same operator configuration the rest of the product
+    /// reads, which normalises a name it is given to exactly that shape before
+    /// anything matches on it. A host that reads one variable and configures both
+    /// sides from it would otherwise pass `Founders Pass` to a perk while every
+    /// holding it will ever be compared against says `founders_pass`: the perk is
+    /// non-empty, unpadded and unique, so every other check below passes, and it
+    /// then never fires for anybody, forever, with nothing anywhere saying so.
+    /// A refusal at the configuration is loud where that mismatch is silent.
+    ///
+    /// The rule is checked, never applied. Normalising the id here would mean this
+    /// module carrying a second copy of a transform it cannot see, and the two
+    /// would drift; checking the shape needs no shared code, because a normalised
+    /// id is recognisable on its own.
+    ///
     /// - Parameter perks: The perks, in the order they should apply.
     /// - Throws: ``GameConfigurationError`` naming the collection and the setting.
     public init(_ perks: [CollectionPerk]) throws {
@@ -220,6 +241,9 @@ public struct GamePerks: Sendable, Equatable {
             }
             guard trimmed == perk.id else {
                 throw GameConfigurationError.paddedCollectionId(collectionId: perk.id)
+            }
+            guard Self.isNormalized(perk.id) else {
+                throw GameConfigurationError.unnormalizedCollectionId(collectionId: perk.id)
             }
             guard seen.insert(perk.id).inserted else {
                 throw GameConfigurationError.duplicateCollectionId(perk.id)
@@ -292,6 +316,30 @@ public struct GamePerks: Sendable, Equatable {
     }
 
     // MARK: - Private Methods
+
+    /// Whether an id is already in the shape operator configuration normalises to.
+    ///
+    /// Lowercase, and letters, digits or underscores only. The alphabet is
+    /// Unicode's rather than ASCII's on purpose: a normaliser lowercases the name
+    /// it was given and keeps whatever in it is a letter or a digit, so a
+    /// collection called "Café" normalises to `café`, and refusing that would
+    /// refuse a correctly configured server to buy a rule that only looked
+    /// stricter. The alphabet is drawn from what a normaliser keeps rather than
+    /// from what looks tidy, because a rule stricter than that only ever refuses
+    /// somebody who did nothing wrong.
+    ///
+    /// Each character is judged by its first scalar, which is what
+    /// `Character.isLetter` and `Character.isNumber` already do. A combining mark
+    /// landing straight after a separator re-segments into one character that
+    /// begins with that underscore, and reading the first scalar is what stops it
+    /// from being read as punctuation and refused.
+    private static func isNormalized(_ id: String) -> Bool {
+        guard id.lowercased() == id else { return false }
+        let underscore: Unicode.Scalar = "_"
+        return id.allSatisfy { character in
+            character.isLetter || character.isNumber || character.unicodeScalars.first == underscore
+        }
+    }
 
     /// Refuses a probability outside `0...1`, naming what to fix.
     private static func requireProbability(_ value: Double, id: String, setting: String) throws {

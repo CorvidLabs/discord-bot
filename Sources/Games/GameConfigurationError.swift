@@ -19,6 +19,18 @@ public enum GameConfigurationError: Error, LocalizedError, Sendable, Equatable {
     /// uses.
     case paddedCollectionId(collectionId: String)
 
+    /// A collection id that is not in the form operator configuration normalises
+    /// ids to: lowercase, letters, digits and underscores only.
+    ///
+    /// Refused rather than normalised here. The ids a host writes down are read
+    /// once and normalised before the rest of the product matches on them, so a
+    /// host who configures both sides from the same variable would otherwise hand
+    /// a perk `Founders Pass` while every holding says `founders_pass`. That perk
+    /// is structurally perfect, raises nothing, and never fires. Normalising it
+    /// here instead would be this module inventing a transform it cannot check
+    /// against the one that actually ran.
+    case unnormalizedCollectionId(collectionId: String)
+
     /// Two perks claim the same collection id.
     ///
     /// Refused rather than merged or last-wins, because either resolution is a
@@ -49,6 +61,10 @@ public enum GameConfigurationError: Error, LocalizedError, Sendable, Equatable {
         case .paddedCollectionId(let id):
             return "Collection id '\(id)' has whitespace around it. "
                 + "Ids are matched exactly, so a padded one matches nothing."
+        case .unnormalizedCollectionId(let id):
+            return "Collection id '\(id)' is not normalised. Write it in lowercase with nothing but "
+                + "letters, digits and underscores, the way the configuration these ids come from "
+                + "writes them, or it will match no holding."
         case .duplicateCollectionId(let id):
             return "Two collection perks use the id '\(id)'. Ids must be unique."
         case .negativeDailyBonus(let id, let value):

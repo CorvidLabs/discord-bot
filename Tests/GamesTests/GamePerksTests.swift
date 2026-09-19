@@ -92,9 +92,48 @@ struct GamePerksTests {
         #expect(throws: GameConfigurationError.paddedCollectionId(collectionId: "founders\n")) {
             try GamePerks([CollectionPerk(id: "founders\n")])
         }
-        // An id with a space inside it is a legal id: only the edges are the typo.
-        #expect(throws: Never.self) {
-            try GamePerks([CollectionPerk(id: "the founders")])
+    }
+
+    @Test("An id the configuration would have normalised is refused, not left to never fire")
+    func unnormalizedIdRefuses() {
+        // The silent failure this refusal exists for. A host reads one variable
+        // for the whole product, the rest of it normalises the name to
+        // `founders_pass`, and this perk is handed the name as typed. It is
+        // non-empty, unpadded and unique, so nothing else here objects, and it
+        // then matches no holding for as long as the server runs.
+        #expect(throws: GameConfigurationError.unnormalizedCollectionId(collectionId: "Founders Pass")) {
+            try GamePerks([CollectionPerk(id: "Founders Pass", dailyBonusChips: 50)])
+        }
+        for typed in ["the founders", "FOUNDERS", "Founders", "founders-pass", "founders.pass", "#1"] {
+            #expect(throws: GameConfigurationError.unnormalizedCollectionId(collectionId: typed)) {
+                try GamePerks([CollectionPerk(id: typed)])
+            }
+        }
+    }
+
+    @Test("Every shape a normalised id can take is accepted, so nobody correct is refused")
+    func normalizedIdsAreAccepted() {
+        // Lowercase letters, digits and underscores, which is everything a
+        // normaliser can produce. The accented and non-Latin ids are here on
+        // purpose: a normaliser lowercases a name and keeps its letters, so
+        // "Café" survives as `café`, and an ASCII-only rule would refuse a server
+        // that had configured itself correctly.
+        let shapes = [
+            "founders",
+            "founders_pass",
+            "second_edition_2",
+            "a1",
+            "2024_drop",
+            "caf\u{00e9}",
+            "cafe\u{0301}",
+            "\u{043a}\u{043e}\u{043b}\u{043b}\u{0435}\u{043a}\u{0446}\u{0438}\u{044f}",
+            "_leading",
+            "trailing_"
+        ]
+        for shape in shapes {
+            #expect(throws: Never.self) {
+                try GamePerks([CollectionPerk(id: shape)])
+            }
         }
     }
 
@@ -174,6 +213,7 @@ struct GamePerksTests {
         let messages: [String] = [
             GameConfigurationError.emptyCollectionId,
             .paddedCollectionId(collectionId: " founders "),
+            .unnormalizedCollectionId(collectionId: "Founders Pass"),
             .duplicateCollectionId("twice"),
             .negativeDailyBonus(collectionId: "bad", value: -5),
             .invalidCooldownFactor(collectionId: "bad", value: -1),
@@ -185,9 +225,11 @@ struct GamePerksTests {
             #expect(!message.isEmpty)
         }
         #expect(messages[1].contains(" founders "))
-        #expect(messages[2].contains("twice"))
-        #expect(messages[5].contains("gold"))
-        #expect(messages[6].contains("the reroll chance"))
+        #expect(messages[2].contains("Founders Pass"))
+        #expect(messages[2].contains("lowercase"))
+        #expect(messages[3].contains("twice"))
+        #expect(messages[6].contains("gold"))
+        #expect(messages[7].contains("the reroll chance"))
     }
 
     // MARK: - Loot weights

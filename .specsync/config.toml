@@ -2,7 +2,11 @@
 # Docs: https://github.com/CorvidLabs/spec-sync
 
 specs_dir = "specs"
-source_dirs = ["Sources/Reserve", "Sources/Gating"]
+# Every target with a contract, not just the one this branch added. Each
+# branch of the stack edited this line and two of them replaced it rather than
+# extending it, which would have quietly dropped a target out of a gate that
+# still reported full coverage.
+source_dirs = ["Sources/Reserve", "Sources/Gating", "Sources/Games"]
 required_sections = ["Purpose", "Public API", "Invariants", "Behavioral Examples", "Error Cases", "Dependencies", "Change Log"]
 enforcement = "strict"
 

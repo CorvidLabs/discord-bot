@@ -17,6 +17,12 @@ public struct GameHoldings: Sendable, Equatable, Codable {
     // MARK: - Properties
 
     /// Collection ids the player holds at least one of.
+    ///
+    /// In the same normalised shape ``CollectionPerk/id`` is checked for:
+    /// lowercase, and letters, digits and underscores. Not enforced here,
+    /// because these arrive from whatever cache the host keeps and a reducer
+    /// must not refuse a table over them, which is exactly why the perk side is
+    /// the side that refuses.
     public var collectionIds: Set<String>
 
     /// The account the ids were read from. Empty when nothing is linked.

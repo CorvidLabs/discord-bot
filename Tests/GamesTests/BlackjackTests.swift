@@ -87,14 +87,15 @@ struct BlackjackTests {
         #expect(opened.delta == -200)
     }
 
-    @Test("Dealing on a hand already in play does nothing")
+    @Test("Dealing on a hand already in play costs nothing and says why")
     func dealOutOfPhase() {
         let opened = dealt(seed: 2)
         var context = opened.context
         let before = context.rng.state
         let again = Blackjack.deal(opened.state, amount: 25, context: &context)
         #expect(again.chipDelta == 0)
-        #expect(again.state == opened.state)
+        #expect(again.state.message == "That hand is still in play.")
+        #expect(unchangedButForTheLine(again.state, opened.state))
         #expect(context.rng.state == before)
     }
 
@@ -203,14 +204,15 @@ struct BlackjackTests {
         #expect(second.state.message == "Drew 9\u{2665}. 24, bust. The dealer collects.")
     }
 
-    @Test("Hitting a hand that is over does nothing")
+    @Test("Hitting a hand that is over costs nothing and says why")
     func hitOutOfPhase() {
         let opened = dealt(seed: 7)
         var context = opened.context
         let before = context.rng.state
         let result = Blackjack.hit(opened.state, context: &context)
         #expect(result.chipDelta == 0)
-        #expect(result.state == opened.state)
+        #expect(result.state.message == "That hand is over. Deal the next one.")
+        #expect(unchangedButForTheLine(result.state, opened.state))
         #expect(context.rng.state == before)
     }
 
@@ -281,14 +283,15 @@ struct BlackjackTests {
         #expect(result.state.message == "The dealer drew J\u{2666}, J\u{2663}. Dealer busts. Pays even money.")
     }
 
-    @Test("Standing before a bet does nothing")
+    @Test("Standing before a bet costs nothing and says why")
     func standOutOfPhase() {
         var context = table(seed: 2)
         let start = Blackjack.initial(context: &context)
         let before = context.rng.state
         let result = Blackjack.stand(start, context: &context)
         #expect(result.chipDelta == 0)
-        #expect(result.state == start)
+        #expect(result.state.message == "Put a bet down first.")
+        #expect(unchangedButForTheLine(result.state, start))
         #expect(context.rng.state == before)
     }
 
@@ -399,13 +402,63 @@ struct BlackjackTests {
         #expect(result.state.shoe.map(\.id) == opened.state.shoe.map(\.id))
     }
 
-    @Test("Asking for the next hand mid-hand does nothing")
+    @Test("Asking for the next hand mid-hand costs nothing and says why")
     func nextOutOfPhase() {
         let opened = dealt(seed: 2)
         var context = opened.context
+        let before = context.rng.state
         let result = Blackjack.next(opened.state, context: &context)
-        #expect(result.state == opened.state)
         #expect(result.chipDelta == 0)
+        #expect(result.state.message == "That hand is still in play.")
+        #expect(unchangedButForTheLine(result.state, opened.state))
+        #expect(context.rng.state == before)
+    }
+
+    @Test("No press answers with the card that was pressed, however stale it is")
+    func refusalsNeverLookLikeADeadButton() {
+        // The failure this covers is a duplicate tap. The second press lands in a
+        // phase the action is not legal in, and a refusal that returned the state
+        // exactly as it arrived re-rendered a card nothing had changed on, which
+        // is what a broken button looks like. Every refusal answers a line.
+        var context = table(seed: 2)
+        let idle = Blackjack.initial(context: &context)
+        let opened = dealt(seed: 2)
+        let over = dealt(seed: 7)
+        #expect(over.state.phase == .settled)
+
+        var pressed = context
+        let presses: [(String, ReduceResult<BlackjackState>)] = [
+            ("deal on a live hand", Blackjack.deal(opened.state, amount: 25, context: &pressed)),
+            ("deal on a finished hand", Blackjack.deal(over.state, amount: 25, context: &pressed)),
+            ("hit before a bet", Blackjack.hit(idle, context: &pressed)),
+            ("hit after the hand", Blackjack.hit(over.state, context: &pressed)),
+            ("stand before a bet", Blackjack.stand(idle, context: &pressed)),
+            ("stand after the hand", Blackjack.stand(over.state, context: &pressed)),
+            ("next before a bet", Blackjack.next(idle, context: &pressed)),
+            ("next mid-hand", Blackjack.next(opened.state, context: &pressed)),
+            ("double before a bet", Blackjack.double(idle, context: &pressed)),
+            ("double after the hand", Blackjack.double(over.state, context: &pressed))
+        ]
+        let sources: [BlackjackState] = [
+            opened.state, over.state, idle, over.state, idle,
+            over.state, idle, opened.state, idle, over.state
+        ]
+        for (index, press) in presses.enumerated() {
+            let source = sources[index]
+            #expect(press.1.chipDelta == 0, "\(press.0) moved chips")
+            #expect(press.1.state.message != source.message, "\(press.0) said nothing")
+            #expect(!press.1.state.message.isEmpty, "\(press.0) blanked the line")
+            #expect(unchangedButForTheLine(press.1.state, source), "\(press.0) changed the table")
+        }
+        // No refusal spent a draw, so a replay stays in step.
+        #expect(pressed.rng.state == context.rng.state)
+    }
+
+    /// Whether a refusal touched anything but the one line it is allowed to write.
+    private func unchangedButForTheLine(_ refused: BlackjackState, _ source: BlackjackState) -> Bool {
+        var comparable = refused
+        comparable.message = source.message
+        return comparable == source
     }
 
     // MARK: - The shoe
