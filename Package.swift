@@ -1,4 +1,12 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.1
+
+// Raised from 6.0, which was not true. The resolved graph reaches
+// `swift-asn1` 1.7.3 through `swift-crypto`, and that manifest declares tools
+// version 6.1.0, so `swift build` on Swift 6.0 stops before it compiles
+// anything. It stopped with an error naming somebody else's package, which is
+// the worst kind of wrong floor: the person reading it has no way to tell it
+// was this manifest that misled them. The number here is now a toolchain that
+// can actually build this, and CI builds on exactly it.
 
 import PackageDescription
 
@@ -25,8 +33,18 @@ let package = Package(
         .library(name: "Games", targets: ["Games"]),
         .library(name: "Chain", targets: ["Chain"])
     ],
+    // Up to the next *minor*, not the next major. Semantic versioning gives a
+    // 0.x release no compatibility promise at all across a minor bump, so
+    // `from: "0.1.0"` was a range in which a dependency is allowed to break
+    // this package without breaking its own rules, and a commit that built
+    // last week would stop building with nothing here having changed.
+    // `Package.resolved` is committed beside this for the same reason: the
+    // range says what may be taken, the lock says what was, and TRUST-4 is
+    // that a build made from this repository is made of what the repository
+    // says. Raising the floor is a pull request somebody reads, which is also
+    // what TRUST-1.b asks of a new thing to reach.
     dependencies: [
-        .package(url: "https://github.com/CorvidLabs/swift-algorand.git", from: "0.1.0")
+        .package(url: "https://github.com/CorvidLabs/swift-algorand.git", .upToNextMinor(from: "0.4.0"))
     ],
     targets: [
         .target(

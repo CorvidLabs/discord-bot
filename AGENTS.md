@@ -48,7 +48,9 @@ missing; `INTENT.md` says why the engine came first.
 | `Sources/Games/` | The game engine. Foundation only. |
 | `Sources/Chain/` | Reading the chain, and the two brakes. Depends on `Gating` and on `swift-algorand`. |
 | `Tests/` | 571 tests in 39 suites, all offline: `Reserve` 105, `Gating` 133, `Games` 158, `Chain` 175. |
-| `.github/workflows/` | The two gates that run on every pull request. |
+| `docs/WHAT-IT-TALKS-TO.md` | Every outside service and every secret, derived from the source. A pull request that adds an outbound call, a host, a dependency or a secret edits it in the same pull request. |
+| `CHANGELOG.md` | What changed between two versions. New work goes under `Unreleased`. |
+| `.github/workflows/` | The two gates that run on every pull request, on macOS and on Linux. |
 
 ## Running the gate
 

@@ -1,7 +1,10 @@
 # Swift Package Manager
 .build/
 .swiftpm/
-Package.resolved
+# Package.resolved is deliberately NOT ignored. This package ships libraries,
+# but it is also the thing an operator builds and runs, and a build made from a
+# commit has to be made of the same code every time it is made. See
+# docs/WHAT-IT-TALKS-TO.md.
 
 # Xcode
 *.xcodeproj
