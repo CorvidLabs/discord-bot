@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "re-read-what-every-member-holds-and-move-their-roles-to-match-as-a-sweep-module-with-the-loop-the-batching-the-run",
+  "slug": "re-read-what-every-member-holds-and-move-their-roles-to-match-as-a-sweep-module-with-the-loop-the-batching-the-run",
+  "title": "Re-read what every member holds and move their roles to match, as a Sweep module with the loop, the batching, the run record and the per-member reasons, that nothing calls yet",
+  "description": "Re-read what every member holds and move their roles to match, as a Sweep module with the loop, the batching, the run record and the per-member reasons, that nothing calls yet",
+  "kind": "feature",
+  "state": "verifying",
+  "canonical_applied": true,
+  "base_commit": "3efbbf9e8ad527116e959424063fedfdb869a5a5",
+  "created_at": 1789858240,
+  "updated_at": 1789858721,
+  "affected_specs": [
+    "sweep",
+    "surface"
+  ],
+  "affected_paths": [
+    "Sources/Sweep",
+    "Tests/SweepTests",
+    "Sources/SurfaceDiscord/DiscordRoleApplier.swift",
+    "Tests/SurfaceDiscordTests/RoleListTests.swift",
+    "Package.swift",
+    "Package.resolved",
+    ".specsync/config.toml",
+    "specs/sweep",
+    "specs/surface"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "A Sweep module exists that re-reads what every member holds and moves their roles to match, with the loop, the batching, the schedule, the run record, the per-member reasons and the operator tallies. It depends on Gating, Chain and Store, declares its own chat seam over String so it links no chat SDK, opens no socket and reads no environment variable, and reads the chain only through Chain so a sweep spends the same daily budget under the same three brakes as every other read. A balance nobody could read holds a member's rung rather than dropping it. Separately, DiscordRoleApplier stops unioning RoleDecision.held into the list it sends: held is every configured role the decision deliberately left alone for want of a read, so unioning it granted them, and in the verification callback, which builds holdings with no asset catalogue, that meant every collection badge on every /verify. The list is now the managed half of target plus every role the member holds that the decision does not manage, so a badge a moderator granted by hand survives and an unread rung is held rather than granted. Nothing calls the sweep: boot gate eight is empty, so no behaviour changes for anyone running the bot. 1269 tests in 106 suites pass and specsync check --strict reports 226/226 files."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "design",
+    "research"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "yes"
+  }
+}

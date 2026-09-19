@@ -1,6 +1,6 @@
 ---
 module: sweep
-version: 1
+version: 2
 status: active
 files:
   - Sources/Sweep/CollectionRegistry.swift
@@ -281,3 +281,4 @@ Every exported symbol of the `Sweep` library target, grouped by file.
 | Version | Change |
 |---------|--------|
 | 1 | The first sweep: one batched chain read for the whole pass as the instance's own work, a decision per member through a chat seam declared here, a record written before the work and again after it, held and missed split with named reasons, and an orphan pass behind the guard whose baseline is recorded only when it passes. Corrected before release, each against a test that failed first: a member's own duplicated address is summed once rather than twice, the accounts are re-read immediately before the write so an unlink mid-pass is held rather than undone, the records are re-read immediately before the orphan filter so somebody who verified mid-pass is not stripped, and a pass in flight survives `stop()` so a redeploy does not write a permission outage that never happened. |
+| 2 | re-read-what-every-member-holds-and-move-their-roles-to-match-as-a-sweep-module-with-the-loop-the-batching-the-run: Re-read what every member holds and move their roles to match, as a Sweep module with the loop, the batching, the run record and the per-member reasons, that nothing calls yet |

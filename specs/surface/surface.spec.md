@@ -1,6 +1,6 @@
 ---
 module: surface
-version: 2
+version: 3
 status: active
 files:
   - Sources/Surface/Boot/BootReport.swift
@@ -829,3 +829,4 @@ their commands do.
   on every `/verify`, because the callback builds holdings with no asset
   catalogue and therefore holds every collection. Found by review, fixed
   against five tests that failed first.
+| 2026-09-19 | re-read-what-every-member-holds-and-move-their-roles-to-match-as-a-sweep-module-with-the-loop-the-batching-the-run: Re-read what every member holds and move their roles to match, as a Sweep module with the loop, the batching, the run record and the per-member reasons, that nothing calls yet |
