@@ -15,7 +15,7 @@ document disagree, the code is right and this is a bug.
 
 ## Before the tables
 
-**There is no executable yet.** This package is six libraries, and nothing in
+**There is no executable yet.** This package is seven libraries, and nothing in
 it starts a process. So "refused" below means the loader throws, naming the
 variable, and a host that calls it gets an error instead of a configuration.
 When there is a bot, that is its boot failing. The refusals are real today and
@@ -33,9 +33,16 @@ is not written.
    asset, so the asset is written down once in your file and cannot be written
    down twice differently.
 
-`Reserve`, `Store`, `StoreSQLite` and `Games` read **no environment variable at
-all**. What that means for storage and for a reserve is in
-[Storage](#storage-no-variables-yet) and
+`Reserve`, `Store`, `StoreSQLite`, `Games` and `Verify` read **no environment
+variable at all**. For four of them that is a happenstance of what they do;
+for `Verify` it is a security property, and it is asserted rather than
+promised. A setting that changes how a signature is checked is one setting
+away from a setting that skips it, so `Tests/VerifyTests/TargetShapeTests.swift`
+reads that target's own sources and fails if anything in it ever reads one.
+The operator's challenge label and which prover route is live are real
+settings that this package does not yet have a place to read, and they arrive
+with the host that serves the page. What that means for storage and for a
+reserve is in [Storage](#storage-no-variables-yet) and
 [The reserve](#the-reserve-no-variables-yet).
 
 ### Rules that apply to every variable

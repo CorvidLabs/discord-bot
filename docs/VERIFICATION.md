@@ -10,21 +10,165 @@ document rather than a paragraph is
 operator has to run, they should find that out here rather than from the first
 member whose command failed.
 
-**None of this is implemented in this repository.** There is no gateway, no
-slash command and no HTTP listener at this commit, so nothing below can be run.
-`Store` has a place to record that an account belongs to a member
-(`AccountStore.prove`) and nothing that puts one there. What this document is:
-the contract a working implementation of this flow has been running against,
-read out of that implementation's source and corrected against it, written down
-before the code that will have to honour it. Where the working implementation
-departs from the contract, the departures are listed at the end rather than
-quietly adopted.
+**Half of this is implemented in this repository, and it is the half nobody
+can reach.** The `Verify` library target now decides whether an account is
+controlled by whoever presented a proof of it, in this process, with no second
+service: it mints the challenge, keeps the session, reads the signed
+transaction a wallet sends back and applies fifteen ordered refusals to it.
+`specs/verify/verify.spec.md` is its contract. What is still missing is
+everything a member would touch: there is no gateway, no slash command and no
+HTTP listener at this commit, so nothing below can be run and nobody can
+verify anybody from a clone of this repository. `Store` has a place to record
+that an account belongs to a member (`AccountStore.prove`) and nothing that
+puts one there.
 
-Whether this bot should keep needing a separate web service at all is an open
-question, recorded in
-[`decisions/0001-verification-portal.md`](decisions/0001-verification-portal.md)
-and not yet decided. This document describes the contract either way: a page
-served by the bot itself still has to do everything in
+What this document is: the contract a working implementation of this flow has
+been running against, read out of that implementation's source and corrected
+against it. Where that implementation departs from the contract, the
+departures are listed at the end rather than quietly adopted.
+
+## Two routes, and the bot half is the same either way
+
+Whether this bot needs a separate web service is recorded in
+[`decisions/0001-verification-portal.md`](decisions/0001-verification-portal.md).
+What reading the code settled is narrower than that question and worth stating
+here, because it changes which parts of this document apply.
+
+**A second deployable that checks the proof is not needed.** Proving ownership
+is three moves and only one of them was ever a service. Minting something to
+sign needs nothing a bot does not already have. Checking the signature is
+thirty lines, because an Algorand address **is** an Ed25519 public key. What
+genuinely needs a browser is the return channel in between: a wallet will not
+reply to a process it has no session with.
+
+So there are two routes, and they differ in one thing:
+
+| | Who checks the signature | What the bot ends up holding |
+|---|---|---|
+| **In process** | This bot, in `Verify` | A proof it checked itself |
+| **Portal** | The other service | That service's word, believed because it presented the shared secret |
+
+On the portal route the shared secret is the whole trust boundary, and the
+software says so rather than leaving an operator to work it out: the two
+routes do not share a producer, and the value the portal route yields is named
+for the fact that nothing here checked it.
+
+A page served **anywhere** that posts the signed blob back to this bot's own
+submit route is the first row, not the second. The page moving is not the same
+thing as the proof moving.
+
+**What `Verify` enforces, which this contract's ordered checks do not yet
+carry.** Somebody writing their own page needs all of it, or they will build
+something this refuses:
+
+- Exactly one accepted shape: type `pay`, sender equal to receiver, amount
+  zero, fee **at most one thousand microAlgos**, no lease, no group, and a
+  note that is the session's challenge bytes exactly.
+- **The fee is bounded at the network minimum, not pinned at zero.** The page
+  should still ask for zero, because a wallet showing a fee on something
+  described as free is a member who cancels. The checker accepts a wallet that
+  raises it, because nobody has measured which wallets override a fee they
+  were handed, and a checker pinned at zero turns an untested wallet behaviour
+  into a member who cannot verify and cannot act on the refusal. It is bounded
+  at all because a self payment whose fee is the member's whole balance is a
+  thing this bot would otherwise bless as proof of ownership while the page
+  keeps the blob. At the minimum a leaked blob costs a member a fraction of a
+  cent instead of their balance.
+- **`rekey`, `close`, `aclose`, `lx` and `grp` are each refused**, whether or
+  not the signature is good. The bot never submits, so it cannot be the
+  attacker; refusing means it never holds or blesses a signed instrument that
+  could empty or reassign an account if it leaked. The wire name for a rekey
+  is `rekey`, which is what a canonical encoder emits, and not the name the
+  field carries on a transaction type.
+- **Fifteen ordered refusals**, and a later one is never returned while an
+  earlier one holds: session state, session expiry, blob decode, transaction
+  parse, missing fields, transaction type, pinned address, sender, receiver,
+  amount, fee, forbidden fields, subject, note, signature.
+- **A duplicate key at any depth and any byte after the envelope are
+  refused.** The page supplies the unsigned bytes, so it chooses the
+  encoding, and a transaction map carrying `amt` twice is one document a
+  wallet can display one way and a checker read the other way. The **order**
+  of the keys is not held to anything: unique keys say one thing in any
+  order, and the envelope this reader's ancestor was patched to accept,
+  after a live flow on a phone was refused, carries its signer key after its
+  transaction.
+- **The duplicate-address check is bound to the session.** A session records
+  the address it was connected to the first time one is presented and refuses
+  a second differing one without answering anything about it. Asked freely,
+  "does this address already belong to a member here?" is an enumeration
+  oracle over a public holder list.
+- **One call at a time per session.** A session is claimed for the length of
+  a call and a second call on a claimed one is refused saying nothing. The
+  coordinator is an actor, which bounds one uninterrupted run rather than one
+  method: every hop into the store releases it, so without the claim two
+  submissions posted together both read a live session, both check a
+  signature, and the single use, the attempt bounds and the one authorising
+  key retry are all advisory.
+
+**Two departures from the challenge this document describes**, both
+deliberate. The challenge is **five** lines rather than four: an operator
+supplied label, an identity for this instance, the subject, a six character
+code, and a nonce. The subject is the instance's own minted member key rather
+than the member's chat account id, because nothing that came from a person may
+cross below the chat boundary; the code is what a member compares against what
+their chat client just showed them. And the nonce is a hundred and twenty
+eight bits from the system generator rather than thirty two taken from the
+front of a UUID.
+
+**Eight obligations a host carries**, which are contract rather than
+implementation detail and which `Verify` cannot hold up on its own:
+
+1. Exactly one prover route named explicitly in configuration. Naming none,
+   like naming both, stops the boot naming both variables. **No route is
+   defaulted**, because an operator who meant to run the portal and mistyped
+   the variable must not get a bot that quietly verifies members another way.
+2. The session id is a bearer credential: delivered only in the reply the
+   member alone can see, carried to the page in a fragment or a request body
+   and never in a query string, never written to a log, an access log, an
+   error report or a crash report, and the page served under a referrer
+   policy of `no-referrer`.
+3. Adoption needs a confirmation by the member after the proof has been
+   checked. The checked proof waits in a pending record keyed by the subject
+   rather than by the session id, with an expiry of its own, binding nothing
+   at all until it is confirmed.
+4. An authorising key passed to `Verify` comes only from the host's own chain
+   read of that exact account's authorising address field, attempted at most
+   once per session and only on the signature refusal that reports a retry as
+   available.
+5. The command and the submit route are both rate limited, per member and per
+   source, by the host rather than by something assumed in front of it.
+6. An address bound to the wrong member is releasable by an operator, with an
+   audit line naming who released it and from whom. A lock with no key is not
+   a safety property.
+7. The operator's challenge label is validated at boot, stopping the boot and
+   naming the variable, so an operator does not learn of it from a member
+   whose wallet showed them six lines.
+8. The page names the chat account the session belongs to, in the display name
+   that member's own client would show, with a warning beside it: only
+   continue if that account is yours, and nobody should ever send you this
+   link. The reply carries the same warning.
+
+**Why the named account is on the page rather than in the signed bytes**, and
+not only that it is. In a relayed prompt, where somebody runs the command
+themselves and sends the link to a member, the victim is standing on the
+operator's **real** page, on the real origin: the attacker's whole
+contribution is a link, so the page cannot be made to lie about whose session
+it is, and a name on it is the only form of this defence a first-time verifier
+can use, because they have no value to recognise. Carrying the same name
+inside the signed bytes would additionally defend a **counterfeit** page,
+which is a different attack with a different answer, and it would put an
+identifier that came from a person below the chat boundary. The opaque subject
+line stays in the bytes beside it rather than being replaced by it: that is
+what stops a proof being moved between sessions, which no page can do.
+
+What is left over after all of that is a first-time verifier who does not read
+the warning. The attack needs somebody to take a link from a stranger and sign
+what it shows them, which the rules an operator already publishes cover and
+every wallet warns about. It is real and it is largely user error, and saying
+so is not the same as dismissing it.
+
+This document describes the portal contract either way: a page served by the
+bot itself still has to do everything in
 [What a conforming portal must do](#what-a-conforming-portal-must-do).
 
 ## The shape of it
