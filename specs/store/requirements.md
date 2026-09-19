@@ -178,15 +178,17 @@ backend keeps the charges under a name of their own, that name SHALL be one of
 the shared table names, so a forgetting and an unreadable row report it the
 same way whichever backend is running.
 
-- Covered by `anEpochRoundTrips`, extended with charges, which proves every
-  backend returns them whole and in the order they were written, and by the
-  new `anEpochGainsACharge`, which proves an epoch saved a second time with a
-  further charge reads back with both, in order. `InMemoryConformanceTests`
-  and `SQLiteConformanceTests` prove both behaviours against each backend
-  rather than proving them once (RESERVE-8.a, SPEND-9.c).
-- Covered by `SQLiteFileTests.swift`: a file written by the build before this
-  one keeps every epoch row across the pending migration, and those epochs
-  read as charged to no period rather than failing to load (ADOPT-5, RUN-9).
+Acceptance Criteria
+- The shared conformance behaviour covering an epoch round trip, extended with
+  charges, proves every backend returns them whole and in the order they were
+  written (RESERVE-8.a).
+- A new shared conformance behaviour proves an epoch saved a second time with
+  a further charge reads back with both charges, in order (SPEND-9.c).
+- `InMemoryConformanceTests` and `SQLiteConformanceTests` prove both
+  behaviours against each backend rather than proving them once (RESERVE-8.a).
+- `SQLiteFileTests` proves a file written by the build before this one keeps
+  every epoch row across the pending migration, and that those epochs read as
+  charged to no period rather than failing to load (ADOPT-5, RUN-9).
 
 ### REQ-store-017
 
@@ -199,17 +201,15 @@ than the release which learned to drop one. A reverse SHALL therefore drop
 whole objects the migration created, leaving the earlier schema exactly as it
 was.
 
-- Covered by `SQLiteFileTests.swift`: the existing reverse-everything test
-  proves that applying every migration and reversing every one, including the
-  new one, leaves nothing but the bookkeeping table, and "A pending migration
-  copies the file first, and says what it applied" runs against a file one
-  version behind this build. "A copy that cannot be taken stops the migration
-  rather than being skipped" holds the other half of the copy rule: with
-  somewhere unwritable where the copy goes, the open refuses and the schema is
-  exactly as it was, so the upgrade can be tried again (RUN-9).
-- Covered by `TargetShapeTests.swift`: no shipped migration's reverse uses a
-  column drop, asserted against the statements themselves rather than the text
-  of the file (RUN-9).
+Acceptance Criteria
+- The existing reverse-everything test proves that applying every migration
+  and reversing every one, including the new one, leaves nothing but the
+  bookkeeping table (RUN-9).
+- `SQLiteFileTests` proves the new migration takes a copy of the file before
+  it runs, and refuses to run when the copy fails (RUN-9).
+- `SQLiteFileTests` proves no shipped migration's reverse uses a column drop,
+  so every reverse runs on the oldest SQLite the package declares it supports
+  (RUN-9).
 
 ## Constraints
 

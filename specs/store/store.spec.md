@@ -1,6 +1,6 @@
 ---
 module: store
-version: 1
+version: 2
 status: active
 files:
   - Sources/Store/AccountRecord.swift
@@ -507,3 +507,4 @@ there (`BUILD-4`).
 |---------|--------|
 | 1 | The first store: members, the accounts they proved, the sweep baseline, the payout ledger and the day's request count, with a conformance suite two backends pass. Identifiers are compared by their bytes, an open that created the store says so, and the unreadable-row rule reaches the reserve's state and the sweep baseline as well. |
 | 2 | An epoch's record carries the ceilings it was measured against, in the order they were charged, in a table of their own with the same cascade the claims rows use and a reverse that drops it whole. A row from the previous version reads as charged to no period rather than failing to load. |
+| 2 | satisfy-four-criteria-the-catalogue-states-and-the-code-does-not-which-period-a-boundary-crossing-payout-was-counted: Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing |

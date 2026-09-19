@@ -177,3 +177,34 @@ touching anything:
 3. **RUN-10.a is not a feature.** Anyone who reads the item and starts changing
    `unpause` has misread it. The behaviour is correct today; the gap is the
    proof.
+
+## Why this workspace was finalized weeks after its code merged
+
+The work here merged as #21 and the workspace was never carried past
+`approved`. #22 then partially reverted it, cutting 238 lines out of
+`approvals.json` and most of `state.json`, which is what a rebase does to a
+file two branches both rewrote. The result sat on `main` failing
+`specsync change audit` while CI stayed green, because `audit` had been taken
+out of the `verify` lane for an unrelated reason.
+
+Three things had to be repaired, and each one names a rule worth keeping:
+
+1. **The deltas said `## Added` for blocks already in the living tree.** They
+   were added by #21 itself, so re-materializing them was a conflict. They are
+   `## MODIFIED` now. The rule the tool is enforcing is that a delta describes
+   a move *from the living tree*, not from the author's memory of it.
+2. **`tasks.md` was entirely unticked** although every task was implemented and
+   merged. Each was checked against the tree before ticking; the
+   `Gaps and open questions` section was converted from checkboxes to plain
+   bullets, because its own opening sentence says none of them blocks the work
+   and a checkbox that is never meant to be ticked blocks `check` forever.
+3. **There was no requirement evidence table**, so it is reconstructed from
+   the living specs rather than from a run recorded at the time, and it says
+   so in its own first paragraph.
+
+The lesson is the one `finalize --help` states and this repository learned the
+expensive way: **finalize before merging.** Merging first orphans the
+verification evidence, and the workspace then decays every time another branch
+touches it. One task in Stage 0 could not be completed even now — recording the
+ordering with `specsync change depend` against the runtime change — because
+that workspace never coexisted with this one in a single tree.

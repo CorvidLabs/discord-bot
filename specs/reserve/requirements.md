@@ -126,20 +126,28 @@ that states a ceiling. The same ordered list SHALL be carried on the value a
 finished run hands back, so a host can report which ceiling the run was
 counted against without reading the store a second time.
 
-- Covered by `ReserveRunnerTests.swift`: a clean run records exactly one
-  charge naming the period of the limits it was checked against and the
-  whole-unit figure the planner computed; an epoch whose payer fails part way,
-  re-run under limits naming a later period, reads back two charges in the
-  order they were charged; limits keyed to a different calendar from the
-  cadence are recorded as themselves, so an implementation reaching for the
-  cadence parameter already in scope fails; the charge reaches the store
-  before the first payment is attempted; a run for a host stating no limits
-  records no charge, and a rehearsal records none either; and the charge keeps
-  the figure the run was measured for even when part of the epoch went unpaid
-  (SPEND-9.c, SPEND-9.a, RESERVE-6.a, RESERVE-7.a).
-- Covered by `ReserveStoreTests.swift`: a record encoded by a build from
-  before this field existed loads as a record with no charges rather than
-  throwing (ADOPT-5).
+Acceptance Criteria
+- `ReserveRunnerTests` proves a clean run records exactly one charge, naming
+  the period of the limits it was checked against and the whole-unit figure
+  the planner computed (SPEND-9.c).
+- `ReserveRunnerTests` proves an epoch whose payer fails part way, re-run
+  under limits naming a later period, reads back two charges in the order they
+  were charged (SPEND-9.c, SPEND-9.a).
+- `ReserveRunnerTests` proves that limits keyed to a different calendar from
+  the cadence are recorded as themselves, so an implementation reaching for
+  the cadence parameter already in scope fails (SPEND-9.c).
+- `ReserveRunnerTests` proves the charge reaches the store before the first
+  payment is attempted, using the store double that records its save order
+  (SPEND-9.c, RESERVE-6.a).
+- `ReserveRunnerTests` proves a run for a host stating no limits records no
+  charge, and that a rehearsal records none either (SPEND-9.c, RESERVE-7.a).
+- `ReserveRunnerTests` proves the charge keeps the figure the run was measured
+  for even when part of the epoch went unpaid, so the charge and the paid
+  total are allowed to disagree and the record says which is which
+  (SPEND-9.c).
+- `ReserveStoreTests` proves a record encoded by a build from before this
+  field existed loads as a record with no charges rather than throwing
+  (ADOPT-5).
 
 ## Constraints
 
