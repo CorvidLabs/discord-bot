@@ -83,6 +83,8 @@ blocks every earlier change sharing a delivery input from archiving.
 | `docs/README.md` | Which document owns which fact, and the rules that keep the set from contradicting itself. Read it before putting a fact in a new place. |
 | `docs/CONFIGURATION.md` | Every environment variable an operator sets: what it means, its default, and what goes wrong when it is wrong. A pull request that adds, renames or redefaults a variable edits it in the same pull request. Its worked example is loaded by a test, so it cannot quietly stop being true. |
 | `docs/WHAT-IT-TALKS-TO.md` | Every outside service and every secret, derived from the source. A pull request that adds an outbound call, a host, a dependency or a secret edits it in the same pull request. |
+| `docs/VERIFICATION.md` | How a member proves an account is theirs: every endpoint on both sides, the security properties, and what a conforming portal must and must never do. Written before the code, so it is a contract to build to rather than a description of anything here. |
+| `docs/decisions/` | Decisions taken about the shape of the product, numbered and permanent. A record marked proposed has not been decided and is not licence to build it. |
 | `CHANGELOG.md` | What changed between two versions. New work goes under `Unreleased`. |
 | `.github/workflows/` | The two gates that run on every pull request, on macOS and on Linux. |
 

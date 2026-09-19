@@ -54,7 +54,11 @@ Most of it, and what is missing is the part a person would actually use:
   Discord role.
 - **No wallet verification.** Nothing signs a challenge. There is now a place
   to record that an account belongs to a member, and nothing that puts one
-  there.
+  there. [`docs/VERIFICATION.md`](docs/VERIFICATION.md) is the contract that
+  flow will be built to, complete enough to implement the other half from, and
+  [`docs/decisions/0001-verification-portal.md`](docs/decisions/0001-verification-portal.md)
+  is the open question of whether that other half is a separate web service at
+  all.
 - **Only the smallest store.** Six tables: members, accounts, the sweep
   baseline, the payout ledger and the day's request count. No cache of what an
   account holds, no payments table, no audit log, no claim offers, no scheduled
@@ -75,7 +79,8 @@ written down and agreed, not features that work.
 with an id that never moves.
 
 The Discord surface, the wallet verification flow and a host that wires the
-libraries together come next, in that order.
+libraries together come next, in that order. Verification is written down
+before it is written: [`docs/VERIFICATION.md`](docs/VERIFICATION.md).
 
 ## Why the engine first
 
