@@ -9,6 +9,18 @@ spec: reserve.spec.md
   resizes the reserve or changes a payout.
 - A stream is a value the host configures, not a case in an enum, so a reserve
   can have one stream or six without a code change.
+- The ceilings an epoch was measured against are a **list**, not one key. A
+  single value is simpler and reads well in the ordinary case, and it is wrong
+  in exactly the case SPEND-9.c was written for: an epoch that crashed on one
+  side of a boundary and resumed on the other really was charged to two
+  ceilings, and naming only the first would be a confident lie in the one
+  situation an operator opens the row for. A list costs one table and a loop.
+- The charge records the **spending** period, from the limits the host stated,
+  and never the cadence period. The cadence gap is real and is left open: the
+  state keeps only the latest cadence key per stream, so "which week did epoch
+  seven pay in" is still unanswerable. It is a one-line addition to the same
+  row and it is deliberately not taken here, because SPEND-9.c asks about the
+  ceiling.
 - Denominators are fixed constants. Dividing by the eligible count would mean
   every arrival shrinks and every departure grows everybody's payment, and
   nobody could be told in advance what they will receive.

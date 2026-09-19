@@ -22,8 +22,12 @@ internal struct WalletCheckCacheTests {
             ],
             log: log
         )
-        _ = await cache.check(wallets: [Fixture.wallet(1)], now: Self.noon)
-        let again = await cache.check(wallets: [Fixture.wallet(1)], now: Self.noon.addingTimeInterval(10))
+        _ = await cache.check(wallets: [Fixture.wallet(1)], for: Fixture.member(), now: Self.noon)
+        let again = await cache.check(
+            wallets: [Fixture.wallet(1)],
+            for: Fixture.member(),
+            now: Self.noon.addingTimeInterval(10)
+        )
         #expect(again.first?.directBalance.completeValue == 42)
         #expect(await log.count == 1)
     }
@@ -36,8 +40,12 @@ internal struct WalletCheckCacheTests {
             lifetimes: ChainCacheLifetimes(walletCheck: 30, walletCheckCooldown: 0),
             log: log
         )
-        _ = await cache.check(wallets: [Fixture.wallet(1)], now: Self.noon)
-        _ = await cache.check(wallets: [Fixture.wallet(1)], now: Self.noon.addingTimeInterval(31))
+        _ = await cache.check(wallets: [Fixture.wallet(1)], for: Fixture.member(), now: Self.noon)
+        _ = await cache.check(
+            wallets: [Fixture.wallet(1)],
+            for: Fixture.member(),
+            now: Self.noon.addingTimeInterval(31)
+        )
         #expect(await log.count == 2)
     }
 
@@ -52,10 +60,10 @@ internal struct WalletCheckCacheTests {
             lifetimes: ChainCacheLifetimes(walletCheck: 300, walletCheckCooldown: 0),
             log: log
         )
-        let first = await cache.check(wallets: [Fixture.wallet(1)], now: Self.noon)
+        let first = await cache.check(wallets: [Fixture.wallet(1)], for: Fixture.member(), now: Self.noon)
         #expect(first.first?.combinedBalance.isComplete == false)
         // Asked again rather than served a failure for the next five minutes.
-        _ = await cache.check(wallets: [Fixture.wallet(1)], now: Self.noon.addingTimeInterval(1))
+        _ = await cache.check(wallets: [Fixture.wallet(1)], for: Fixture.member(), now: Self.noon.addingTimeInterval(1))
         #expect(await log.count == 2)
         #expect(await cache.cachedCount == 0)
     }
@@ -74,6 +82,7 @@ internal struct WalletCheckCacheTests {
         )
         let results = await cache.check(
             wallets: [Fixture.wallet(1), Fixture.wallet(1)],
+            for: Fixture.member(),
             now: Self.noon
         )
         // Both callers get their answer; the chain is asked once for it.
@@ -92,10 +101,11 @@ internal struct WalletCheckCacheTests {
             lifetimes: ChainCacheLifetimes(walletCheck: 300, walletCheckCooldown: 60),
             log: log
         )
-        _ = await cache.check(wallets: [Fixture.wallet(1)], now: Self.noon)
+        _ = await cache.check(wallets: [Fixture.wallet(1)], for: Fixture.member(), now: Self.noon)
         #expect(await cache.isOnCooldown(Fixture.wallet(1), now: Self.noon.addingTimeInterval(30)))
         _ = await cache.check(
             wallets: [Fixture.wallet(1)],
+            for: Fixture.member(),
             forceFresh: true,
             now: Self.noon.addingTimeInterval(30)
         )
@@ -105,6 +115,7 @@ internal struct WalletCheckCacheTests {
         #expect(await cache.shouldCheck(Fixture.wallet(1), now: Self.noon.addingTimeInterval(61)))
         _ = await cache.check(
             wallets: [Fixture.wallet(1)],
+            for: Fixture.member(),
             forceFresh: true,
             now: Self.noon.addingTimeInterval(61)
         )
@@ -118,10 +129,10 @@ internal struct WalletCheckCacheTests {
             accounts: [Fixture.wallet(1): Fixture.account(Fixture.wallet(1))],
             log: log
         )
-        _ = await cache.check(wallets: [Fixture.wallet(1)], now: Self.noon)
+        _ = await cache.check(wallets: [Fixture.wallet(1)], for: Fixture.member(), now: Self.noon)
         await cache.invalidate(Fixture.wallet(1))
         #expect(await cache.cachedCount == 0)
-        _ = await cache.check(wallets: [Fixture.wallet(1)], now: Self.noon)
+        _ = await cache.check(wallets: [Fixture.wallet(1)], for: Fixture.member(), now: Self.noon)
         #expect(await log.count == 2)
     }
 
@@ -133,7 +144,7 @@ internal struct WalletCheckCacheTests {
                 Fixture.wallet(2): Fixture.account(Fixture.wallet(2))
             ]
         )
-        _ = await cache.check(wallets: [Fixture.wallet(1), Fixture.wallet(2)], now: Self.noon)
+        _ = await cache.check(wallets: [Fixture.wallet(1), Fixture.wallet(2)], for: Fixture.member(), now: Self.noon)
         #expect(await cache.cachedCount == 2)
         await cache.invalidateAll()
         #expect(await cache.cachedCount == 0)
@@ -154,9 +165,10 @@ internal struct WalletCheckCacheTests {
                 )
             ]
         )
-        _ = await cache.check(wallets: [Fixture.wallet(2)], now: Self.noon)
+        _ = await cache.check(wallets: [Fixture.wallet(2)], for: Fixture.member(), now: Self.noon)
         let results = await cache.check(
             wallets: [Fixture.wallet(1), Fixture.wallet(2)],
+            for: Fixture.member(),
             now: Self.noon.addingTimeInterval(1)
         )
         #expect(results.map(\.address) == [Fixture.wallet(1), Fixture.wallet(2)])

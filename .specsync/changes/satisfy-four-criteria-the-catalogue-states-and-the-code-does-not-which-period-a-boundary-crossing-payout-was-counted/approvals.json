@@ -1,0 +1,287 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1789831722,
+      "digest": "a0ba97a6d5f44d448c38c5129b45c23a1cfb4c6743f1dd3557cd891f243dec06",
+      "note": "Approved in session after an interview covering the open trades.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "satisfy-four-criteria-the-catalogue-states-and-the-code-does-not-which-period-a-boundary-crossing-payout-was-counted",
+        "title": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
+        "description": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
+        "kind": "feature",
+        "affected_specs": [
+          "chain",
+          "reserve",
+          "store"
+        ],
+        "affected_paths": [
+          "AGENTS.md",
+          "CHANGELOG.md",
+          "README.md",
+          "Sources",
+          "Tests",
+          "docs",
+          "specs"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "SPEND-9.c: an epoch record names the period it was counted against, so an operator reads it rather than inferring it from two timestamps. RUN-10.a: a test fails if unpausing ever returns any of the day's spent budget. RUN-11: one caller cannot spend the whole day's requests, and what happens when they reach their share is decided and documented rather than emergent. SEE-1.b: a health answer can be assembled without spending a request, proved by a test asserting the request count did not move, and it still answers after the budget is gone. Each criterion is cited by id in the test that protects it."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "chain": "00c34b715ec2562471d6d1ee2eb2b61fb0e373b42da9c55626d7d344ee1928ce",
+        "reserve": "565952295cc8faa76b7ae79b2c213ed25d447126c71a6e2537278bb567444da5",
+        "store": "3f996a746066eaa37777ada60f74823987d2effe335a0ba17c9d01ca99b008c5"
+      }
+    },
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1789838885,
+      "digest": "694f9a5b97b809a4c2c46c86843e7e230eb16310d8e9de98926fa9183604cdde",
+      "note": "Renewal, not a scope change. The approved paths were written without trailing slashes, so 'Sources' matched no file under Sources/ and the gate reported every ported file as uncovered. Same list, corrected syntax, plus .github/ for the Linux lane fix the owner asked for. Owner asked for CI fixed and these merged.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "satisfy-four-criteria-the-catalogue-states-and-the-code-does-not-which-period-a-boundary-crossing-payout-was-counted",
+        "title": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
+        "description": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
+        "kind": "feature",
+        "affected_specs": [
+          "chain",
+          "reserve",
+          "store"
+        ],
+        "affected_paths": [
+          ".github/",
+          "AGENTS.md",
+          "CHANGELOG.md",
+          "README.md",
+          "Sources/",
+          "Tests/",
+          "docs/",
+          "specs/"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "SPEND-9.c: an epoch record names the period it was counted against, so an operator reads it rather than inferring it from two timestamps. RUN-10.a: a test fails if unpausing ever returns any of the day's spent budget. RUN-11: one caller cannot spend the whole day's requests, and what happens when they reach their share is decided and documented rather than emergent. SEE-1.b: a health answer can be assembled without spending a request, proved by a test asserting the request count did not move, and it still answers after the budget is gone. Each criterion is cited by id in the test that protects it."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "chain": "ede935b3422fbd841d7dbcd57a60ac917da6700da28d3a18ec39e5b58c86b108",
+        "reserve": "565952295cc8faa76b7ae79b2c213ed25d447126c71a6e2537278bb567444da5",
+        "store": "3f996a746066eaa37777ada60f74823987d2effe335a0ba17c9d01ca99b008c5"
+      }
+    },
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1789838903,
+      "digest": "292dda43765fade0c9a3926b5262220cce9f7140238557fe1bfbc03f14f3a7cb",
+      "note": "Renewal with the scope stated as the file list the change actually touches, which is the convention the reference project uses. The earlier list was directory prefixes, which matched nothing, so the gate reported every ported file as uncovered. Same work, scope now stated in a form the gate can check. Owner asked for CI fixed and these merged.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "satisfy-four-criteria-the-catalogue-states-and-the-code-does-not-which-period-a-boundary-crossing-payout-was-counted",
+        "title": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
+        "description": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
+        "kind": "feature",
+        "affected_specs": [
+          "chain",
+          "reserve",
+          "store"
+        ],
+        "affected_paths": [
+          ".build-linux/",
+          ".github/workflows/tests.yml",
+          "AGENTS.md",
+          "CHANGELOG.md",
+          "README.md",
+          "Sources/Chain/BatchedChainReader.swift",
+          "Sources/Chain/CallerShare.swift",
+          "Sources/Chain/ChainConfiguration.swift",
+          "Sources/Chain/ChainEnvironment.swift",
+          "Sources/Chain/ChainError.swift",
+          "Sources/Chain/ChainHealth.swift",
+          "Sources/Chain/ChainHealthAssembly.swift",
+          "Sources/Chain/ChainNotice.swift",
+          "Sources/Chain/ChainReader.swift",
+          "Sources/Chain/DailyRequestBudget.swift",
+          "Sources/Chain/ProviderProofProbe.swift",
+          "Sources/Chain/RequestBudgetSnapshot.swift",
+          "Sources/Chain/RequestCaller.swift",
+          "Sources/Chain/RequestGovernor.swift",
+          "Sources/Chain/WalletCheckCache.swift",
+          "Sources/Reserve/ReserveEpochCharge.swift",
+          "Sources/Reserve/ReserveEpochOutcome.swift",
+          "Sources/Reserve/ReserveEpochRecord.swift",
+          "Sources/Reserve/ReserveError.swift",
+          "Sources/Reserve/ReserveRunner.swift",
+          "Sources/Store/StoreDate.swift",
+          "Sources/Store/StoreTable.swift",
+          "Sources/StoreSQLite/SQLiteStore+Reserve.swift",
+          "Sources/StoreSQLite/SQLiteStore.swift",
+          "Sources/StoreSQLite/Schema.swift",
+          "Sources/StoreTestKit/StoreConformance+Durability.swift",
+          "Sources/StoreTestKit/StoreConformance+Reserve.swift",
+          "Sources/StoreTestKit/StoreConformance.swift",
+          "Tests/ChainTests/BatchedChainReaderTests.swift",
+          "Tests/ChainTests/CallerShareTests.swift",
+          "Tests/ChainTests/ChainConfigurationTests.swift",
+          "Tests/ChainTests/ChainFixtures.swift",
+          "Tests/ChainTests/ChainHealthTests.swift",
+          "Tests/ChainTests/ChainReaderTests.swift",
+          "Tests/ChainTests/RequestGovernorTests.swift",
+          "Tests/ChainTests/WalletCheckCacheTests.swift",
+          "Tests/ReserveTests/ReserveRunnerTests.swift",
+          "Tests/ReserveTests/ReserveStoreTests.swift",
+          "Tests/StoreSQLiteTests/SQLiteFileTests.swift",
+          "Tests/StoreSQLiteTests/TargetShapeTests.swift",
+          "docs/CONFIGURATION.md",
+          "docs/WHAT-IT-TALKS-TO.md",
+          "specs/chain/chain.spec.md",
+          "specs/chain/context.md",
+          "specs/chain/requirements.md",
+          "specs/chain/testing.md",
+          "specs/games/testing.md",
+          "specs/reserve/context.md",
+          "specs/reserve/requirements.md",
+          "specs/reserve/reserve.spec.md",
+          "specs/reserve/testing.md",
+          "specs/store/context.md",
+          "specs/store/requirements.md",
+          "specs/store/store.spec.md",
+          "specs/store/testing.md"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "SPEND-9.c: an epoch record names the period it was counted against, so an operator reads it rather than inferring it from two timestamps. RUN-10.a: a test fails if unpausing ever returns any of the day's spent budget. RUN-11: one caller cannot spend the whole day's requests, and what happens when they reach their share is decided and documented rather than emergent. SEE-1.b: a health answer can be assembled without spending a request, proved by a test asserting the request count did not move, and it still answers after the budget is gone. Each criterion is cited by id in the test that protects it."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "chain": "ede935b3422fbd841d7dbcd57a60ac917da6700da28d3a18ec39e5b58c86b108",
+        "reserve": "565952295cc8faa76b7ae79b2c213ed25d447126c71a6e2537278bb567444da5",
+        "store": "3f996a746066eaa37777ada60f74823987d2effe335a0ba17c9d01ca99b008c5"
+      }
+    },
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1789838923,
+      "digest": "a84fbbdf04f13793926187378ac9062833e208d65251c5d3f710e748453b2005",
+      "note": "Scope restated as the exact file list, which is the form the gate checks.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "satisfy-four-criteria-the-catalogue-states-and-the-code-does-not-which-period-a-boundary-crossing-payout-was-counted",
+        "title": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
+        "description": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
+        "kind": "feature",
+        "affected_specs": [
+          "chain",
+          "reserve",
+          "store"
+        ],
+        "affected_paths": [
+          ".github/workflows/tests.yml",
+          "AGENTS.md",
+          "CHANGELOG.md",
+          "README.md",
+          "Sources/Chain/BatchedChainReader.swift",
+          "Sources/Chain/CallerShare.swift",
+          "Sources/Chain/ChainConfiguration.swift",
+          "Sources/Chain/ChainEnvironment.swift",
+          "Sources/Chain/ChainError.swift",
+          "Sources/Chain/ChainHealth.swift",
+          "Sources/Chain/ChainHealthAssembly.swift",
+          "Sources/Chain/ChainNotice.swift",
+          "Sources/Chain/ChainReader.swift",
+          "Sources/Chain/DailyRequestBudget.swift",
+          "Sources/Chain/ProviderProofProbe.swift",
+          "Sources/Chain/RequestBudgetSnapshot.swift",
+          "Sources/Chain/RequestCaller.swift",
+          "Sources/Chain/RequestGovernor.swift",
+          "Sources/Chain/WalletCheckCache.swift",
+          "Sources/Reserve/ReserveEpochCharge.swift",
+          "Sources/Reserve/ReserveEpochOutcome.swift",
+          "Sources/Reserve/ReserveEpochRecord.swift",
+          "Sources/Reserve/ReserveError.swift",
+          "Sources/Reserve/ReserveRunner.swift",
+          "Sources/Store/StoreDate.swift",
+          "Sources/Store/StoreTable.swift",
+          "Sources/StoreSQLite/SQLiteStore+Reserve.swift",
+          "Sources/StoreSQLite/SQLiteStore.swift",
+          "Sources/StoreSQLite/Schema.swift",
+          "Sources/StoreTestKit/StoreConformance+Durability.swift",
+          "Sources/StoreTestKit/StoreConformance+Reserve.swift",
+          "Sources/StoreTestKit/StoreConformance.swift",
+          "Tests/ChainTests/BatchedChainReaderTests.swift",
+          "Tests/ChainTests/CallerShareTests.swift",
+          "Tests/ChainTests/ChainConfigurationTests.swift",
+          "Tests/ChainTests/ChainFixtures.swift",
+          "Tests/ChainTests/ChainHealthTests.swift",
+          "Tests/ChainTests/ChainReaderTests.swift",
+          "Tests/ChainTests/RequestGovernorTests.swift",
+          "Tests/ChainTests/WalletCheckCacheTests.swift",
+          "Tests/ReserveTests/ReserveRunnerTests.swift",
+          "Tests/ReserveTests/ReserveStoreTests.swift",
+          "Tests/StoreSQLiteTests/SQLiteFileTests.swift",
+          "Tests/StoreSQLiteTests/TargetShapeTests.swift",
+          "docs/CONFIGURATION.md",
+          "docs/WHAT-IT-TALKS-TO.md",
+          "specs/chain/chain.spec.md",
+          "specs/chain/context.md",
+          "specs/chain/requirements.md",
+          "specs/chain/testing.md",
+          "specs/games/testing.md",
+          "specs/reserve/context.md",
+          "specs/reserve/requirements.md",
+          "specs/reserve/reserve.spec.md",
+          "specs/reserve/testing.md",
+          "specs/store/context.md",
+          "specs/store/requirements.md",
+          "specs/store/store.spec.md",
+          "specs/store/testing.md"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "SPEND-9.c: an epoch record names the period it was counted against, so an operator reads it rather than inferring it from two timestamps. RUN-10.a: a test fails if unpausing ever returns any of the day's spent budget. RUN-11: one caller cannot spend the whole day's requests, and what happens when they reach their share is decided and documented rather than emergent. SEE-1.b: a health answer can be assembled without spending a request, proved by a test asserting the request count did not move, and it still answers after the budget is gone. Each criterion is cited by id in the test that protects it."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "chain": "ede935b3422fbd841d7dbcd57a60ac917da6700da28d3a18ec39e5b58c86b108",
+        "reserve": "565952295cc8faa76b7ae79b2c213ed25d447126c71a6e2537278bb567444da5",
+        "store": "3f996a746066eaa37777ada60f74823987d2effe335a0ba17c9d01ca99b008c5"
+      }
+    }
+  ],
+  "reopenings": []
+}

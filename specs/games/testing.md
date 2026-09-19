@@ -4,7 +4,7 @@ spec: games.spec.md
 
 ## Automated Testing
 
-`swift test` runs the whole package: 594 tests in 39 suites. The `Games`
+`swift test` runs the whole package: 694 tests in 48 suites. The `Games`
 target's own share is 167 tests in 9 suites, all offline, with no network, no
 key and no database (`swift test --filter GamesTests`).
 

@@ -206,11 +206,13 @@ not call it one.
 | `CHAIN_DAILY_REQUEST_BUDGET` | no | `0`, meaning no budget | Requests permitted per UTC day, counting reads **and** signing, so the number is the whole process. | Left at `0` on a metered plan, a sweep can spend the day's quota before lunch and every read fails until midnight; set too low, the budget pauses work that was healthy. Warnings are raised the first time 50, 75 and 90 percent are reached in a day. |
 | `CHAIN_BUDGET_PERSIST_EVERY` | no | `25` | Requests between writes of the day's counter, so a restart does not hand the process a fresh day. | Too high and a crash forgets that many requests, which is how a restart loop spends a quota twice; `0` is refused. |
 | `CHAIN_BATCH_SIZE` | no | `50` | How many accounts are read in parallel per batch. | Too large a batch spends the day's budget in bursts and irritates a provider that is watching concurrency; `0` is refused. |
-| `CHAIN_PROOF_HEADERS` | no | none | Comma-separated response header names copied onto a health answer as proof of which provider served the request. | A header your provider does not send contributes nothing rather than a fabricated value, so a wrong name here is a health answer that quietly proves less than you think. |
+| `CHAIN_CALLER_SHARE_PERCENT` | no | `5` | The share of the day's budget any one member may draw, as a percentage. `0` turns shares off. | **It does nothing unless `CHAIN_DAILY_REQUEST_BUDGET` is set**, because there is no day's budget to take a part of. Set it small and a member with several wallets is refused mid-command; set it large and one person can still spend most of the day. Above `100` is refused by name rather than clamped. |
+| `CHAIN_CALLER_BURST_REQUESTS` | no | `10` | The most one member may take before their allowance has to refill. | Too small and an ordinary command that reads three wallets is refused; larger than the day's share, it is clamped to the share rather than refused. `0` is refused. |
+| `CHAIN_PROOF_HEADERS` | no | none | Comma-separated response header names copied onto a health answer as proof of which provider served the request. | A header your provider does not send contributes nothing rather than a fabricated value, so a wrong name here is a health answer that quietly proves less than you think. The first check after a start answers without a provider section and starts the probe that fills it, so read the second. |
 | `CHAIN_POOL_CACHE_SECONDS` | no | `60` | How long a pool's reserves stay usable. | Long, and shares are computed from reserves that have moved; `0` means never cached, which spends the budget on every read. |
 | `CHAIN_WALLET_CACHE_SECONDS` | no | `300` | How long a completed account reading stays usable. | As above, for balances: a long life shows members a tier they have already left. |
 | `CHAIN_WALLET_COOLDOWN_SECONDS` | no | `60` | How soon the same account may be read again on demand. | `0` lets one member re-read their own wallet as fast as they can type, which is a direct line from a keyboard to your daily budget. |
-| `CHAIN_HEALTH_PROBE_CACHE_SECONDS` | no | `30` | How long a health probe's answer is reused. | `0` turns a monitoring check every few seconds into traffic to your node. |
+| `CHAIN_HEALTH_PROBE_CACHE_SECONDS` | no | `30` | How long a health probe's answer is reused, a failed one included. | `0` turns a monitoring check every few seconds into traffic to your node, and it is a probe that failed that would be repeated hardest, at the moment the node can least take it. |
 
 Every numeric variable here refuses a value it cannot use, naming the variable
 and saying what was expected: negative seconds, a rate below one, a batch below
@@ -481,12 +483,15 @@ VERIFIED_ROLE_ID=REPLACE_WITH_ROLE_ID_VERIFIED
 ADMIN_WALLET_1=REPLACE_WITH_ADMIN_ADDRESS
 
 # ---------------------------------------------------------------------------
-# The node and the two brakes. Set the budget below what your plan allows.
+# The node and the three brakes. Set the budget below what your plan allows;
+# the share does nothing without it.
 # ---------------------------------------------------------------------------
 CHAIN_NODE_URL=https://node.example.com
 CHAIN_REQUESTS_PER_SECOND=5
 CHAIN_DAILY_REQUEST_BUDGET=20_000
 CHAIN_BATCH_SIZE=25
+CHAIN_CALLER_SHARE_PERCENT=5
+CHAIN_CALLER_BURST_REQUESTS=10
 ```
 
 ### What that file produces
@@ -508,6 +513,10 @@ Loaded through `GatingConfiguration.load` and `ChainConfiguration.load`:
   requests a day, 25 accounts to a batch. The counter is written every 25
   requests and the asset's decimals are checked against the chain, both by
   default.
+- One member may draw 1,000 of those 20,000 requests across the day, and no
+  more than 10 of them at once before their allowance has to refill. The
+  sweep, and anything else the instance does for itself, is not held to that
+  share.
 
 ### Checking it yourself
 

@@ -46,7 +46,7 @@ compare against.
   ids, written before the code and cited by the tests.
 - `specs/`, a contract per module, checked against the exported API by
   `specsync check --strict` in CI.
-- 635 tests in 47 suites, all offline. No test reaches a network, and none
+- 694 tests in 48 suites, all offline. No test reaches a network, and none
   needs a key, a funded wallet or a Discord server.
 - `docs/CONFIGURATION.md`: every environment variable an operator sets,
   grouped by what they are deciding rather than alphabetically, each with its
@@ -56,6 +56,31 @@ compare against.
   document was written. Nothing re-runs it yet, and the document says so
   through the real loaders, so the example cannot quietly stop working
   (ADOPT-2, ADOPT-4).
+- **`Reserve`**: an epoch's durable record now names the spending period each
+  run of it was measured against, as an ordered list written before the first
+  payment of that run. An epoch cut short on one side of a ceiling's boundary
+  and resumed on the other names both periods, in the order they were charged,
+  each with the figure that run was checked for, so an operator reconciling a
+  payout against a weekly cap reads the answer instead of subtracting
+  timestamps. A host that states no ceiling records nothing, and nothing is
+  ever inferred (SPEND-9.c).
+- **`Chain`**: one member's share of the day's request budget. Every read says
+  whose it is, a member's caller may draw a configured percentage of the day
+  with a burst on top, refilling as the day passes, and a caller who has drawn
+  their share is refused at once with the instant their next request would be
+  allowed. The refusal spends nothing of the day, pauses nothing and writes no
+  notice, and the instance's own work carries no share. Two new variables,
+  `CHAIN_CALLER_SHARE_PERCENT` (5) and `CHAIN_CALLER_BURST_REQUESTS` (10),
+  neither of which does anything unless a day budget is set (RUN-11).
+- **`Chain`**: a health answer that can be assembled without spending a
+  request and still answers once the day's budget is gone, with what is left
+  of the budget and any pause on it as a field rather than as a change of
+  status. `ProviderProofProbe` gained a read that answers from the proof it
+  already holds without going to fetch any, and a refresh that fills it in the
+  background when the answer has none, so a check never waits on a provider
+  and the next one carries proof. A probe that failed is kept for its cache
+  lifetime, so a node that is down is not probed once per check. Nothing
+  serves the answer yet (SEE-1.b, SEE-10.a).
 - `docs/README.md`: which document owns which fact, and the rules that keep
   the set from drifting into contradiction.
 - `docs/WHAT-IT-TALKS-TO.md`: every outside service the package contacts and
@@ -85,6 +110,51 @@ this file is that somebody can tell.
 - **`Reserve`** and **`Chain`**: `ReserveError` gains `spendLimitsExpired` and
   `ChainError` gains `requestBudgetCannotCover`. Both break an exhaustive
   switch.
+- **`Reserve`**: `ReserveEpochRecord` gains `charges` and
+  `ReserveEpochOutcome.periodKey` is renamed `cadencePeriodKey`, so a
+  memberwise initialiser call and any reader of that property written against
+  the old shape no longer compile. The record is the only durable thing an
+  operator can read after the fact, so the period belongs on it and not only
+  on the value a run returns, and the rename is what stops the cadence period
+  and the ceiling's period sharing a word on the same report. The runner's
+  parameter and `ReserveError.periodAlreadyPaid` follow it for the same
+  reason.
+- **`Store`**: the schema gains version 3, one table holding those charges. A
+  file written by this build is refused by the previous one, by name, pointing
+  at the copy taken before the migration. That is the existing promise being
+  kept rather than a new hazard. The reverse drops the table whole, because
+  the oldest SQLite this package admits at open cannot drop a column.
+- **`Chain`**: `RequestGovernor.reserveRequest` and `reserveRequests` take a
+  `RequestCaller`, with no default. Breaking on purpose: a defaulted parameter
+  would have made either the sweep or the next command somebody writes wrong
+  in silence. `ChainReader`, `BatchedChainReader` and `WalletCheckCache` name
+  their caller on every read for the same reason.
+- **`Chain`**: `ChainError` gains `callerShareSpent` and
+  `callerShareCannotCover`, which break an exhaustive switch. The second is
+  the refusal for a reservation larger than any burst: it carries no instant,
+  because no allowance ever holds more than its burst, so a date there would
+  be a fixed point rather than a waiting time and a host honouring it would
+  retry into the same refusal forever.
+- **`Chain`**: the budget figures on `RequestGovernor.snapshot(now:)` answer
+  for the day they are asked about, the way `remainingRequests(now:)` already
+  did. A check run after midnight and before the day's first reservation read
+  yesterday's spent budget as today's, which is loudest in the case it is
+  read in: the previous day's budget was gone, so nothing was reserving, so
+  nothing rolled the counter.
+- **`Chain`**: the health body carries `caller_refusals` beside
+  `throttled_callers`. The second is not evidence of throttling, because one
+  request inside a refill interval puts a caller in it; the first is the only
+  place a monitoring check can see that a member was turned away, since a
+  share refusal deliberately writes no notice.
+- **`Chain`**: a caller refused because the tracking table is full is told the
+  next sweep rather than the next UTC midnight. A slot comes free as soon as
+  any tracked caller refills, and the contract that refusal is written against
+  says the instant is never midnight.
+- **`Chain`**: `ChainLimits`'s memberwise initialiser holds the share
+  percentage and the burst inside the range it documents. The environment
+  loader still refuses both by name; built in Swift, a percentage above a
+  hundred could overflow the share's arithmetic and a burst of zero switched
+  the whole guard off in silence.
 
 
 - `Package.resolved` is committed instead of ignored, so two clones of one
@@ -96,6 +166,21 @@ this file is that somebody can tell.
 
 ### Fixed
 
+- **`Chain`**: a caller's allowance no longer hands a spent member their whole
+  burst back after the wall clock is stepped backwards. A refused reservation
+  at the stepped clock moved the point the next refill was measured from back
+  with it, so the same interval was counted twice once the clock was
+  corrected, and the refused caller then read as full and was forgotten by the
+  sweep as well. Handing out free requests when the clock goes backwards is
+  the one thing a limiter exists to prevent, and it is why this package's
+  platform floor was raised for the per-second limiter; the share bucket had
+  reintroduced it on `Date` (RUN-11).
+- **`Chain`**: a health answer can now carry provider proof at all. The read
+  it takes proof from never probes, deliberately, and nothing else in the
+  module ever called the probe, so every answer came back with no provider
+  section however the headers were configured. The third part of the path
+  this was ported from, the refresh started beside the answer, had been left
+  behind (SEE-10.a).
 - `swift-tools-version` was `6.0`, and the package could not be built with
   Swift 6.0. The resolved graph reaches `swift-asn1` 1.7.3, whose own manifest
   requires 6.1.0, so `swift build` on a fresh clone stopped with an error
@@ -112,4 +197,10 @@ before installing should not have to infer it from what is missing above.
 - There is no Discord surface, no wallet verification, no persistence, no host
   and no executable target. Nothing here can be run or deployed.
 - There is no way to ask a running instance what it has been reaching, because
-  there is nothing running (TRUST-1.a is half answered, by grep).
+  there is nothing running (TRUST-1.a is half answered, by grep). The answer
+  can now be assembled, with the budget and any pause on it, and nothing
+  serves it: the listener, the route and the status codes belong to whoever
+  builds the executable.
+- A member's share of the day is held in memory, so a restart hands a caller
+  at most one fresh burst. The day's own count is persisted and restored, so
+  no restart trick creates requests out of nothing.

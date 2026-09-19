@@ -199,6 +199,87 @@ internal struct ChainConfigurationTests {
         #expect(configuration.cacheLifetimes.healthProbe == 30)
         #expect(configuration.proofHeaderNames.isEmpty)
         #expect(configuration.verifiesAssetDecimals)
+        // The share one member may draw. Five percent and a burst of ten are
+        // a judgement rather than a measurement, chosen to be safe on a small
+        // budget, and they do nothing at all until a budget is set.
+        #expect(configuration.limits.callerSharePercent == 5)
+        #expect(configuration.limits.callerBurstRequests == 10)
+        #expect(configuration.limits.callerShare == nil)
+    }
+
+    @Test("A share is only a share once there is a day's budget to take part of (RUN-11, ADOPT-1)")
+    internal func theShareNeedsABudget() throws {
+        var environment = Self.minimal
+        environment[ChainEnvironment.dailyRequestBudget] = "10_000"
+        let configured = try ChainConfiguration.load(token: try Fixture.token(), environment: environment)
+        let share = try #require(configured.limits.callerShare)
+        #expect(share.dailyShareRequests == 500)
+        #expect(share.burstRequests == 10)
+
+        // And zero is how an operator turns shares off, as every other zero in
+        // this layer means off.
+        environment[ChainEnvironment.callerSharePercent] = "0"
+        let off = try ChainConfiguration.load(token: try Fixture.token(), environment: environment)
+        #expect(off.limits.callerShare == nil)
+    }
+
+    @Test("A share above the whole day refuses at boot and names the variable (ADOPT-2)")
+    internal func shareAboveOneHundredRefused() throws {
+        // Refused rather than clamped: an operator who wrote 500 meant
+        // something, and quietly turning it into "all of it" is the kind of
+        // setting that is discovered a year later.
+        #expect(throws: ChainConfigurationError.invalidValue(
+            variable: ChainEnvironment.callerSharePercent,
+            value: "500",
+            expected: "a share of the day's budget from 0 to 100 percent, where 0 turns shares off"
+        )) {
+            var environment = Self.minimal
+            environment[ChainEnvironment.callerSharePercent] = "500"
+            return try ChainConfiguration.load(token: try Fixture.token(), environment: environment)
+        }
+    }
+
+    @Test("A share that is not a number, or a burst of nothing, refuses at boot (ADOPT-2)")
+    internal func shareAndBurstMustBeUsable() throws {
+        #expect(throws: ChainConfigurationError.self) {
+            var environment = Self.minimal
+            environment[ChainEnvironment.callerSharePercent] = "half"
+            return try ChainConfiguration.load(token: try Fixture.token(), environment: environment)
+        }
+        #expect(throws: ChainConfigurationError.invalidValue(
+            variable: ChainEnvironment.callerBurstRequests,
+            value: "0",
+            expected: "at least one request in a burst"
+        )) {
+            var environment = Self.minimal
+            environment[ChainEnvironment.callerBurstRequests] = "0"
+            return try ChainConfiguration.load(token: try Fixture.token(), environment: environment)
+        }
+    }
+
+    @Test("Limits built in Swift keep the range their own documentation states (RUN-11, ADOPT-2)")
+    internal func theMemberwiseLimitsHoldTheirRange() {
+        // The loader refuses both of these by name, because an operator wrote
+        // them and is owed the refusal. This is the other door: a host
+        // building limits in Swift, where neither failure is visible where it
+        // is made. A percentage above a hundred reaches the share's
+        // arithmetic, which can overflow and kill the process on a computed
+        // property nowhere near the value that caused it.
+        let tooMuch = ChainLimits(dailyRequestBudget: 1_000, callerSharePercent: 500)
+        #expect(tooMuch.callerSharePercent == 100)
+        #expect(tooMuch.callerShare?.dailyShareRequests == 1_000)
+
+        // And a burst of nothing makes the rule nil, which switches the whole
+        // guard off in silence: the shape of a bug nobody finds until one
+        // member has spent the day.
+        let noBurst = ChainLimits(dailyRequestBudget: 1_000, callerBurstRequests: 0)
+        #expect(noBurst.callerBurstRequests == 1)
+        #expect(noBurst.callerShare?.burstRequests == 1)
+
+        // Zero percent still means off, which is what every other zero in
+        // this layer means.
+        #expect(ChainLimits(dailyRequestBudget: 1_000, callerSharePercent: 0).callerShare == nil)
+        #expect(ChainLimits(dailyRequestBudget: 1_000, callerSharePercent: -5).callerSharePercent == 0)
     }
 
     @Test("Every number that used to be written into the source can be set")
@@ -213,6 +294,8 @@ internal struct ChainConfigurationTests {
         environment[ChainEnvironment.walletCooldownSeconds] = "15"
         environment[ChainEnvironment.healthProbeSeconds] = "10"
         environment[ChainEnvironment.proofHeaders] = "x-served-by, x-tier"
+        environment[ChainEnvironment.callerSharePercent] = "20"
+        environment[ChainEnvironment.callerBurstRequests] = "3"
         environment[ChainEnvironment.verifyAssetDecimals] = "false"
         environment[ChainEnvironment.apiToken] = "a-token"
 
@@ -228,6 +311,10 @@ internal struct ChainConfigurationTests {
         #expect(configuration.proofHeaderNames == ["x-served-by", "x-tier"])
         #expect(configuration.verifiesAssetDecimals == false)
         #expect(configuration.apiToken == "a-token")
+        #expect(configuration.limits.callerSharePercent == 20)
+        #expect(configuration.limits.callerBurstRequests == 3)
+        #expect(configuration.limits.callerShare?.dailyShareRequests == 800)
+        #expect(configuration.limits.callerShare?.burstRequests == 3)
     }
 
     @Test("A rate of zero refuses at boot rather than stalling every read later")

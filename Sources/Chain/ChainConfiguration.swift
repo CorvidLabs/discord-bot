@@ -279,6 +279,32 @@ public struct ChainLimits: Sendable, Equatable {
     /// loses at most this many requests of the day's count.
     public let budgetPersistEvery: UInt64
 
+    /// The share of the day's budget one member's caller may draw, as a
+    /// percentage. Zero turns shares off.
+    ///
+    /// Five by default, which is a judgement rather than a measurement: it is
+    /// chosen to be safe on a small budget, and the first operator to run this
+    /// at scale will have a better number than this default does. With no
+    /// daily budget set it does nothing, because there is no day's budget to
+    /// take a part of.
+    public let callerSharePercent: Int
+
+    /// The most one member's caller may take before their allowance has to
+    /// refill. Clamped to the day's share when it is larger.
+    public let callerBurstRequests: UInt64
+
+    /// One caller's share, or nil when there is no share at all.
+    ///
+    /// Derived rather than configured, so the two settings and the day's
+    /// budget cannot drift apart into a share nobody wrote down.
+    public var callerShare: CallerShareRule? {
+        CallerShareRule(
+            dailyRequestBudget: dailyRequestBudget,
+            percent: callerSharePercent,
+            burstRequests: callerBurstRequests
+        )
+    }
+
     // MARK: - Initializers
 
     /// - Parameters:
@@ -288,16 +314,32 @@ public struct ChainLimits: Sendable, Equatable {
     ///   - batchSize: Must be at least one.
     ///   - dailyRequestBudget: Zero means no budget.
     ///   - budgetPersistEvery: Must be at least one.
+    ///   - callerSharePercent: Zero to one hundred, and held there. Zero turns
+    ///     shares off.
+    ///   - callerBurstRequests: At least one, and held there.
     public init(
         requestsPerSecond: Double = 10,
         batchSize: Int = 50,
         dailyRequestBudget: UInt64 = 0,
-        budgetPersistEvery: UInt64 = 25
+        budgetPersistEvery: UInt64 = 25,
+        callerSharePercent: Int = 5,
+        callerBurstRequests: UInt64 = 10
     ) {
         self.requestsPerSecond = requestsPerSecond
         self.batchSize = batchSize
         self.dailyRequestBudget = dailyRequestBudget
         self.budgetPersistEvery = budgetPersistEvery
+        // The two share settings are held inside the range the parameters
+        // above promise, because neither failure is visible where it is made.
+        // A percentage above a hundred reaches `CallerShareRule` as a
+        // multiplication that can overflow and kill the process on a computed
+        // property, nowhere near the value that caused it, and a burst of
+        // nothing makes the rule nil, which switches the whole guard off in
+        // silence. The loader refuses both by name, because an operator wrote
+        // those and is owed the refusal; a caller writing Swift is owed the
+        // range its own documentation states.
+        self.callerSharePercent = Swift.min(Swift.max(callerSharePercent, 0), 100)
+        self.callerBurstRequests = Swift.max(callerBurstRequests, 1)
     }
 
     /// Reads the limits from environment variables, refusing anything unusable.
@@ -347,6 +389,37 @@ public struct ChainLimits: Sendable, Equatable {
                 expected: "at least one request between writes"
             )
         }
+        // Above a hundred is refused rather than clamped: a host that wrote
+        // 500 meant something, and quietly turning it into "all of it" is the
+        // kind of setting that is discovered a year later.
+        let sharePercent = try ChainConfiguration.optional(
+            environment,
+            ChainEnvironment.callerSharePercent,
+            parse: Int.init,
+            expected: "a share of the day's budget from 0 to 100 percent, where 0 turns shares off",
+            default: 5
+        )
+        guard sharePercent >= 0, sharePercent <= 100 else {
+            throw ChainConfigurationError.invalidValue(
+                variable: ChainEnvironment.callerSharePercent,
+                value: String(sharePercent),
+                expected: "a share of the day's budget from 0 to 100 percent, where 0 turns shares off"
+            )
+        }
+        let burst = try ChainConfiguration.optional(
+            environment,
+            ChainEnvironment.callerBurstRequests,
+            parse: UInt64.init,
+            expected: "at least one request in a burst",
+            default: 10
+        )
+        guard burst >= 1 else {
+            throw ChainConfigurationError.invalidValue(
+                variable: ChainEnvironment.callerBurstRequests,
+                value: String(burst),
+                expected: "at least one request in a burst"
+            )
+        }
         self.init(
             requestsPerSecond: requestsPerSecond,
             batchSize: batchSize,
@@ -357,7 +430,9 @@ public struct ChainLimits: Sendable, Equatable {
                 expected: "a whole number of requests, or 0 for no budget",
                 default: 0
             ),
-            budgetPersistEvery: persistEvery
+            budgetPersistEvery: persistEvery,
+            callerSharePercent: sharePercent,
+            callerBurstRequests: burst
         )
     }
 }

@@ -138,7 +138,7 @@ extension StoreConformance {
         ]
         for cut in cuts {
             await payer.reset()
-            let periodKey = "PERIOD-\(cut.epoch)"
+            let cadenceKey = "PERIOD-\(cut.epoch)"
 
             var cutShort = false
             do {
@@ -153,7 +153,7 @@ extension StoreConformance {
                 ).run(
                     streamId: ConformanceFixture.streamId,
                     recipients: recipients,
-                    periodKey: periodKey,
+                    cadencePeriodKey: cadenceKey,
                     now: ConformanceFixture.instant(Int(cut.epoch) * 1_000)
                 )
             } catch is CutShort {
@@ -173,7 +173,7 @@ extension StoreConformance {
             ).run(
                 streamId: ConformanceFixture.streamId,
                 recipients: recipients,
-                periodKey: periodKey,
+                cadencePeriodKey: cadenceKey,
                 now: ConformanceFixture.instant(Int(cut.epoch) * 1_000 + 60)
             )
             try expectEqual(
@@ -220,7 +220,7 @@ extension StoreConformance {
                 .run(
                     streamId: ConformanceFixture.streamId,
                     recipients: recipients,
-                    periodKey: "PERIOD-3",
+                    cadencePeriodKey: "PERIOD-3",
                     now: ConformanceFixture.instant(9_000)
                 )
         } catch {

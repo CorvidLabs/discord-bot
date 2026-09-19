@@ -212,6 +212,71 @@ struct ReserveStoreTests {
         }
     }
 
+    // MARK: - Which ceiling an epoch was charged against
+
+    @Test("A record written before charges existed loads as charged to nothing (ADOPT-5)")
+    func aRecordFromAnOlderBuildHasNoCharges() async throws {
+        let store = InMemoryReserveStore()
+        // Exactly what the build before this one wrote: every key it had, and
+        // no `charges`. Synthesised decoding of a non-optional array throws on
+        // a missing key, and a throw here would stop every run of the stream
+        // until somebody edited the database, because an epoch row that cannot
+        // be read refuses rather than reading as unpaid.
+        await store.setRaw(
+            key: InMemoryReserveStore.epochKey(streamId: Fixture.members, epoch: 3),
+            value: """
+                {"streamId":"members","epoch":3,"paidAccounts":["ACCOUNT-A"],
+                "paidRecipientIds":["R1"],"claimedHoldingIds":["H-1"],
+                "paidBaseUnits":1000,"startedAt":10,"completedAt":20}
+                """
+        )
+        let record = try await store.loadEpoch(streamId: Fixture.members, epoch: 3)
+        #expect(record.charges.isEmpty)
+        #expect(record.chargedPeriodKeys.isEmpty)
+        // Everything else still read, and the period was not invented from
+        // either timestamp, which is the arithmetic SPEND-9.c abolishes.
+        #expect(record.paidAccounts == ["ACCOUNT-A"])
+        #expect(record.startedAt == Date(timeIntervalSince1970: 10))
+    }
+
+    @Test("A key that is genuinely missing still refuses, so only charges are forgiving")
+    func onlyTheChargesKeyIsOptional() async throws {
+        let store = InMemoryReserveStore()
+        await store.setRaw(
+            key: InMemoryReserveStore.epochKey(streamId: Fixture.members, epoch: 4),
+            value: """
+                {"streamId":"members","epoch":4,"paidRecipientIds":[],
+                "claimedHoldingIds":[],"paidBaseUnits":0}
+                """
+        )
+        await #expect(throws: (any Error).self) {
+            _ = try await store.loadEpoch(streamId: Fixture.members, epoch: 4)
+        }
+    }
+
+    @Test("The ceilings a record was measured against survive a write and a read (SPEND-9.c)")
+    func chargesRoundTrip() async throws {
+        let store = InMemoryReserveStore()
+        var record = Fixture.epoch(Fixture.members, 2)
+        record.recordCharge(
+            periodKey: "2026-W38",
+            checkedWholeUnits: 269_230_770,
+            at: Date(timeIntervalSince1970: 100)
+        )
+        try await store.save(epoch: record)
+        record.recordCharge(
+            periodKey: "2026-W39",
+            checkedWholeUnits: 12,
+            at: Date(timeIntervalSince1970: 700_000)
+        )
+        try await store.save(epoch: record)
+
+        let reloaded = try await store.loadEpoch(streamId: Fixture.members, epoch: 2)
+        #expect(reloaded.charges == record.charges)
+        #expect(reloaded.chargedPeriodKeys == ["2026-W38", "2026-W39"])
+        #expect(reloaded.charges.map(\.checkedWholeUnits) == [269_230_770, 12])
+    }
+
     // MARK: - Broken rows
 
     @Test("A row that will not parse refuses rather than reading as unpaid (RESERVE-6.e)")

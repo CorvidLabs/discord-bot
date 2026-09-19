@@ -21,7 +21,7 @@ internal struct ChainReaderTests {
                 )
             ]
         )
-        #expect(try await reader.balance(of: Fixture.wallet(1)) == 7_500_000)
+        #expect(try await reader.balance(of: Fixture.wallet(1), for: Fixture.sweep) == 7_500_000)
     }
 
     @Test("A wallet that never opted in holds none of it, which the node is telling us")
@@ -29,7 +29,7 @@ internal struct ChainReaderTests {
         let reader = try Self.reader(
             accounts: [Fixture.wallet(1): Fixture.account(Fixture.wallet(1))]
         )
-        #expect(try await reader.balance(of: Fixture.wallet(1)) == 0)
+        #expect(try await reader.balance(of: Fixture.wallet(1), for: Fixture.sweep) == 0)
     }
 
     @Test("An account the node has never heard of holds nothing, and that is a complete answer")
@@ -37,8 +37,8 @@ internal struct ChainReaderTests {
         // A 404 is the node answering, not the node failing. The reads that
         // never came back are the dangerous ones.
         let reader = try Self.reader(accounts: [:])
-        #expect(try await reader.balance(of: Fixture.wallet(9)) == 0)
-        #expect(try await reader.holdings(of: Fixture.wallet(9)).isEmpty)
+        #expect(try await reader.balance(of: Fixture.wallet(9), for: Fixture.sweep) == 0)
+        #expect(try await reader.holdings(of: Fixture.wallet(9), for: Fixture.sweep).isEmpty)
     }
 
     @Test("A failed request is raised rather than answered with a zero")
@@ -48,7 +48,7 @@ internal struct ChainReaderTests {
             failures: [Fixture.wallet(1): ChainError.network("connection reset")]
         )
         await #expect(throws: ChainError.network("connection reset")) {
-            _ = try await reader.balance(of: Fixture.wallet(1))
+            _ = try await reader.balance(of: Fixture.wallet(1), for: Fixture.sweep)
         }
     }
 
@@ -72,9 +72,9 @@ internal struct ChainReaderTests {
             governor: governor,
             log: log
         )
-        _ = try await reader.balance(of: Fixture.wallet(1))
+        _ = try await reader.balance(of: Fixture.wallet(1), for: Fixture.sweep)
         await #expect(throws: ChainError.self) {
-            _ = try await reader.balance(of: Fixture.wallet(1))
+            _ = try await reader.balance(of: Fixture.wallet(1), for: Fixture.sweep)
         }
         // One call, not two: the second never reached the node.
         #expect(await log.count == 1)
@@ -89,7 +89,7 @@ internal struct ChainReaderTests {
             governor: governor
         )
         await #expect(throws: ChainError.self) {
-            _ = try await reader.balance(of: Fixture.wallet(1))
+            _ = try await reader.balance(of: Fixture.wallet(1), for: Fixture.sweep)
         }
         #expect(await reader.pausedUntil() != nil)
         #expect(await reader.budgetSnapshot().pauseReason == .providerRefusedQuota)
@@ -108,7 +108,7 @@ internal struct ChainReaderTests {
             configured: 6,
             onChain: 2
         )) {
-            try await reader.verifyAssetDecimals()
+            try await reader.verifyAssetDecimals(for: Fixture.sweep)
         }
     }
 
@@ -118,14 +118,14 @@ internal struct ChainReaderTests {
             accounts: [:],
             assets: [Fixture.assetId: Fixture.assetDetails(id: Fixture.assetId, decimals: 6)]
         )
-        try await reader.verifyAssetDecimals()
+        try await reader.verifyAssetDecimals(for: Fixture.sweep)
     }
 
     @Test("An asset that does not exist on this node refuses to start")
     internal func missingAssetRefuses() async throws {
         let reader = try Self.reader(accounts: [:], assets: [:])
         await #expect(throws: ChainError.assetNotFound(assetId: Fixture.assetId)) {
-            try await reader.verifyAssetDecimals()
+            try await reader.verifyAssetDecimals(for: Fixture.sweep)
         }
     }
 
@@ -138,7 +138,7 @@ internal struct ChainReaderTests {
             verifiesAssetDecimals: false,
             log: log
         )
-        try await reader.verifyAssetDecimals()
+        try await reader.verifyAssetDecimals(for: Fixture.sweep)
         #expect(await log.count == 0)
     }
 
@@ -166,7 +166,7 @@ internal struct ChainReaderTests {
                 )
             ]
         )
-        let reserves = try await reader.poolReserves(pool: pool, now: Self.noon)
+        let reserves = try await reader.poolReserves(pool: pool, for: Fixture.sweep, now: Self.noon)
         #expect(reserves.countedAssetBalance == 4_000)
         #expect(reserves.otherAssetBalance == 2_000)
         #expect(reserves.circulatingPoolTokens == 1_000)
@@ -192,7 +192,7 @@ internal struct ChainReaderTests {
                 )
             ]
         )
-        let reserves = try await reader.poolReserves(pool: pool, now: Self.noon)
+        let reserves = try await reader.poolReserves(pool: pool, for: Fixture.sweep, now: Self.noon)
         #expect(reserves.otherAssetBalance == 12_345)
     }
 
@@ -204,7 +204,7 @@ internal struct ChainReaderTests {
             assets: [Fixture.lpAssetId: Fixture.assetDetails(id: Fixture.lpAssetId)]
         )
         await #expect(throws: ChainError.poolAddressNotFound(poolId: pool.id)) {
-            _ = try await reader.poolReserves(pool: pool, now: Self.noon)
+            _ = try await reader.poolReserves(pool: pool, for: Fixture.sweep, now: Self.noon)
         }
     }
 
@@ -224,7 +224,7 @@ internal struct ChainReaderTests {
             ]
         )
         await #expect(throws: ChainError.api(statusCode: 404, message: "no accounts found for address")) {
-            _ = try await reader.poolReserves(pool: pool, now: Self.noon)
+            _ = try await reader.poolReserves(pool: pool, for: Fixture.sweep, now: Self.noon)
         }
     }
 
@@ -236,7 +236,7 @@ internal struct ChainReaderTests {
         let governor = RequestGovernor(limit: 10)
         let reader = try Self.reader(accounts: [:], governor: governor, log: log)
         await #expect(throws: ChainError.invalidAddress("not an address")) {
-            _ = try await reader.balance(of: "not an address")
+            _ = try await reader.balance(of: "not an address", for: Fixture.sweep)
         }
         #expect(await log.count == 0)
         #expect(await governor.snapshot(now: Self.noon).usedRequests == 0)
@@ -270,7 +270,7 @@ internal struct ChainReaderTests {
             ],
             log: log
         )
-        _ = try await reader.poolReserves(pool: pool, now: Self.noon)
+        _ = try await reader.poolReserves(pool: pool, for: Fixture.sweep, now: Self.noon)
         // The circulating supply comes out of the account already read rather
         // than costing a second pair of requests per pool per sweep.
         #expect(await log.count == 2)

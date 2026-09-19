@@ -181,6 +181,40 @@ spec: chain.spec.md
   either is unreasonable: a pool holding ten to the fifteenth of each side,
   ordinary for a six-decimal asset, overflows against a holding of the same
   size.
+- **A share is a percentage of the day plus a burst, not an absolute count.**
+  A project-neutral bot is pointed at free tiers and paid tiers whose budgets
+  differ by orders of magnitude, so one absolute number is wrong at one end or
+  the other. The burst sits alongside it because "however fast they type" is a
+  rate problem: a pure daily quota lets a member empty their share in ten
+  seconds and then locks them out for fifteen hours, which reads to them as
+  the bot being broken. Five percent and ten are a judgement, not a
+  measurement; the first operator to run this at scale will have a better
+  number than this document does.
+- **The allowance is held in memory, not persisted per member per day.** The
+  honest version of a daily quota would need a row per member per day, a
+  table, a migration, a cascade obligation and a write in front of every
+  member read. A refilling allowance costs a restart at most one burst per
+  caller, and the day's own count **is** persisted, so no restart trick
+  creates requests out of nothing. The visible cost is written down rather
+  than hidden.
+- **With no day budget there is no share at all**, which means the package's
+  default configuration has no per-caller brake either, because it has no day
+  budget. That is deliberate: a share is a part of something, and refusing
+  members on behalf of a ceiling nobody set would be the worst of both. The
+  consequence is stated in `docs/CONFIGURATION.md` and the operator chooses.
+- **The budget on the health answer is this change's judgement, not SEE-1.b's
+  demand.** The criterion asks that checking costs nothing and still answers;
+  it does not ask that the answer carry the budget. Carrying it is worth doing
+  because an operator's one check should tell them why nothing is happening,
+  and it is recorded here as a decision rather than presented as the
+  criterion's own.
+- **A spent budget is a field and not a third health status.** A third value
+  was the alternative and it is a published enum and a grep-able body, so it
+  lands on everybody who reads either; worse, a deploy gate reading the status
+  would replace a working version because a provider quota ran out at four in
+  the afternoon. What is written down instead is the readiness contract: an
+  unreached component is not ready, a reached instance with no budget left is
+  ready, and monitoring alerts on the field.
 - **Nothing here logs, stores, signs or decides a role.** The chain client is a
   protocol, because in the bot this was ported from the money-adjacent code
   talked to a real node through a concrete type and not one of its failure
@@ -205,16 +239,23 @@ spec: chain.spec.md
   and the notices.
 - `Sources/Chain/RequestRateLimiter.swift` and `Sources/Chain/TokenBucket.swift`:
   the other brake, and why it is not the same brake.
+- `Sources/Chain/RequestCaller.swift` and `Sources/Chain/CallerShare.swift`:
+  the third brake, who it applies to, and who it deliberately does not.
+- `Sources/Chain/ChainHealthAssembly.swift`: what a health answer may touch,
+  and the boundary with whoever builds the listener.
 - `hi/role.md`, `hi/see.md` and `hi/adopt.md`: the criteria the tests cite.
 
 ## Current Status
 
-Implemented and covered by 175 tests in 13 suites, all offline. The module
+Implemented and covered by 222 tests in 14 suites, all offline. The module
 builds against `Gating` for the token, the pool, the collections, the two
 readings and the environment rules, and against `swift-algorand` for the node
 client. There is no bot target yet: nothing here is wired to a live sweep, a
 live health endpoint or a live payout, and `NodeAccountDataSource` is the only
-file that has ever spoken to a node.
+file that has ever spoken to a node. A health answer can be assembled and
+nothing serves it: the listener, the route and the status codes belong to
+whoever builds the executable, and that split is written down on both sides so
+neither assumes the other owns it.
 
 ## Notes
 

@@ -76,10 +76,23 @@ public enum StoreDate: Sendable {
     }
 
     /// One epoch's record as a store records it.
+    ///
+    /// The instant on each charge is rounded here too, rather than left to
+    /// each backend. A charge is an instant like every other in this store, and
+    /// a backend that rounded it on the way to disk while the value in memory
+    /// kept its fraction would make a saved record unequal to the record it
+    /// was handed.
     public static func recorded(_ record: ReserveEpochRecord) -> ReserveEpochRecord {
         var copy = record
         copy.startedAt = whole(record.startedAt)
         copy.completedAt = whole(record.completedAt)
+        copy.charges = record.charges.map {
+            ReserveEpochCharge(
+                periodKey: $0.periodKey,
+                checkedWholeUnits: $0.checkedWholeUnits,
+                recordedAt: whole($0.recordedAt)
+            )
+        }
         return copy
     }
 

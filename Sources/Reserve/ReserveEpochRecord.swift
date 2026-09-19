@@ -41,6 +41,17 @@ public struct ReserveEpochRecord: Codable, Sendable, Equatable {
     /// When the epoch ran to the end, or nil while it is unfinished.
     public var completedAt: Date?
 
+    /// The ceilings this epoch was measured against, in the order they were
+    /// charged.
+    ///
+    /// A list rather than one value, because an epoch cut off on Sunday and
+    /// resumed on Monday really was measured against two weeks' ceilings, and
+    /// a record naming only the first would be a confident lie in the one
+    /// situation an operator opens it for. An ordinary epoch holds exactly
+    /// one, and an epoch run for a host that stated no ceiling holds none:
+    /// nothing anywhere invents one.
+    public var charges: [ReserveEpochCharge]
+
     // MARK: - Initializers
 
     public init(
@@ -51,7 +62,8 @@ public struct ReserveEpochRecord: Codable, Sendable, Equatable {
         claimedHoldingIds: [String] = [],
         paidBaseUnits: UInt64 = 0,
         startedAt: Date? = nil,
-        completedAt: Date? = nil
+        completedAt: Date? = nil,
+        charges: [ReserveEpochCharge] = []
     ) {
         self.streamId = streamId
         self.epoch = epoch
@@ -61,6 +73,69 @@ public struct ReserveEpochRecord: Codable, Sendable, Equatable {
         self.paidBaseUnits = paidBaseUnits
         self.startedAt = startedAt
         self.completedAt = completedAt
+        self.charges = charges
+    }
+
+    // MARK: - Coding
+
+    /// The keys a record is written under.
+    ///
+    /// Spelled out rather than synthesised because ``init(from:)`` below has to
+    /// be written by hand, and a synthesised key set beside a hand written
+    /// decoder is two things that can drift apart. Private, because what a row
+    /// is called on disk is this type's business and a host that needs the
+    /// names has a store rather than a key set.
+    private enum CodingKeys: String, CodingKey {
+
+        /// The stream.
+        case streamId
+
+        /// The epoch number.
+        case epoch
+
+        /// Accounts already paid.
+        case paidAccounts
+
+        /// People already paid.
+        case paidRecipientIds
+
+        /// Holdings already paid for.
+        case claimedHoldingIds
+
+        /// Smallest units already committed.
+        case paidBaseUnits
+
+        /// When the epoch first claimed anybody.
+        case startedAt
+
+        /// When the epoch ran to the end.
+        case completedAt
+
+        /// The ceilings the epoch was measured against.
+        case charges
+    }
+
+    /// Reads a record, treating a missing list of charges as no charges.
+    ///
+    /// **Only that key, and deliberately.** Synthesised decoding of a
+    /// non-optional array throws on a missing key, and here that throw is not
+    /// harmless: the rule everywhere else is that an epoch row which cannot be
+    /// read throws rather than reading as unpaid, so a row written by a build
+    /// from before this field existed would stop every run of that stream
+    /// until somebody edited the database (ADOPT-5). Every other key still
+    /// throws when it is missing, because a row with no `paidAccounts` really
+    /// is a row nobody can trust.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.streamId = try container.decode(String.self, forKey: .streamId)
+        self.epoch = try container.decode(UInt64.self, forKey: .epoch)
+        self.paidAccounts = try container.decode([String].self, forKey: .paidAccounts)
+        self.paidRecipientIds = try container.decode([String].self, forKey: .paidRecipientIds)
+        self.claimedHoldingIds = try container.decode([String].self, forKey: .claimedHoldingIds)
+        self.paidBaseUnits = try container.decode(UInt64.self, forKey: .paidBaseUnits)
+        self.startedAt = try container.decodeIfPresent(Date.self, forKey: .startedAt)
+        self.completedAt = try container.decodeIfPresent(Date.self, forKey: .completedAt)
+        self.charges = try container.decodeIfPresent([ReserveEpochCharge].self, forKey: .charges) ?? []
     }
 
     // MARK: - Public Methods
@@ -76,6 +151,37 @@ public struct ReserveEpochRecord: Codable, Sendable, Equatable {
 
     /// True when the epoch ran to the end.
     public var isComplete: Bool { completedAt != nil }
+
+    /// The periods this epoch was charged against, in the order they were
+    /// charged.
+    ///
+    /// For a reader that wants the answer without walking the charges. Empty
+    /// means no ceiling was in force, never that the period is unknown: a host
+    /// that states no limits produces no charge.
+    public var chargedPeriodKeys: [String] { charges.map(\.periodKey) }
+
+    /// Records that this run was measured against a ceiling, to be called
+    /// **before** the first payment of the run is attempted.
+    ///
+    /// Appends rather than overwrites. A resumed epoch names both periods, in
+    /// the order they were charged, because it really was measured twice; an
+    /// implementation that replaced the value would answer the boundary case
+    /// with the period the run did not finish in.
+    ///
+    /// - Parameters:
+    ///   - periodKey: The period the ceiling belonged to, from
+    ///     ``ReserveSpendLimits/periodKey`` and from nowhere else.
+    ///   - checkedWholeUnits: What the run was measured as costing.
+    ///   - date: When the measurement was taken.
+    public mutating func recordCharge(periodKey: String, checkedWholeUnits: UInt64, at date: Date) {
+        charges.append(
+            ReserveEpochCharge(
+                periodKey: periodKey,
+                checkedWholeUnits: checkedWholeUnits,
+                recordedAt: date
+            )
+        )
+    }
 
     /// Claims one line's slots, to be called **before** the payment is attempted.
     ///
