@@ -25,6 +25,18 @@ let package = Package(
         .visionOS(.v1)
     ],
     products: [
+        // The program. Exactly one executable product, so bare `swift run` is
+        // unambiguous and an operator following the README types one thing.
+        //
+        // `Runtime` is deliberately **not** a product. A product is a promise
+        // about an API, and the composition root is at its least stable
+        // moment: it grows a parameter every time a surface lands. Keeping it
+        // a plain target means the executable and the tests reach it and
+        // nobody downstream can depend on its shape. Promoting a target to a
+        // product later breaks nobody; demoting one is a breaking change.
+        // `StoreTestKit` is the precedent already in this manifest.
+        .executable(name: "bot", targets: ["BotMain"]),
+
         // The payout engine is a product in its own right. The bot target that
         // will grow up beside it depends on this library like any other client
         // would, so the engine can never quietly acquire a Discord import.
@@ -159,6 +171,39 @@ let package = Package(
             swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
         ),
 
+        // The composition root: the boot gates, the settings catalogue, the
+        // startup report, the health state and the listener.
+        //
+        // It may never depend on a chat SDK and never on a database. Not on a
+        // chat SDK, because the chat seam here is a protocol over Foundation
+        // types with a role and a member both `String`: the adapter that
+        // knows about snowflakes will depend on this target, and SwiftPM
+        // refuses a cycle, so this one can never acquire it back and `Store`
+        // is two edges further away still, which is what keeps the guarantee
+        // the `Store` comment above already claims. Not on a database,
+        // because it takes `any BotStore` and the concrete durable store is
+        // chosen in the executable.
+        //
+        // Not `Games` and not `Reserve` either: neither is reachable without
+        // a surface to play on or a payer to pay with.
+        .target(
+            name: "Runtime",
+            dependencies: ["Gating", "Chain", "Store"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+
+        // The program. Argument handling, the one snapshot of the process
+        // environment, the construction of the live seams, signal handling
+        // and the exit. Nothing here decides anything, and it is the only
+        // place both `Runtime` and a concrete store are visible, which is
+        // what makes "what can this build reach" one function rather than a
+        // search.
+        .executableTarget(
+            name: "BotMain",
+            dependencies: ["Runtime", "StoreSQLite"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+
         .testTarget(
             name: "StoreTests",
             dependencies: ["Store", "StoreTestKit"],
@@ -167,6 +212,17 @@ let package = Package(
         .testTarget(
             name: "StoreSQLiteTests",
             dependencies: ["StoreSQLite", "Store", "StoreTestKit", "CSQLite"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+
+        // Depends on `StoreSQLite` because the boot's own tests compose a
+        // real store: `SQLiteStore.inMemory()` and a file under the test's
+        // own temporary directory. Everything else they need is a stub, a spy
+        // or a loopback bind on port zero, so the whole suite still reaches
+        // no chain, no server and no account.
+        .testTarget(
+            name: "RuntimeTests",
+            dependencies: ["Runtime", "Store", "StoreSQLite", "Gating", "Chain"],
             swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
         )
     ]

@@ -9,11 +9,13 @@ That is the product this is meant to become. Almost none of it is written.
 
 ## State
 
-**Early. Not runnable yet.** This repository is being built in the open, a piece
-at a time, out of a private bot that has been running a live community for
-months. There is no bot here: no gateway, no slash commands, no executable
-target and nothing you can deploy. What exists is six library targets, all
-offline, all covered by tests, and none of them wired to anything.
+**Early. It starts, and there is no bot in it yet.** This repository is being
+built in the open, a piece at a time, out of a private bot that has been
+running a live community for months. There is now a binary: it reads your
+settings, tells you what it made of them, opens its store, checks your asset
+against your node and answers a health endpoint. What it does not have is the
+part your members would see: no gateway, no slash commands, nothing that can
+move value, and nothing that sweeps.
 
 | Target | What it is |
 |--------|------------|
@@ -23,14 +25,56 @@ offline, all covered by tests, and none of them wired to anything.
 | `Chain` | Reading what an account holds on an Algorand node, and the three brakes that stop it reading too much: a per-second limiter, a per-UTC-day request budget, and one member's share of that budget. |
 | `Store` | What one instance remembers between restarts: members, the accounts they proved, the sweep baseline, the payout ledger and the day's request count. Records, protocols, and a store in memory that needs nothing installed. No Discord in its package graph. |
 | `StoreSQLite` | The same store on a file, using the SQLite the operating system already ships. One connection, every durability setting read back at start, an exclusive lease so two instances cannot pay the same week, and no new entry in `Package.resolved`. |
+| `Runtime` | The composition root: eight boot gates in a fixed order, the one description of every variable this build reads, the startup report, and a health endpoint that answers `starting` until the parts that must be up are up. Links no chat client and no database. |
+| `BotMain` | The program, as the `bot` executable. The arguments, the one snapshot of the process environment, the live seams, the signals and the exit. It decides nothing. |
 
 ```
-swift test    # 694 tests in 48 suites
 ```
 
 The store's conformance suite is one test with thirty four behaviours, run
 against three backends, so those three lines are a hundred and two checks
 rather than three.
+swift test    # 751 tests in 63 suites
+swift run bot help
+```
+
+### What the binary takes
+
+| Verb | What it does |
+|------|--------------|
+| `run` | Walks the eight boot gates, binds the health endpoint and stays up. The default with no argument. |
+| `check` | Loads your settings and prints the report a start would, opening no socket, no store file and no connection. What to point a new version at before you take it. |
+| `rehearse` | Runs the role rules over members and holdings it invents, against **your** ladder, collections and pools. Opens nothing. The thing to run on a laptop with no keys. |
+| `help` | The four, and the exit codes. |
+
+Exit codes are the conventional `sysexits` ones, so a supervisor can tell them
+apart: **0** stopped cleanly, **64** an argument nobody recognises, **69**
+something is already here or cannot be used (a store another process holds, an
+address in use, a volume that cannot promise a write), **70** internal, **78**
+the configuration is wrong. 69 is the one to put in a supervisor's
+do-not-restart list.
+
+### Its own three variables
+
+Everything else an operator sets is in
+[`docs/CONFIGURATION.md`](docs/CONFIGURATION.md). These three belong to the
+program itself.
+
+| Variable | Required | What it is |
+|----------|----------|------------|
+| `STORE_PATH` | yes | Where this instance keeps what it remembers. **Absolute**: a supervisor restarting from another directory would otherwise open a different and empty store, which looks exactly like a first boot. |
+| `HEALTH_PORT` | yes | The port `GET /health` listens on. No default, because several communities on one machine each need their own. Zero lets the operating system choose. |
+| `HEALTH_ADDRESS` | no | The address to bind. Loopback unless you set it. |
+
+A start with nothing set names the first variable to set, says what it is for,
+and exits 78. A bound socket is **not** health: the endpoint answers
+`503 {"status":"starting","waiting":[...]}` until every part it is waiting for
+has been reached, so a deploy gate cannot promote a version that came up half
+way.
+
+The store's conformance suite is one test with thirty three behaviours, run
+against three backends, so those three lines are ninety nine checks rather
+than three.
 
 Everything runs offline. No test reaches a network, and none needs a key, a
 funded wallet or a Discord server.
@@ -73,6 +117,11 @@ Most of it, and what is missing is the part a person would actually use:
 - **No host.** The targets do not know about each other beyond `Chain`
   depending on `Gating` and `Store` depending on all three. Nothing sweeps,
   nothing schedules, nothing pays.
+- **No sweep, no scheduler and nothing that pays.** The boot has a gate where
+  the loops go and it is empty. `Runtime` wires the store, the node and the
+  health endpoint together and stops there.
+- **Nothing that can move value.** No payer is compiled in, every start says
+  so in its first line, and there is no variable that would change it.
 - **No giveaways, no draws, no cards to look at, no announcements.** The
   `hi/` families describing them have nothing behind them.
 

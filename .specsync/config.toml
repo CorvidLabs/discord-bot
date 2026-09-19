@@ -13,7 +13,9 @@ source_dirs = [
     "Sources/Chain",
     "Sources/Store",
     "Sources/StoreTestKit",
-    "Sources/StoreSQLite"
+    "Sources/StoreSQLite",
+    "Sources/Runtime",
+    "Sources/BotMain"
 ]
 required_sections = ["Purpose", "Public API", "Invariants", "Behavioral Examples", "Error Cases", "Dependencies", "Change Log"]
 enforcement = "strict"
