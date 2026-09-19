@@ -1,6 +1,15 @@
 import Foundation
+import Gating
 
 /// What a pool held when it was last read.
+///
+/// The two sides are named **counted** and **other** rather than A and B. They
+/// were A and B while this module carried its own pool type, which said which
+/// of the two positions the counted asset sat in; the pool an operator
+/// actually writes down says which asset counts and which it is paired with,
+/// and there is no third fact saying which came first. Keeping A and B would
+/// have meant inventing an ordering, and every reader of it would have had to
+/// look up which end the real answer was at.
 public struct PoolReserves: Sendable, Equatable {
 
     // MARK: - Properties
@@ -11,11 +20,12 @@ public struct PoolReserves: Sendable, Equatable {
     /// The account holding the pool's reserves.
     public let poolAddress: String
 
-    /// How much of side A the pool holds, in that asset's smallest unit.
-    public let assetABalance: UInt64
+    /// How much of the counted asset the pool holds, in its smallest unit.
+    public let countedAssetBalance: UInt64
 
-    /// How much of side B the pool holds, in that asset's smallest unit.
-    public let assetBBalance: UInt64
+    /// How much of the other side the pool holds, in that asset's smallest
+    /// unit.
+    public let otherAssetBalance: UInt64
 
     /// Pool tokens in circulation, which is what a provider's holding is a
     /// share of.
@@ -26,35 +36,31 @@ public struct PoolReserves: Sendable, Equatable {
 
     // MARK: - Initializers
 
-    /// - Parameter readAt: When this was read, passed in so a test pins it
-    ///   and a caller can say how stale it is.
+    /// - Parameters:
+    ///   - pool: The pool this describes.
+    ///   - poolAddress: The account holding its reserves.
+    ///   - countedAssetBalance: How much of the counted asset the pool holds.
+    ///   - otherAssetBalance: How much of the other side it holds.
+    ///   - circulatingPoolTokens: Pool tokens in somebody's hands.
+    ///   - readAt: When this was read, passed in so a test pins it and a
+    ///     caller can say how stale it is.
     public init(
         pool: LiquidityPool,
         poolAddress: String,
-        assetABalance: UInt64,
-        assetBBalance: UInt64,
+        countedAssetBalance: UInt64,
+        otherAssetBalance: UInt64,
         circulatingPoolTokens: UInt64,
         readAt: Date
     ) {
         self.pool = pool
         self.poolAddress = poolAddress
-        self.assetABalance = assetABalance
-        self.assetBBalance = assetBBalance
+        self.countedAssetBalance = countedAssetBalance
+        self.otherAssetBalance = otherAssetBalance
         self.circulatingPoolTokens = circulatingPoolTokens
         self.readAt = readAt
     }
 
     // MARK: - Public Methods
-
-    /// How much of the counted asset the pool holds.
-    public var countedAssetBalance: UInt64 {
-        pool.assetA.assetId == pool.countedAssetId ? assetABalance : assetBBalance
-    }
-
-    /// How much of the other side the pool holds.
-    public var otherAssetBalance: UInt64 {
-        pool.assetA.assetId == pool.countedAssetId ? assetBBalance : assetABalance
-    }
 
     /// What a holding of this pool's token is worth of each side.
     ///
@@ -64,23 +70,23 @@ public struct PoolReserves: Sendable, Equatable {
     /// numbers of smallest units, and the exact answer is a whole number of
     /// smallest units. Rounded down, always, so a card never shows somebody
     /// more than the pool could actually give them back.
+    ///
+    /// - Parameter held: The pool tokens the provider holds.
     public func share(ofPoolTokens held: UInt64) -> PoolShare {
         guard circulatingPoolTokens > 0, held > 0 else {
             return PoolShare(
                 poolId: pool.id,
-                countedAssetId: pool.countedAssetId,
-                assetAId: pool.assetA.assetId,
+                countedAssetId: pool.tokenAssetId,
                 poolTokenBalance: held,
                 circulatingPoolTokens: circulatingPoolTokens,
                 shareMillionths: 0,
-                assetAAmount: 0,
-                assetBAmount: 0
+                countedAssetAmount: 0,
+                otherAssetAmount: 0
             )
         }
         return PoolShare(
             poolId: pool.id,
-            countedAssetId: pool.countedAssetId,
-            assetAId: pool.assetA.assetId,
+            countedAssetId: pool.tokenAssetId,
             poolTokenBalance: held,
             circulatingPoolTokens: circulatingPoolTokens,
             shareMillionths: ExactRatio.portion(
@@ -88,13 +94,13 @@ public struct PoolReserves: Sendable, Equatable {
                 numerator: held,
                 denominator: circulatingPoolTokens
             ),
-            assetAAmount: ExactRatio.portion(
-                of: assetABalance,
+            countedAssetAmount: ExactRatio.portion(
+                of: countedAssetBalance,
                 numerator: held,
                 denominator: circulatingPoolTokens
             ),
-            assetBAmount: ExactRatio.portion(
-                of: assetBBalance,
+            otherAssetAmount: ExactRatio.portion(
+                of: otherAssetBalance,
                 numerator: held,
                 denominator: circulatingPoolTokens
             )
@@ -110,11 +116,8 @@ public struct PoolShare: Sendable, Equatable {
     /// The pool this is a share of.
     public let poolId: String
 
-    /// Which side counts toward a member's balance.
+    /// Which asset the counted amount is of.
     public let countedAssetId: UInt64
-
-    /// Side A's asset id, so the amounts below can be told apart.
-    public let assetAId: UInt64
 
     /// The pool tokens held.
     public let poolTokenBalance: UInt64
@@ -129,47 +132,45 @@ public struct PoolShare: Sendable, Equatable {
     /// precision for the smallest position worth showing.
     public let shareMillionths: UInt64
 
-    /// The provider's part of side A, in that asset's smallest unit.
-    public let assetAAmount: UInt64
+    /// The provider's part of the counted asset, in its smallest unit. This
+    /// is the part that counts toward a member's balance.
+    public let countedAssetAmount: UInt64
 
-    /// The provider's part of side B, in that asset's smallest unit.
-    public let assetBAmount: UInt64
+    /// The provider's part of the other side, in that asset's smallest unit.
+    public let otherAssetAmount: UInt64
 
     // MARK: - Initializers
 
     /// Built by ``PoolReserves/share(ofPoolTokens:)``. Public so a host can
     /// rebuild one from figures it stored earlier.
+    ///
+    /// - Parameters:
+    ///   - poolId: The pool this is a share of.
+    ///   - countedAssetId: Which asset the counted amount is of.
+    ///   - poolTokenBalance: The pool tokens held.
+    ///   - circulatingPoolTokens: Pool tokens in circulation at the time.
+    ///   - shareMillionths: The share of the pool, in millionths.
+    ///   - countedAssetAmount: The provider's part of the counted asset.
+    ///   - otherAssetAmount: The provider's part of the other side.
     public init(
         poolId: String,
         countedAssetId: UInt64,
-        assetAId: UInt64,
         poolTokenBalance: UInt64,
         circulatingPoolTokens: UInt64,
         shareMillionths: UInt64,
-        assetAAmount: UInt64,
-        assetBAmount: UInt64
+        countedAssetAmount: UInt64,
+        otherAssetAmount: UInt64
     ) {
         self.poolId = poolId
         self.countedAssetId = countedAssetId
-        self.assetAId = assetAId
         self.poolTokenBalance = poolTokenBalance
         self.circulatingPoolTokens = circulatingPoolTokens
         self.shareMillionths = shareMillionths
-        self.assetAAmount = assetAAmount
-        self.assetBAmount = assetBAmount
+        self.countedAssetAmount = countedAssetAmount
+        self.otherAssetAmount = otherAssetAmount
     }
 
     // MARK: - Public Methods
-
-    /// The part that counts toward a member's balance.
-    public var countedAssetAmount: UInt64 {
-        assetAId == countedAssetId ? assetAAmount : assetBAmount
-    }
-
-    /// The part that does not.
-    public var otherAssetAmount: UInt64 {
-        assetAId == countedAssetId ? assetBAmount : assetAAmount
-    }
 
     /// The share as a percentage with four decimal places.
     public var formattedSharePercent: String {

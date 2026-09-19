@@ -1,4 +1,5 @@
 import Foundation
+import Gating
 
 /// One wallet, read once: what it holds directly, what its pool positions are
 /// worth, and which parts of that could not be established.
@@ -18,10 +19,10 @@ public struct WalletCheck: Sendable, Equatable {
     /// Everything the wallet has opted into, held or not.
     public let holdings: ChainReading<[ChainHolding]>
 
-    /// The configured asset held directly in this wallet.
+    /// The configured token held directly in this wallet.
     public let directBalance: ChainReading<UInt64>
 
-    /// The counted asset attributable to this wallet's pool positions.
+    /// The counted token attributable to this wallet's pool positions.
     ///
     /// Short when a pool's reserves were not available: the wallet's pool
     /// tokens were read, but without reserves there is no way to say what they
@@ -32,23 +33,46 @@ public struct WalletCheck: Sendable, Equatable {
     /// Pool tokens held, by pool id, for the pools that were read.
     public let poolTokenBalances: [String: UInt64]
 
+    /// What each pool position is worth of the counted token, by pool id.
+    ///
+    /// Only the pools whose reserves were read appear here. A pool whose
+    /// reserves were missing is **absent**, and named in ``liquidityAmount``'s
+    /// gaps, rather than present as a zero: a zero here would travel into a
+    /// position worth nothing and demote the provider, which is the failure
+    /// this whole type is shaped around. Kept per pool as well as summed into
+    /// ``liquidityAmount`` so a caller can build one
+    /// ``Gating/LiquidityPosition`` per pool without reading the reserves
+    /// again.
+    public let poolCountedAmounts: [String: UInt64]
+
     // MARK: - Initializers
 
-    /// Built by ``read(address:holdings:asset:pools:reserves:)`` or
+    /// Built by ``read(address:holdings:token:pools:reserves:)`` or
     /// ``unreadable(address:gap:)``. Public so a host can rebuild one from
     /// figures it stored earlier.
+    ///
+    /// - Parameters:
+    ///   - address: The wallet this describes.
+    ///   - holdings: Everything it has opted into, held or not.
+    ///   - directBalance: The configured token held directly.
+    ///   - liquidityAmount: The counted token its pool positions are worth.
+    ///   - poolTokenBalances: Pool tokens held, by pool id.
+    ///   - poolCountedAmounts: What each position is worth, by pool id, for
+    ///     the pools whose reserves were read.
     public init(
         address: String,
         holdings: ChainReading<[ChainHolding]>,
         directBalance: ChainReading<UInt64>,
         liquidityAmount: ChainReading<UInt64>,
-        poolTokenBalances: [String: UInt64]
+        poolTokenBalances: [String: UInt64],
+        poolCountedAmounts: [String: UInt64]
     ) {
         self.address = address
         self.holdings = holdings
         self.directBalance = directBalance
         self.liquidityAmount = liquidityAmount
         self.poolTokenBalances = poolTokenBalances
+        self.poolCountedAmounts = poolCountedAmounts
     }
 
     // MARK: - Public Methods
@@ -63,40 +87,48 @@ public struct WalletCheck: Sendable, Equatable {
     /// - Parameters:
     ///   - address: The wallet.
     ///   - holdings: What it holds, from a read that completed.
-    ///   - asset: The asset counted directly.
+    ///   - token: The token counted directly.
     ///   - pools: The pools an operator wants counted.
     ///   - reserves: Reserves by pool id. A pool missing from this is a gap,
     ///     never a zero.
     public static func read(
         address: String,
         holdings: [ChainHolding],
-        asset: ChainAsset,
+        token: TokenProfile,
         pools: [LiquidityPool],
         reserves: [String: PoolReserves]
     ) -> WalletCheck {
         var poolTokenBalances: [String: UInt64] = [:]
+        var poolCountedAmounts: [String: UInt64] = [:]
         var liquidity: UInt64 = 0
         var gaps: [ChainReadGap] = []
 
         for pool in pools {
-            let held = holdings.amount(of: pool.poolTokenId)
+            let held = holdings.amount(of: pool.lpAssetId)
             poolTokenBalances[pool.id] = held
-            guard held > 0 else { continue }
+            guard held > 0 else {
+                poolCountedAmounts[pool.id] = 0
+                continue
+            }
             guard let reserve = reserves[pool.id] else {
                 // Holding pool tokens whose pool could not be read. The amount
-                // is unknown and is emphatically not zero.
+                // is unknown and is emphatically not zero, so this pool is
+                // left out of `poolCountedAmounts` rather than written as a 0.
                 gaps.append(.poolReservesUnavailable(poolId: pool.id))
                 continue
             }
-            liquidity = liquidity.saturatingAdding(reserve.share(ofPoolTokens: held).countedAssetAmount)
+            let counted = reserve.share(ofPoolTokens: held).countedAssetAmount
+            poolCountedAmounts[pool.id] = counted
+            liquidity = liquidity.saturatingAdding(counted)
         }
 
         return WalletCheck(
             address: address,
             holdings: .complete(holdings),
-            directBalance: .complete(holdings.amount(of: asset.id)),
+            directBalance: .complete(holdings.amount(of: token.assetId)),
             liquidityAmount: gaps.isEmpty ? .complete(liquidity) : .short(liquidity, gaps: gaps),
-            poolTokenBalances: poolTokenBalances
+            poolTokenBalances: poolTokenBalances,
+            poolCountedAmounts: poolCountedAmounts
         )
     }
 
@@ -110,7 +142,8 @@ public struct WalletCheck: Sendable, Equatable {
             holdings: .unavailable(gaps: [gap]),
             directBalance: .unavailable(gaps: [gap]),
             liquidityAmount: .unavailable(gaps: [gap]),
-            poolTokenBalances: [:]
+            poolTokenBalances: [:],
+            poolCountedAmounts: [:]
         )
     }
 

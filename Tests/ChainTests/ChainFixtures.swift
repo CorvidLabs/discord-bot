@@ -1,4 +1,5 @@
 import Foundation
+import Gating
 @testable import Chain
 
 /// The pieces the suites read the chain with, none of which touch a network.
@@ -14,8 +15,8 @@ internal enum Fixture {
     /// The asset an operator has configured. Small, and nobody's.
     internal static let assetId: UInt64 = 4_242
 
-    /// A pool token id.
-    internal static let poolTokenId: UInt64 = 5_150
+    /// A pool's own LP token id.
+    internal static let lpAssetId: UInt64 = 5_150
 
     /// The other side of the pair.
     internal static let pairedAssetId: UInt64 = 7_007
@@ -35,8 +36,13 @@ internal enum Fixture {
 
     // MARK: - Pieces
 
-    internal static func asset(decimals: UInt8 = 6) throws -> ChainAsset {
-        try ChainAsset(id: assetId, symbol: "TOKEN", decimals: decimals)
+    /// The one token, as `Gating` loads it and `Chain` reads balances of.
+    ///
+    /// There is deliberately no second asset type here: the layers share
+    /// ``TokenProfile`` so an operator cannot set the asset twice and set it
+    /// differently.
+    internal static func token(decimals: UInt8 = 6) throws -> TokenProfile {
+        try TokenProfile(assetId: assetId, symbol: "TOKEN", decimals: decimals)
     }
 
     internal static func nodeURL() throws -> URL {
@@ -54,7 +60,7 @@ internal enum Fixture {
         verifiesAssetDecimals: Bool = true
     ) throws -> ChainConfiguration {
         try ChainConfiguration(
-            asset: try asset(decimals: decimals),
+            token: try token(decimals: decimals),
             nodeURL: try nodeURL(),
             limits: limits,
             cacheLifetimes: cacheLifetimes,
@@ -63,15 +69,24 @@ internal enum Fixture {
         )
     }
 
-    internal static func pool(id: String = "pair-one") throws -> LiquidityPool {
-        try LiquidityPool(
+    /// A pool, as the operator writes one down.
+    ///
+    /// There is one ``LiquidityPool`` in the package and it belongs to
+    /// `Gating`, which is the module with the loader an operator's `POOL_n_*`
+    /// variables go through. This file used to qualify the name because both
+    /// modules declared one.
+    internal static func pool(
+        id: String = "pair-one",
+        paired: UInt64 = pairedAssetId
+    ) -> LiquidityPool {
+        LiquidityPool(
             id: id,
             name: "TOKEN / PAIR",
-            poolTokenId: poolTokenId,
-            poolTokenDecimals: 6,
-            assetA: PoolSide(assetId: assetId, symbol: "TOKEN", decimals: 6),
-            assetB: PoolSide(assetId: pairedAssetId, symbol: "PAIR", decimals: 6),
-            countedAssetId: assetId
+            lpAssetId: lpAssetId,
+            pairedAssetId: paired,
+            decimals: 6,
+            roleId: "role-lp-pair-one",
+            tokenAssetId: assetId
         )
     }
 
@@ -87,11 +102,28 @@ internal enum Fixture {
         PoolReserves(
             pool: pool,
             poolAddress: poolAccount,
-            assetABalance: counted,
-            assetBBalance: other,
+            countedAssetBalance: counted,
+            otherAssetBalance: other,
             circulatingPoolTokens: circulating,
             readAt: at
         )
+    }
+
+    /// The `POOL_1_*` variables an operator writes to configure ``pool()``.
+    ///
+    /// Used by the tests that go the whole way from what somebody typed to
+    /// what this layer reads, which is the path that had no floor under it:
+    /// the pool type this module used to carry could not be built from these
+    /// variables at all.
+    internal static func poolEnvironment(id: String = "pair-one") -> [String: String] {
+        [
+            "POOL_1_ID": id,
+            "POOL_1_NAME": "TOKEN / PAIR",
+            "POOL_1_LP_ASA": String(lpAssetId),
+            "POOL_1_PAIRED_ASA": String(pairedAssetId),
+            "POOL_1_DECIMALS": "6",
+            "POOL_1_ROLE_ID": "role-lp-pair-one"
+        ]
     }
 
     internal static func holding(_ assetId: UInt64, _ amount: UInt64) -> ChainHolding {

@@ -1,49 +1,5 @@
 import Foundation
-
-/// What one person holds, added up across every wallet they have linked.
-public struct CombinedBalance: Sendable, Equatable {
-
-    // MARK: - Properties
-
-    /// How many wallets went into it.
-    public let walletCount: Int
-
-    /// The configured asset held directly, across all of them.
-    public let directBalance: UInt64
-
-    /// The counted asset attributable to pool positions, across all of them.
-    public let liquidityAmount: UInt64
-
-    /// The two added together. This is the number a tier is decided on.
-    public let combinedBalance: UInt64
-
-    /// Whether any wallet has a pool position at all, which is worth a badge
-    /// of its own however small it is.
-    public let hasLiquidity: Bool
-
-    /// Wallets whose figure came from a stored balance rather than a fresh
-    /// read, so an operator can tell how old the answer is.
-    public let walletsFromStoredBalances: [String]
-
-    // MARK: - Initializers
-
-    /// The total is derived rather than passed in, so it cannot disagree
-    /// with its two halves.
-    public init(
-        walletCount: Int,
-        directBalance: UInt64,
-        liquidityAmount: UInt64,
-        hasLiquidity: Bool,
-        walletsFromStoredBalances: [String] = []
-    ) {
-        self.walletCount = walletCount
-        self.directBalance = directBalance
-        self.liquidityAmount = liquidityAmount
-        self.combinedBalance = directBalance.saturatingAdding(liquidityAmount)
-        self.hasLiquidity = hasLiquidity
-        self.walletsFromStoredBalances = walletsFromStoredBalances
-    }
-}
+import Gating
 
 /// Adding a person's wallets up without losing what could not be read.
 ///
@@ -52,6 +8,16 @@ public struct CombinedBalance: Sendable, Equatable {
 /// **whole** total short: the three that were read are a real number, it is
 /// simply not this person's number, and deciding anything on it is deciding on
 /// a fraction of what they hold.
+///
+/// The total itself is ``Gating/CombinedBalance/Totals``. This module used to
+/// declare a second `CombinedBalance` of its own, and both carried a comment
+/// about the same morning: a member demoted for linking a second, empty
+/// wallet. Two types with one name, written for one incident, in two modules a
+/// host imports together, is how the third version of that incident happens.
+/// The one in ``Gating`` stays, because it is the layer the rules are decided
+/// in and the shape they are decided from; the facts this one had that it
+/// lacked, how many accounts went into the total and which of them stood in on
+/// a stored figure, moved there rather than being kept in a rival type.
 public enum BalanceCombiner: Sendable {
 
     // MARK: - Public Methods
@@ -62,30 +28,34 @@ public enum BalanceCombiner: Sendable {
     ///     wallets that were not read this time.
     /// - Returns: The total, complete only when nothing is missing from it.
     ///
-    /// The stored balances are not a convenience. Verification reads only the
-    /// wallet that has just signed, and a person linking a second, empty wallet
-    /// would otherwise be totalled at whatever that empty wallet holds and
-    /// stripped of a tier they earned on the first one. A stored figure
-    /// standing in for a wallet nobody read this time is a complete answer, and
-    /// is recorded as such so somebody can see where it came from.
+    /// **No wallets at all is `unavailable`, never a total of nothing.** A
+    /// caller reaches an empty list two ways and they want opposite
+    /// decisions: the member genuinely has no account, or nobody could list
+    /// the accounts they have. ``Gating/CombinedBalance/across(_:)`` answers
+    /// the same question the same way, one layer up, and the two agreeing is
+    /// the point: a confident zero here would read as a member who sold
+    /// everything and strip every rung from somebody whose holdings nobody
+    /// looked at. A member who provably has no account is
+    /// ``Gating/MemberHoldings/unlinked(memberId:configuration:)``.
+    ///
+    /// The stored balances are not a convenience either. Verification reads
+    /// only the wallet that has just signed, and a person linking a second,
+    /// empty wallet would otherwise be totalled at whatever that empty wallet
+    /// holds and stripped of a tier they earned on the first one. A stored
+    /// figure standing in for a wallet nobody read this time is a complete
+    /// answer, and is recorded as such so somebody can see where it came from.
     public static func combine(
         _ checks: [WalletCheck],
         storedBalances: [String: UInt64] = [:]
-    ) -> ChainReading<CombinedBalance> {
+    ) -> ChainReading<CombinedBalance.Totals> {
+        guard !checks.isEmpty else { return .unavailable(gaps: [.notRead]) }
+
         var direct: UInt64 = 0
         var liquidity: UInt64 = 0
-        var hasLiquidity = false
         var gaps: [ChainReadGap] = []
         var fromStored: [String] = []
 
         for check in checks {
-            // The badge is for having a position, not for the position being
-            // worth something. A share of the counted side that rounds down to
-            // nothing is still liquidity somebody provided, and the pool token
-            // balance is the record of it.
-            if check.poolTokenBalances.values.contains(where: { $0 > 0 }) {
-                hasLiquidity = true
-            }
             guard let readDirectly = check.directBalance.completeValue else {
                 // Nothing was read for this wallet. A figure already on record
                 // stands in for the whole of it, direct holding and pool
@@ -104,25 +74,22 @@ public enum BalanceCombiner: Sendable {
 
             if let amount = check.liquidityAmount.completeValue {
                 liquidity = liquidity.saturatingAdding(amount)
-                if amount > 0 { hasLiquidity = true }
             } else {
                 // No stored fallback for pool positions on purpose: a stored
                 // pool figure is worth what the pool was worth when it was
                 // stored, and a pool's value moves with every trade.
-                if let partial = check.liquidityAmount.valueEvenIfShort, partial > 0 {
-                    hasLiquidity = true
-                }
                 gaps.append(contentsOf: check.liquidityAmount.gaps)
             }
         }
 
-        let combined = CombinedBalance(
-            walletCount: checks.count,
-            directBalance: direct,
-            liquidityAmount: liquidity,
-            hasLiquidity: hasLiquidity,
-            walletsFromStoredBalances: fromStored
+        let totals = CombinedBalance.Totals(
+            direct: direct,
+            liquidity: liquidity,
+            combined: direct.saturatingAdding(liquidity),
+            otherAccountsExist: checks.count > 1,
+            accountCount: checks.count,
+            accountsFromStoredBalances: fromStored
         )
-        return gaps.isEmpty ? .complete(combined) : .short(combined, gaps: gaps)
+        return gaps.isEmpty ? .complete(totals) : .short(totals, gaps: gaps)
     }
 }

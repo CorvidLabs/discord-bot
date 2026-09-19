@@ -1,4 +1,5 @@
 import Foundation
+import Gating
 
 /// Reads many wallets at once, at a rate the provider will tolerate.
 ///
@@ -82,7 +83,7 @@ public actor BatchedChainReader {
     ) async -> [WalletCheck] {
         guard !wallets.isEmpty else { return [] }
         let reserves = pools.isEmpty ? [:] : await self.reserves(for: pools, now: now)
-        let asset = configuration.asset
+        let token = configuration.token
         let reader = self.reader
         let limiter = self.limiter
         var results: [WalletCheck] = []
@@ -104,7 +105,7 @@ public actor BatchedChainReader {
                                 WalletCheck.read(
                                     address: wallet,
                                     holdings: holdings,
-                                    asset: asset,
+                                    token: token,
                                     pools: pools,
                                     reserves: reserves
                                 )

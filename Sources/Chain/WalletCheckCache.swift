@@ -1,4 +1,5 @@
 import Foundation
+import Gating
 
 /// Recently read wallets, so the same question does not become traffic.
 ///

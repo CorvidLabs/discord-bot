@@ -1,4 +1,5 @@
 import Foundation
+import Gating
 
 /// Everything this layer needs to know before it reads anything.
 ///
@@ -12,12 +13,21 @@ import Foundation
 /// operator who knows what their provider allows can say so in one variable.
 /// Every one of them is validated at boot, so a typo is a refusal that names
 /// the variable rather than a bot that behaves oddly in a month.
+///
+/// The **token is not one of them**. It is handed in, already read, as
+/// ``Gating/TokenProfile``, so the asset id, ticker and decimal places are
+/// read from the environment in exactly one place in the whole package. This
+/// layer briefly carried its own asset id, ticker and decimals variables
+/// beside the ladder's `TOKEN_*` ones: an operator had to write the asset down
+/// twice and could write it down differently, and two `decimals` that
+/// disagreed would read balances at one precision and decide tiers at another,
+/// which is a factor of ten per missing place on every rung of the ladder.
 public struct ChainConfiguration: Sendable, Equatable {
 
     // MARK: - Properties
 
-    /// The asset balances are read for.
-    public let asset: ChainAsset
+    /// The token balances are read for, as the layer above loaded it.
+    public let token: TokenProfile
 
     /// The node to read from.
     public let nodeURL: URL
@@ -42,7 +52,11 @@ public struct ChainConfiguration: Sendable, Equatable {
     // MARK: - Initializers
 
     /// - Parameters:
-    ///   - asset: The asset balances are read for.
+    ///   - token: The token balances are read for, already loaded by the layer
+    ///     above. Its asset id may not be zero: on this chain zero names the
+    ///     chain's own currency, which is not an asset an account opts into
+    ///     and is not what this reads. An unset variable arriving here as zero
+    ///     would otherwise report every member as holding nothing.
     ///   - nodeURL: An absolute `http` or `https` URL.
     ///   - apiToken: The node's token, when it needs one.
     ///   - limits: The two brakes. Defaults are conservative.
@@ -51,7 +65,7 @@ public struct ChainConfiguration: Sendable, Equatable {
     ///   - verifiesAssetDecimals: Whether boot checks the configured decimals
     ///     against the chain.
     public init(
-        asset: ChainAsset,
+        token: TokenProfile,
         nodeURL: URL,
         apiToken: String? = nil,
         limits: ChainLimits = ChainLimits(),
@@ -59,14 +73,31 @@ public struct ChainConfiguration: Sendable, Equatable {
         proofHeaderNames: [String] = [],
         verifiesAssetDecimals: Bool = true
     ) throws {
-        guard let scheme = nodeURL.scheme?.lowercased(), scheme == "http" || scheme == "https" else {
+        // Zero is refused here rather than in `TokenProfile`, because it is a
+        // fact about this chain rather than about a ladder: a community whose
+        // ladder is measured in the chain's own currency is a coherent thing
+        // to configure, and a community whose *balances are read from an
+        // asset* with id zero is not.
+        guard token.assetId > 0 else {
+            throw ChainConfigurationError.invalidValue(
+                variable: TokenProfile.assetIdKey,
+                value: "0",
+                expected: "an asset id greater than zero"
+            )
+        }
+        // The same rule the layer above applies to every URL an operator
+        // writes down, called rather than restated. Checking the scheme alone,
+        // which is what this used to do, accepts `http://`: the process boots
+        // clean, every read then fails as a network error, and nothing
+        // anywhere names the variable that is wrong.
+        guard NumberedEnvironment.isLinkableURL(nodeURL.absoluteString) else {
             throw ChainConfigurationError.invalidValue(
                 variable: ChainEnvironment.nodeURL,
                 value: nodeURL.absoluteString,
-                expected: "an absolute http or https URL"
+                expected: "an absolute http or https URL with a host"
             )
         }
-        self.asset = asset
+        self.token = token
         self.nodeURL = nodeURL
         self.apiToken = apiToken
         self.limits = limits
@@ -78,44 +109,47 @@ public struct ChainConfiguration: Sendable, Equatable {
 
     // MARK: - Public Methods
 
-    /// Reads the whole configuration out of a set of environment variables.
+    /// Reads the chain-layer configuration out of a set of environment
+    /// variables, around a token that has already been read.
+    ///
+    /// The token is a **parameter**, not something read here. A host loads it
+    /// once with ``Gating/TokenProfile/load(from:)`` and hands the same value
+    /// to both layers, so there is one asset id, one ticker and one number of
+    /// decimal places in the process.
     ///
     /// Takes the variables as a dictionary rather than reaching for
     /// `ProcessInfo` itself, so every refusal below is reachable from a test.
-    /// Use ``fromProcessEnvironment()`` in a host.
+    /// Use ``loadFromProcessEnvironment(token:)`` in a host.
     ///
     /// A missing required variable is an error naming it, so that an operator
     /// finds out they have set it up wrong before their members do. A missing
     /// optional variable takes the documented default, never somebody else's
     /// value.
-    public static func from(environment: [String: String]) throws -> ChainConfiguration {
-        let asset = try ChainAsset(
-            id: try required(environment, ChainEnvironment.assetId, parse: UInt64.init, expected: "a whole number"),
-            symbol: try requiredString(environment, ChainEnvironment.assetSymbol),
-            decimals: try required(
-                environment,
-                ChainEnvironment.assetDecimals,
-                parse: UInt8.init,
-                expected: "0 to 19 decimal places"
-            )
-        )
+    ///
+    /// - Parameters:
+    ///   - token: The token balances are read for.
+    ///   - environment: The variables to read.
+    public static func load(
+        token: TokenProfile,
+        environment: [String: String]
+    ) throws -> ChainConfiguration {
         let raw = try requiredString(environment, ChainEnvironment.nodeURL)
         guard let url = URL(string: raw) else {
             throw ChainConfigurationError.invalidValue(
                 variable: ChainEnvironment.nodeURL,
                 value: raw,
-                expected: "an absolute http or https URL"
+                expected: "an absolute http or https URL with a host"
             )
         }
         return try ChainConfiguration(
-            asset: asset,
+            token: token,
             nodeURL: url,
             apiToken: value(environment, ChainEnvironment.apiToken),
             limits: try ChainLimits(environment: environment),
             cacheLifetimes: try ChainCacheLifetimes(environment: environment),
             proofHeaderNames: (value(environment, ChainEnvironment.proofHeaders) ?? "")
                 .split(separator: ",")
-                .map { String($0) },
+                .map(String.init),
             verifiesAssetDecimals: try optionalBool(
                 environment,
                 ChainEnvironment.verifyAssetDecimals,
@@ -124,9 +158,12 @@ public struct ChainConfiguration: Sendable, Equatable {
         )
     }
 
-    /// Reads the configuration out of the process environment.
-    public static func fromProcessEnvironment() throws -> ChainConfiguration {
-        try from(environment: ProcessInfo.processInfo.environment)
+    /// Reads the configuration out of the process environment, around a token
+    /// the host has already loaded.
+    ///
+    /// - Parameter token: The token balances are read for.
+    public static func loadFromProcessEnvironment(token: TokenProfile) throws -> ChainConfiguration {
+        try load(token: token, environment: ProcessInfo.processInfo.environment)
     }
 
     // MARK: - Internal Methods
@@ -136,12 +173,19 @@ public struct ChainConfiguration: Sendable, Equatable {
     ///
     /// Blank counts as unset because a variable set to the empty string in a
     /// deployment file is somebody having meant to fill it in.
+    ///
+    /// Delegated to ``Gating/NumberedEnvironment/nonEmpty(_:_:)`` rather than
+    /// spelled out again, so the two layers cannot disagree about what "set"
+    /// means. They did: this one trimmed newlines and the layer above did not,
+    /// so a variable with the trailing newline a file gives it was a value
+    /// here and a refusal one layer down. An operator has one environment, not
+    /// one per module, and should not have to know which module reads which
+    /// line.
     internal static func value(_ environment: [String: String], _ name: String) -> String? {
-        guard let raw = environment[name] else { return nil }
-        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : trimmed
+        NumberedEnvironment.nonEmpty(name) { environment[$0] }
     }
 
+    /// A variable that has to be set to something.
     internal static func requiredString(_ environment: [String: String], _ name: String) throws -> String {
         guard let found = value(environment, name) else {
             throw ChainConfigurationError.missing(variable: name)
@@ -149,19 +193,20 @@ public struct ChainConfiguration: Sendable, Equatable {
         return found
     }
 
-    internal static func required<Value>(
-        _ environment: [String: String],
-        _ name: String,
-        parse: (String) -> Value?,
-        expected: String
-    ) throws -> Value {
-        let raw = try requiredString(environment, name)
-        guard let parsed = parse(raw) else {
-            throw ChainConfigurationError.invalidValue(variable: name, value: raw, expected: expected)
-        }
-        return parsed
-    }
-
+    /// A variable with a default, parsed by the caller.
+    ///
+    /// Digit separators come out before `parse` sees the value, by
+    /// ``Gating/NumberedEnvironment/withoutDigitSeparators(_:)``, which is the
+    /// one place that rule lives. The ladder above has always allowed
+    /// `TIER_1_MIN=100_000`, on the stated grounds that somebody typing a
+    /// number with nine zeros in it will use separators and should not be
+    /// punished for it, and a daily request budget is exactly such a number;
+    /// this layer used to refuse it. One environment, one rule.
+    ///
+    /// The refusal stays a ``ChainConfigurationError`` rather than becoming
+    /// the layer above's, because each one carries the sentence saying what
+    /// *this* variable expected, and "a batch of at least one wallet" is worth
+    /// more to the person reading it than "is not a whole number".
     internal static func optional<Value>(
         _ environment: [String: String],
         _ name: String,
@@ -170,7 +215,7 @@ public struct ChainConfiguration: Sendable, Equatable {
         default fallback: Value
     ) throws -> Value {
         guard let raw = value(environment, name) else { return fallback }
-        guard let parsed = parse(raw) else {
+        guard let parsed = parse(NumberedEnvironment.withoutDigitSeparators(raw)) else {
             throw ChainConfigurationError.invalidValue(variable: name, value: raw, expected: expected)
         }
         return parsed

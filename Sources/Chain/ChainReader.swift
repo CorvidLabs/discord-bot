@@ -1,4 +1,5 @@
 import Foundation
+import Gating
 
 /// Reading the chain, one account at a time, behind the day's budget.
 ///
@@ -37,15 +38,15 @@ public actor ChainReader {
 
     // MARK: - Public Methods
 
-    /// The asset balances are read for.
-    public nonisolated var asset: ChainAsset { configuration.asset }
+    /// The token balances are read for.
+    public nonisolated var token: TokenProfile { configuration.token }
 
     /// Whether a string is a canonical address. Costs nothing from the budget.
     public nonisolated func isValidAddress(_ address: String) -> Bool {
         dataSource.isValidAddress(address)
     }
 
-    /// Reads the asset's precision from the chain and refuses to carry on when
+    /// Reads the token's precision from the chain and refuses to carry on when
     /// it disagrees with what was configured.
     ///
     /// Called once at boot, deliberately, and worth the one request it costs.
@@ -56,11 +57,11 @@ public actor ChainReader {
     /// is the difference between a five minute fix and a week of confusion.
     public func verifyAssetDecimals() async throws {
         guard configuration.verifiesAssetDecimals else { return }
-        let details = try await assetDetails(configuration.asset.id)
-        guard details.decimals == UInt64(configuration.asset.decimals) else {
+        let details = try await assetDetails(configuration.token.assetId)
+        guard details.decimals == UInt64(configuration.token.decimals) else {
             throw ChainError.assetDecimalsDisagree(
-                assetId: configuration.asset.id,
-                configured: configuration.asset.decimals,
+                assetId: configuration.token.assetId,
+                configured: configuration.token.decimals,
                 onChain: details.decimals
             )
         }
@@ -81,9 +82,9 @@ public actor ChainReader {
         }
     }
 
-    /// How much of the configured asset an account holds.
+    /// How much of the configured token an account holds.
     public func balance(of address: String) async throws -> UInt64 {
-        try await account(address).holdings.amount(of: configuration.asset.id)
+        try await account(address).holdings.amount(of: configuration.token.assetId)
     }
 
     /// Everything an account has opted into, held or not.
@@ -114,7 +115,7 @@ public actor ChainReader {
     /// used to cost two further requests per pool per sweep for a number
     /// already in hand.
     public func poolReserves(pool: LiquidityPool, now: Date = Date()) async throws -> PoolReserves {
-        let poolToken = try await assetDetails(pool.poolTokenId)
+        let poolToken = try await assetDetails(pool.lpAssetId)
         guard let poolAddress = poolToken.reserveAddress else {
             throw ChainError.poolAddressNotFound(poolId: pool.id)
         }
@@ -129,11 +130,11 @@ public actor ChainReader {
         return PoolReserves(
             pool: pool,
             poolAddress: poolAddress,
-            assetABalance: balance(in: poolAccount, of: pool.assetA),
-            assetBBalance: balance(in: poolAccount, of: pool.assetB),
+            countedAssetBalance: balance(in: poolAccount, ofSide: pool.tokenAssetId),
+            otherAssetBalance: balance(in: poolAccount, ofSide: pool.pairedAssetId),
             circulatingPoolTokens: Self.circulatingSupply(
                 total: poolToken.total,
-                heldByPool: poolAccount.holdings.amount(of: pool.poolTokenId)
+                heldByPool: poolAccount.holdings.amount(of: pool.lpAssetId)
             ),
             readAt: now
         )
@@ -184,8 +185,10 @@ public actor ChainReader {
 
     /// A side's balance in the pool's own account. The chain's own currency is
     /// an account balance rather than a holding, so it is read differently.
-    private func balance(in account: ChainAccount, of side: PoolSide) -> UInt64 {
-        side.isNativeCurrency ? account.nativeBalance : account.holdings.amount(of: side.assetId)
+    private func balance(in account: ChainAccount, ofSide assetId: UInt64) -> UInt64 {
+        LiquidityPool.isNativeCurrency(assetId)
+            ? account.nativeBalance
+            : account.holdings.amount(of: assetId)
     }
 
     /// Reserves one request, makes it, and reports a provider refusal.

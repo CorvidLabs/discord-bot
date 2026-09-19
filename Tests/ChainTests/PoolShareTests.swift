@@ -1,4 +1,5 @@
 import Foundation
+import Gating
 import Testing
 @testable import Chain
 
@@ -14,7 +15,7 @@ internal struct PoolShareTests {
 
     @Test("A tenth of the pool tokens is a tenth of each side")
     internal func straightforwardShare() throws {
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let share = Fixture.reserves(pool: pool).share(ofPoolTokens: 100_000)
         #expect(share.countedAssetAmount == 100_000_000)
         #expect(share.otherAssetAmount == 200_000)
@@ -24,7 +25,7 @@ internal struct PoolShareTests {
 
     @Test("A share that does not divide evenly rounds down, never up")
     internal func roundsDown() throws {
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let reserves = Fixture.reserves(pool: pool, counted: 10, other: 10, circulating: 3)
         let share = reserves.share(ofPoolTokens: 1)
         // A third of ten is three and a bit. Showing four would be showing
@@ -35,7 +36,7 @@ internal struct PoolShareTests {
 
     @Test("A pool and a holding both near the largest number the chain can hold still divide")
     internal func hugeNumbersDoNotOverflow() throws {
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let huge: UInt64 = 1_000_000_000_000_000_000
         let reserves = Fixture.reserves(
             pool: pool,
@@ -51,7 +52,7 @@ internal struct PoolShareTests {
 
     @Test("A pool nobody has tokens in is worth nothing rather than dividing by zero")
     internal func emptyPool() throws {
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let reserves = Fixture.reserves(pool: pool, circulating: 0)
         let share = reserves.share(ofPoolTokens: 10)
         #expect(share.countedAssetAmount == 0)
@@ -60,29 +61,24 @@ internal struct PoolShareTests {
 
     @Test("Holding more pool tokens than exist answers with the whole pool rather than trapping")
     internal func impossibleHoldingIsSurvivable() throws {
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let reserves = Fixture.reserves(pool: pool, counted: 500, other: 40, circulating: 10)
         let share = reserves.share(ofPoolTokens: 50)
         #expect(share.countedAssetAmount == 500)
         #expect(share.otherAssetAmount == 40)
     }
 
-    @Test("Which side counts is configuration, and the other side is reported separately")
-    internal func countedSideIsConfigured() throws {
-        let flipped = try LiquidityPool(
-            id: "flipped",
-            name: "PAIR / TOKEN",
-            poolTokenId: Fixture.poolTokenId,
-            poolTokenDecimals: 6,
-            assetA: PoolSide(assetId: Fixture.pairedAssetId, symbol: "PAIR", decimals: 2),
-            assetB: PoolSide(assetId: Fixture.assetId, symbol: "TOKEN", decimals: 6),
-            countedAssetId: Fixture.assetId
-        )
+    @Test("Which asset counts comes from the pool, and the other side is reported separately")
+    internal func countedSideIsConfigured() {
+        // The pool an operator writes down says which asset counts and which
+        // it is paired with. There is no A and B to get the wrong way round,
+        // which is the point: the pool type this module used to carry had an
+        // ordering nothing in the configuration could set.
         let reserves = PoolReserves(
-            pool: flipped,
+            pool: Fixture.pool(id: "flipped"),
             poolAddress: Fixture.poolAccount,
-            assetABalance: 400,
-            assetBBalance: 800,
+            countedAssetBalance: 800,
+            otherAssetBalance: 400,
             circulatingPoolTokens: 100,
             readAt: Date(timeIntervalSince1970: 0)
         )
@@ -91,22 +87,26 @@ internal struct PoolShareTests {
         let share = reserves.share(ofPoolTokens: 25)
         #expect(share.countedAssetAmount == 200)
         #expect(share.otherAssetAmount == 100)
+        #expect(share.countedAssetId == Fixture.assetId)
     }
 
-    @Test("The two sides can have different precision, and neither is assumed")
-    internal func sidesKeepTheirOwnPrecision() throws {
-        let pool = try LiquidityPool(
-            id: "mixed",
-            name: "TOKEN / CENTS",
-            poolTokenId: Fixture.poolTokenId,
-            poolTokenDecimals: 6,
-            assetA: PoolSide(assetId: Fixture.assetId, symbol: "TOKEN", decimals: 6),
-            assetB: PoolSide(assetId: Fixture.pairedAssetId, symbol: "CENTS", decimals: 2),
-            countedAssetId: Fixture.assetId
+    @Test("The amounts are smallest units, so the token's own precision prints them")
+    internal func amountsArePrintedAtTheTokenPrecision() throws {
+        // The pool used to carry a symbol and a decimal count per side, and
+        // no file in this module ever read either: what a card shows comes
+        // from the one `TokenProfile` the operator configured, and the other
+        // side's precision is a number nothing here has been given a way to
+        // learn. Inventing one is worse than not printing it.
+        let reserves = Fixture.reserves(
+            pool: Fixture.pool(),
+            counted: 1_500,
+            other: 1_500,
+            circulating: 1_000
         )
-        #expect(pool.countedSide.decimals == 6)
-        #expect(pool.otherSide.decimals == 2)
-        #expect(ChainFormatting.amount(150, decimals: Int(pool.otherSide.decimals)) == "1.5")
+        let share = reserves.share(ofPoolTokens: 100)
+        #expect(share.countedAssetAmount == 150)
+        #expect(try Fixture.token(decimals: 2).format(share.countedAssetAmount) == "1.5")
+        #expect(try Fixture.token(decimals: 6).format(share.countedAssetAmount) == "0.00015")
     }
 
     // MARK: - The helper underneath

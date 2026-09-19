@@ -1,4 +1,5 @@
 import Foundation
+import Gating
 
 /// Why a read of the chain did not produce an answer.
 ///
@@ -54,9 +55,9 @@ public enum ChainError: Error, Equatable, LocalizedError, Sendable {
             return "Asset \(assetId) does not exist on this node."
         case .assetDecimalsDisagree(let assetId, let configured, let onChain):
             return "Asset \(assetId) has \(onChain) decimal places on chain, and "
-                + "\(ChainEnvironment.assetDecimals) is set to \(configured). Every balance would be wrong by "
+                + "\(TokenProfile.decimalsKey) is set to \(configured). Every balance would be wrong by "
                 + "a factor of ten for each missing place, so this refuses to start. Correct "
-                + "\(ChainEnvironment.assetDecimals) or \(ChainEnvironment.assetId)."
+                + "\(TokenProfile.decimalsKey) or \(TokenProfile.assetIdKey)."
         case .requestBudgetSpent(let until):
             return "Today's request budget is spent. Reads and signing are paused until "
                 + "\(UTCDay.stamp(until)) UTC. Raise \(ChainEnvironment.dailyRequestBudget) or read less "

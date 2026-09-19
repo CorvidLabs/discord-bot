@@ -1,4 +1,5 @@
 import Foundation
+import Gating
 import Testing
 @testable import Chain
 
@@ -145,7 +146,7 @@ internal struct ChainReaderTests {
 
     @Test("A pool's reserves are read from the account the pool token names")
     internal func readsPoolReserves() async throws {
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let reader = try Self.reader(
             accounts: [
                 Fixture.poolAccount: Fixture.account(
@@ -153,36 +154,28 @@ internal struct ChainReaderTests {
                     holdings: [
                         Fixture.holding(Fixture.assetId, 4_000),
                         Fixture.holding(Fixture.pairedAssetId, 2_000),
-                        Fixture.holding(Fixture.poolTokenId, 0)
+                        Fixture.holding(Fixture.lpAssetId, 0)
                     ]
                 )
             ],
             assets: [
-                Fixture.poolTokenId: Fixture.assetDetails(
-                    id: Fixture.poolTokenId,
+                Fixture.lpAssetId: Fixture.assetDetails(
+                    id: Fixture.lpAssetId,
                     total: 1_000,
                     reserveAddress: Fixture.poolAccount
                 )
             ]
         )
         let reserves = try await reader.poolReserves(pool: pool, now: Self.noon)
-        #expect(reserves.assetABalance == 4_000)
-        #expect(reserves.assetBBalance == 2_000)
+        #expect(reserves.countedAssetBalance == 4_000)
+        #expect(reserves.otherAssetBalance == 2_000)
         #expect(reserves.circulatingPoolTokens == 1_000)
         #expect(reserves.readAt == Self.noon)
     }
 
     @Test("A pair against the chain's own currency reads the account balance, not a holding")
     internal func nativeCurrencySideIsReadFromTheAccount() async throws {
-        let pool = try LiquidityPool(
-            id: "native",
-            name: "TOKEN / NATIVE",
-            poolTokenId: Fixture.poolTokenId,
-            poolTokenDecimals: 6,
-            assetA: PoolSide(assetId: Fixture.assetId, symbol: "TOKEN", decimals: 6),
-            assetB: PoolSide(assetId: 0, symbol: "NATIVE", decimals: 6),
-            countedAssetId: Fixture.assetId
-        )
+        let pool = Fixture.pool(id: "native", paired: LiquidityPool.nativeCurrencyAssetId)
         let reader = try Self.reader(
             accounts: [
                 Fixture.poolAccount: Fixture.account(
@@ -192,23 +185,23 @@ internal struct ChainReaderTests {
                 )
             ],
             assets: [
-                Fixture.poolTokenId: Fixture.assetDetails(
-                    id: Fixture.poolTokenId,
+                Fixture.lpAssetId: Fixture.assetDetails(
+                    id: Fixture.lpAssetId,
                     total: 100,
                     reserveAddress: Fixture.poolAccount
                 )
             ]
         )
         let reserves = try await reader.poolReserves(pool: pool, now: Self.noon)
-        #expect(reserves.assetBBalance == 12_345)
+        #expect(reserves.otherAssetBalance == 12_345)
     }
 
     @Test("A pool token that names no account refuses rather than reporting an empty pool")
     internal func missingPoolAccountRefuses() async throws {
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let reader = try Self.reader(
             accounts: [:],
-            assets: [Fixture.poolTokenId: Fixture.assetDetails(id: Fixture.poolTokenId)]
+            assets: [Fixture.lpAssetId: Fixture.assetDetails(id: Fixture.lpAssetId)]
         )
         await #expect(throws: ChainError.poolAddressNotFound(poolId: pool.id)) {
             _ = try await reader.poolReserves(pool: pool, now: Self.noon)
@@ -220,12 +213,12 @@ internal struct ChainReaderTests {
         // A 404 on a member's wallet means they hold nothing and is a complete
         // answer. A 404 on a pool is not: read as an empty pool it makes every
         // provider's share nothing, completely, and the sweep demotes them.
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let reader = try Self.reader(
             accounts: [:],
             assets: [
-                Fixture.poolTokenId: Fixture.assetDetails(
-                    id: Fixture.poolTokenId,
+                Fixture.lpAssetId: Fixture.assetDetails(
+                    id: Fixture.lpAssetId,
                     reserveAddress: Fixture.poolAccount
                 )
             ]
@@ -266,12 +259,12 @@ internal struct ChainReaderTests {
     @Test("Reading a pool costs two requests, not four")
     internal func poolReadIsTwoRequests() async throws {
         let log = CallLog()
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let reader = try Self.reader(
             accounts: [Fixture.poolAccount: Fixture.account(Fixture.poolAccount)],
             assets: [
-                Fixture.poolTokenId: Fixture.assetDetails(
-                    id: Fixture.poolTokenId,
+                Fixture.lpAssetId: Fixture.assetDetails(
+                    id: Fixture.lpAssetId,
                     reserveAddress: Fixture.poolAccount
                 )
             ],

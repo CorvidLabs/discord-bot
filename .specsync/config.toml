@@ -6,7 +6,7 @@ specs_dir = "specs"
 # branch of the stack edited this line and two of them replaced it rather than
 # extending it, which would have quietly dropped a target out of a gate that
 # still reported full coverage.
-source_dirs = ["Sources/Reserve", "Sources/Gating", "Sources/Games"]
+source_dirs = ["Sources/Reserve", "Sources/Gating", "Sources/Games", "Sources/Chain"]
 required_sections = ["Purpose", "Public API", "Invariants", "Behavioral Examples", "Error Cases", "Dependencies", "Change Log"]
 enforcement = "strict"
 

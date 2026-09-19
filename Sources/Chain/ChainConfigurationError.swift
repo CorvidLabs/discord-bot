@@ -17,9 +17,6 @@ public enum ChainConfigurationError: Error, Equatable, LocalizedError, Sendable 
     /// Whole units times the asset's scale does not fit in `UInt64`.
     case amountOverflows(whole: UInt64, decimals: UInt8)
 
-    /// A pool names an asset that is neither of its two sides.
-    case poolCountsAnAssetItDoesNotHold(poolId: String, assetId: UInt64)
-
     /// Two pools share an id, so one of them would be silently dropped.
     case duplicatePoolId(String)
 
@@ -33,9 +30,6 @@ public enum ChainConfigurationError: Error, Equatable, LocalizedError, Sendable 
         case .amountOverflows(let whole, let decimals):
             return "\(ChainFormatting.grouped(whole)) whole units at \(decimals) decimal places does not fit "
                 + "in a 64 bit count of smallest units."
-        case .poolCountsAnAssetItDoesNotHold(let poolId, let assetId):
-            return "Pool `\(poolId)` is configured to count asset \(assetId) toward a balance, but that asset "
-                + "is neither side of the pair. Nothing would ever be counted from it."
         case .duplicatePoolId(let poolId):
             return "Two pools are configured with the id `\(poolId)`. Give each pool its own id."
         }

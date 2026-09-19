@@ -27,19 +27,26 @@ describes anything that exists yet, any more than the rest do. They are wants
 that have been written down, in the voices of the two people most likely to
 arrive next.
 
-**Almost none of it is built.** What exists today is one library, the payout
-engine that RESERVE describes, and nothing else: no gateway, no commands, no
-chain access, nothing that can be deployed. It is being built engine first
-because the engine is the part that cannot be patched after the fact. A bot that
-renders a card badly is embarrassing for an afternoon. A bot that pays a finite
-reserve twice has spent value nobody can put back. So the payout engine is
-written on its own, with no Discord and no chain anywhere near it, where every
-figure it produces can be pinned by a test and read by a person with a
-calculator. Everything social gets built on top of something already known to be
-correct.
+**Almost none of it is built.** What exists today is four libraries: the payout
+engine that RESERVE describes, the role rules that ROLE and ADOPT describe, the
+game engine that PLAY describes, and a layer that reads an Algorand node. There
+is **no gateway, no command, no database and nothing that can be deployed**, so
+no member has ever seen any of it and no operator has ever configured it.
+
+It is being built engine first because the engine is the part that cannot be
+patched after the fact. A bot that renders a card badly is embarrassing for an
+afternoon. A bot that pays a finite reserve twice has spent value nobody can put
+back. So the payout engine was written on its own, with no Discord and no chain
+anywhere near it, where every figure it produces can be pinned by a test and
+read by a person with a calculator. The three libraries beside it keep the same
+shape: no Discord type, no clock read inside a decision, no network in a test.
+Everything social gets built on top of something already known to be correct.
 
 So read the families below as the product this is meant to become. A line here
-is a want that has been written down and agreed, not a feature that works.
+is a want that has been written down and agreed, not a feature that works. Four
+families have code standing behind part of what they describe, which is not the
+same as being finished: RESERVE, ROLE, ADOPT and PLAY. The other fifteen have
+nothing behind them at all.
 
 ## Features
 

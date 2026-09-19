@@ -6,23 +6,21 @@ import Foundation
 /// the documentation and the error message cannot drift apart. An operator who
 /// has set something wrong should never have to grep the source to find out
 /// what it was called.
+///
+/// **There are no variables for the asset here.** Which asset, what it is
+/// called and how many decimal places it has are read once, by
+/// ``Gating/TokenProfile``, from `TOKEN_ASSET_ID`, `TOKEN_SYMBOL` and
+/// `TOKEN_DECIMALS`, and handed to ``ChainConfiguration`` as a value. This
+/// layer briefly had an asset id, a ticker and a decimals variable of its own,
+/// which asked an operator to write the asset down twice and let them write it
+/// down differently.
 public enum ChainEnvironment: Sendable {
 
-    // MARK: - The asset
+    // MARK: - The token
 
-    /// The on chain id of the asset balances are read for. Required.
-    public static let assetId = "CHAIN_ASSET_ID"
-
-    /// The ticker shown to people. Required, because a default would be
-    /// somebody else's word appearing in a stranger's server.
-    public static let assetSymbol = "CHAIN_ASSET_SYMBOL"
-
-    /// The asset's decimal places. Required, and deliberately never six by
-    /// default.
-    public static let assetDecimals = "CHAIN_ASSET_DECIMALS"
-
-    /// Whether to read the asset's decimals from the chain at boot and refuse
-    /// to start when they disagree with ``assetDecimals``. Defaults to on.
+    /// Whether to read the token's decimals from the chain at boot and refuse
+    /// to start when they disagree with the configured `TOKEN_DECIMALS`.
+    /// Defaults to on.
     public static let verifyAssetDecimals = "CHAIN_VERIFY_ASSET_DECIMALS"
 
     // MARK: - The node

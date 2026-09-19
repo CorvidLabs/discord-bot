@@ -82,7 +82,7 @@ internal struct BatchedChainReaderTests {
     @Test("A pool is read once for the whole sweep, not once for every member")
     internal func poolIsReadOncePerSweep() async throws {
         let log = CallLog()
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         var accounts: [String: ChainAccount] = [
             Fixture.poolAccount: Fixture.account(
                 Fixture.poolAccount,
@@ -95,14 +95,14 @@ internal struct BatchedChainReaderTests {
         for index in 0..<10 {
             accounts[Fixture.wallet(index)] = Fixture.account(
                 Fixture.wallet(index),
-                holdings: [Fixture.holding(Fixture.poolTokenId, 100)]
+                holdings: [Fixture.holding(Fixture.lpAssetId, 100)]
             )
         }
         let batched = try Self.batched(
             accounts: accounts,
             assets: [
-                Fixture.poolTokenId: Fixture.assetDetails(
-                    id: Fixture.poolTokenId,
+                Fixture.lpAssetId: Fixture.assetDetails(
+                    id: Fixture.lpAssetId,
                     total: 1_000,
                     reserveAddress: Fixture.poolAccount
                 )
@@ -115,22 +115,22 @@ internal struct BatchedChainReaderTests {
             now: Self.noon
         )
         #expect(results.allSatisfy { $0.liquidityAmount.completeValue == 100_000 })
-        #expect(await log.count(of: "asset:\(Fixture.poolTokenId)") == 1)
+        #expect(await log.count(of: "asset:\(Fixture.lpAssetId)") == 1)
         #expect(await log.count(of: "account:\(Fixture.poolAccount)") == 1)
     }
 
     @Test("A pool that could not be read leaves its providers short instead of poor")
     internal func unreadablePoolLeavesProvidersShort() async throws {
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let batched = try Self.batched(
             accounts: [
                 Fixture.wallet(1): Fixture.account(
                     Fixture.wallet(1),
-                    holdings: [Fixture.holding(Fixture.poolTokenId, 100)]
+                    holdings: [Fixture.holding(Fixture.lpAssetId, 100)]
                 )
             ],
             assets: [:],
-            assetFailures: [Fixture.poolTokenId: ChainError.network("connection reset")]
+            assetFailures: [Fixture.lpAssetId: ChainError.network("connection reset")]
         )
         let results = await batched.check(wallets: [Fixture.wallet(1)], pools: [pool], now: Self.noon)
         #expect(results[0].liquidityAmount.gaps == [.poolReservesUnavailable(poolId: pool.id)])
@@ -143,17 +143,17 @@ internal struct BatchedChainReaderTests {
         // that as an empty pool is the incident this module is built around: a
         // failed read presented as a complete zero, and every provider demoted
         // for providing liquidity.
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let batched = try Self.batched(
             accounts: [
                 Fixture.wallet(1): Fixture.account(
                     Fixture.wallet(1),
-                    holdings: [Fixture.holding(Fixture.poolTokenId, 100)]
+                    holdings: [Fixture.holding(Fixture.lpAssetId, 100)]
                 )
             ],
             assets: [
-                Fixture.poolTokenId: Fixture.assetDetails(
-                    id: Fixture.poolTokenId,
+                Fixture.lpAssetId: Fixture.assetDetails(
+                    id: Fixture.lpAssetId,
                     total: 1_000,
                     reserveAddress: Fixture.poolAccount
                 )
@@ -168,12 +168,12 @@ internal struct BatchedChainReaderTests {
     @Test("Reserves are reused until their lifetime is up, then read again")
     internal func reservesAreCachedForTheirLifetime() async throws {
         let log = CallLog()
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let batched = try Self.batched(
             accounts: [Fixture.poolAccount: Fixture.account(Fixture.poolAccount)],
             assets: [
-                Fixture.poolTokenId: Fixture.assetDetails(
-                    id: Fixture.poolTokenId,
+                Fixture.lpAssetId: Fixture.assetDetails(
+                    id: Fixture.lpAssetId,
                     reserveAddress: Fixture.poolAccount
                 )
             ],
@@ -190,12 +190,12 @@ internal struct BatchedChainReaderTests {
 
     @Test("Clearing the cached reserves makes the next read a fresh one")
     internal func clearingTheCache() async throws {
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let batched = try Self.batched(
             accounts: [Fixture.poolAccount: Fixture.account(Fixture.poolAccount)],
             assets: [
-                Fixture.poolTokenId: Fixture.assetDetails(
-                    id: Fixture.poolTokenId,
+                Fixture.lpAssetId: Fixture.assetDetails(
+                    id: Fixture.lpAssetId,
                     reserveAddress: Fixture.poolAccount
                 )
             ]
@@ -209,11 +209,11 @@ internal struct BatchedChainReaderTests {
     @Test("Once the provider has refused, the remaining pools are not asked")
     internal func quotaRefusalStopsTheRemainingPools() async throws {
         let log = CallLog()
-        let pools = [try Fixture.pool(id: "one"), try Fixture.pool(id: "two")]
+        let pools = [Fixture.pool(id: "one"), Fixture.pool(id: "two")]
         let batched = try Self.batched(
             accounts: [:],
             assetFailures: [
-                Fixture.poolTokenId: ChainError.api(statusCode: 403, message: "daily quota exceeded")
+                Fixture.lpAssetId: ChainError.api(statusCode: 403, message: "daily quota exceeded")
             ],
             log: log
         )

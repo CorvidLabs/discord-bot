@@ -1,4 +1,5 @@
 import Foundation
+import Gating
 import Testing
 @testable import Chain
 
@@ -13,7 +14,7 @@ internal struct WalletCheckTests {
         let check = WalletCheck.read(
             address: Fixture.wallet(1),
             holdings: [Fixture.holding(Fixture.assetId, 5_000_000)],
-            asset: try Fixture.asset(),
+            token: try Fixture.token(),
             pools: [],
             reserves: [:]
         )
@@ -28,7 +29,7 @@ internal struct WalletCheckTests {
         let check = WalletCheck.read(
             address: Fixture.wallet(2),
             holdings: [],
-            asset: try Fixture.asset(),
+            token: try Fixture.token(),
             pools: [],
             reserves: [:]
         )
@@ -45,7 +46,7 @@ internal struct WalletCheckTests {
                 Fixture.holding(Fixture.collectibleId, 0),
                 Fixture.holding(Fixture.assetId, 10)
             ],
-            asset: try Fixture.asset(),
+            token: try Fixture.token(),
             pools: [],
             reserves: [:]
         )
@@ -56,15 +57,15 @@ internal struct WalletCheckTests {
 
     @Test("What is parked in a pool counts toward what somebody holds")
     internal func poolPositionsCount() throws {
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let reserves = Fixture.reserves(pool: pool)
         let check = WalletCheck.read(
             address: Fixture.wallet(4),
             holdings: [
                 Fixture.holding(Fixture.assetId, 1_000_000),
-                Fixture.holding(Fixture.poolTokenId, 100_000)
+                Fixture.holding(Fixture.lpAssetId, 100_000)
             ],
-            asset: try Fixture.asset(),
+            token: try Fixture.token(),
             pools: [pool],
             reserves: [pool.id: reserves]
         )
@@ -76,14 +77,14 @@ internal struct WalletCheckTests {
 
     @Test("A pool whose reserves could not be read leaves the total short, never smaller")
     internal func missingReservesLeaveItShort() throws {
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let check = WalletCheck.read(
             address: Fixture.wallet(5),
             holdings: [
                 Fixture.holding(Fixture.assetId, 1_000_000),
-                Fixture.holding(Fixture.poolTokenId, 100_000)
+                Fixture.holding(Fixture.lpAssetId, 100_000)
             ],
-            asset: try Fixture.asset(),
+            token: try Fixture.token(),
             pools: [pool],
             reserves: [:]
         )
@@ -99,11 +100,11 @@ internal struct WalletCheckTests {
 
     @Test("A pool somebody has nothing in needs no reserves, so the total stays whole")
     internal func emptyPoolNeedsNoReserves() throws {
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let check = WalletCheck.read(
             address: Fixture.wallet(6),
             holdings: [Fixture.holding(Fixture.assetId, 42)],
-            asset: try Fixture.asset(),
+            token: try Fixture.token(),
             pools: [pool],
             reserves: [:]
         )
@@ -130,28 +131,33 @@ internal struct WalletCheckTests {
 
     @Test("Everything I hold is counted together, across every wallet I have linked")
     internal func walletsAreAddedUp() throws {
-        let asset = try Fixture.asset()
+        let token = try Fixture.token()
         let checks = [
             WalletCheck.read(
                 address: Fixture.wallet(1),
                 holdings: [Fixture.holding(Fixture.assetId, 1_000)],
-                asset: asset,
+                token: token,
                 pools: [],
                 reserves: [:]
             ),
             WalletCheck.read(
                 address: Fixture.wallet(2),
                 holdings: [Fixture.holding(Fixture.assetId, 2_500)],
-                asset: asset,
+                token: token,
                 pools: [],
                 reserves: [:]
             )
         ]
-        let combined = try BalanceCombiner.combine(checks).requireComplete()
-        #expect(combined.walletCount == 2)
-        #expect(combined.directBalance == 3_500)
-        #expect(combined.combinedBalance == 3_500)
-        #expect(combined.hasLiquidity == false)
+        // Spelled out rather than inferred: there is one `CombinedBalance` in
+        // the package now, and it is the layer above's. Both modules used to
+        // declare one, both carried a comment about the same morning, and a
+        // host importing the two had to qualify the name to say which
+        // incident it meant.
+        let combined: Gating.CombinedBalance.Totals = try BalanceCombiner.combine(checks).requireComplete()
+        #expect(combined.accountCount == 2)
+        #expect(combined.direct == 3_500)
+        #expect(combined.combined == 3_500)
+        #expect(combined.otherAccountsExist)
     }
 
     @Test("One unreadable wallet makes the whole person's total short, not just that wallet's")
@@ -160,7 +166,7 @@ internal struct WalletCheckTests {
             WalletCheck.read(
                 address: Fixture.wallet(1),
                 holdings: [Fixture.holding(Fixture.assetId, 1_000)],
-                asset: try Fixture.asset(),
+                token: try Fixture.token(),
                 pools: [],
                 reserves: [:]
             ),
@@ -168,7 +174,7 @@ internal struct WalletCheckTests {
         ]
         let reading = BalanceCombiner.combine(checks)
         #expect(reading.isComplete == false)
-        #expect(reading.valueEvenIfShort?.combinedBalance == 1_000)
+        #expect(reading.valueEvenIfShort?.combined == 1_000)
         #expect(throws: ChainError.self) {
             _ = try reading.requireComplete()
         }
@@ -183,7 +189,7 @@ internal struct WalletCheckTests {
             WalletCheck.read(
                 address: Fixture.wallet(1),
                 holdings: [],
-                asset: try Fixture.asset(),
+                token: try Fixture.token(),
                 pools: [],
                 reserves: [:]
             ),
@@ -192,17 +198,17 @@ internal struct WalletCheckTests {
         let combined = try BalanceCombiner
             .combine(checks, storedBalances: [Fixture.wallet(2): 9_000_000])
             .requireComplete()
-        #expect(combined.combinedBalance == 9_000_000)
-        #expect(combined.walletsFromStoredBalances == [Fixture.wallet(2)])
+        #expect(combined.combined == 9_000_000)
+        #expect(combined.accountsFromStoredBalances == [Fixture.wallet(2)])
     }
 
     @Test("A stored figure is never used for a pool position, because a pool moves with every trade")
     internal func storedFiguresDoNotCoverPools() throws {
-        let pool = try Fixture.pool()
+        let pool = Fixture.pool()
         let check = WalletCheck.read(
             address: Fixture.wallet(1),
-            holdings: [Fixture.holding(Fixture.poolTokenId, 5)],
-            asset: try Fixture.asset(),
+            holdings: [Fixture.holding(Fixture.lpAssetId, 5)],
+            token: try Fixture.token(),
             pools: [pool],
             reserves: [:]
         )
@@ -216,11 +222,16 @@ internal struct WalletCheckTests {
         // The badge is for having put something in, not for what today's price
         // makes of it. One token out of a million of a pool holding a hundred
         // of the counted side rounds down to nothing and is still liquidity.
-        let pool = try Fixture.pool()
+        //
+        // Asked of the position rather than of the total, because that is
+        // where the rules ask it: `LiquidityPosition.isProviding` reads the
+        // LP holding, which is the evidence that somebody provided, and the
+        // counted amount is what the position is worth today.
+        let pool = Fixture.pool()
         let check = WalletCheck.read(
             address: Fixture.wallet(1),
-            holdings: [Fixture.holding(Fixture.poolTokenId, 1)],
-            asset: try Fixture.asset(),
+            holdings: [Fixture.holding(Fixture.lpAssetId, 1)],
+            token: try Fixture.token(),
             pools: [pool],
             reserves: [
                 pool.id: Fixture.reserves(
@@ -232,30 +243,47 @@ internal struct WalletCheckTests {
             ]
         )
         let combined = try BalanceCombiner.combine([check]).requireComplete()
-        #expect(combined.liquidityAmount == 0)
-        #expect(combined.hasLiquidity)
+        #expect(combined.liquidity == 0)
+
+        let holdings = MemberHoldings.fromChain(
+            memberId: "member-1",
+            isVerified: true,
+            checks: [check],
+            pools: [pool]
+        )
+        #expect(holdings.isProvidingLiquidity == .known(true))
+        #expect(holdings.position(inPool: pool.id) == .known(
+            LiquidityPosition(poolId: pool.id, lpBaseUnits: 1, tokenBaseUnits: 0)
+        ))
     }
 
     @Test("Adding up absurd balances gives an absurd number rather than taking the process down")
     internal func totalsSaturateRatherThanTrap() throws {
-        let asset = try Fixture.asset()
+        let token = try Fixture.token()
         let checks = (0..<3).map { index in
             WalletCheck.read(
                 address: Fixture.wallet(index),
                 holdings: [Fixture.holding(Fixture.assetId, UInt64.max)],
-                asset: asset,
+                token: token,
                 pools: [],
                 reserves: [:]
             )
         }
         let combined = try BalanceCombiner.combine(checks).requireComplete()
-        #expect(combined.combinedBalance == UInt64.max)
+        #expect(combined.combined == UInt64.max)
     }
 
-    @Test("Nobody's wallets add up to nothing, completely")
-    internal func noWalletsIsACompleteZero() throws {
-        let combined = try BalanceCombiner.combine([]).requireComplete()
-        #expect(combined.walletCount == 0)
-        #expect(combined.combinedBalance == 0)
+    @Test("Nobody's wallets is not a total of nothing, because nobody looked")
+    internal func noWalletsIsNotAZero() {
+        // This used to answer a complete zero, while the same question one
+        // layer up answered unknown, and the two now produce the same type.
+        // A caller reaches an empty list both when a member really has no
+        // account and when nobody could list the accounts they have, and a
+        // confident zero for the second strips every rung from somebody whose
+        // holdings nobody read.
+        let reading = BalanceCombiner.combine([])
+        #expect(reading.isComplete == false)
+        #expect(reading.valueEvenIfShort == nil)
+        #expect(reading.gaps == [.notRead])
     }
 }
