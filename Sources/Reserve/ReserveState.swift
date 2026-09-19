@@ -6,7 +6,7 @@ import Foundation
 /// concurrency gate covers every stream at once rather than one stream each:
 /// two streams writing this back simultaneously would each save a snapshot taken
 /// before the other's, and the loser's finished epoch would vanish while its
-/// epoch row still said "complete" — leaving that stream permanently refusing to
+/// epoch row still said "complete", leaving that stream permanently refusing to
 /// pay.
 public struct ReserveState: Codable, Sendable, Equatable {
 
@@ -125,7 +125,7 @@ public struct ReserveState: Codable, Sendable, Equatable {
     /// A copy with one payment's smallest units added, without closing the epoch.
     ///
     /// Recorded *before* the payment, like the epoch claim. An over-count is
-    /// safe: it tightens the allocation ceiling. An under-count is not — it
+    /// safe: it tightens the allocation ceiling. An under-count is not: it
     /// would let a later epoch spend past the allocation.
     public func recordingSpend(streamId: String, baseUnits amount: UInt64) -> ReserveState {
         var copy = self

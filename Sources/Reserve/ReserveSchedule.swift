@@ -6,7 +6,7 @@ import Foundation
 /// per-epoch figure, never what a recipient is entitled to over the whole
 /// schedule: half as many epochs pay twice as much each. What is actually *paid*
 /// can differ between two durations by a handful of smallest units, because the
-/// residue that will not divide differs — and that residue is stated rather than
+/// residue that will not divide differs, and that residue is stated rather than
 /// hidden.
 ///
 /// The catalog is configuration. The original hard-coded exactly two durations,
@@ -25,7 +25,7 @@ public struct ReserveSchedule: Sendable, Equatable, Hashable, Codable, Identifia
     /// Epochs in this schedule. At least one.
     public let epochCount: UInt64
 
-    /// What one epoch is called: `weekly`, `monthly`. Display only — the engine
+    /// What one epoch is called: `weekly`, `monthly`. Display only: the engine
     /// never reads a clock, so the cadence is the host's to enforce.
     public let cadence: String
 
@@ -56,7 +56,7 @@ public struct ReserveSchedule: Sendable, Equatable, Hashable, Codable, Identifia
     /// Whether a typed string names this schedule.
     ///
     /// Matches the id, the label, the epoch count and any alias, ignoring case,
-    /// spaces, hyphens and underscores — so `6m`, `26`, `Six Months` and
+    /// spaces, hyphens and underscores, so `6m`, `26`, `Six Months` and
     /// `six-months` all land on the same schedule. An empty string matches
     /// nothing, because nothing here is allowed to fall back to a default: a
     /// duration that quietly became the other one would halve or double every

@@ -6,7 +6,7 @@ import Foundation
 /// split once and then never again, and the split has to be provably exact. Two
 /// streams at `70/100` and `30/100` of ten billion are seven billion and three
 /// billion with nothing left over, and the configuration refuses to exist if
-/// that is not true — see ``ReserveConfiguration``.
+/// that is not true: see ``ReserveConfiguration``.
 public struct ReserveShare: Sendable, Equatable, Hashable, Codable {
 
     // MARK: - Properties

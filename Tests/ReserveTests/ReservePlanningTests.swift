@@ -62,7 +62,7 @@ struct ReservePlanningTests {
     func recipientPaidOncePerEpoch() throws {
         let planner = try Fixture.planner()
         // Five things in five accounts, all one person. Paying per account would
-        // pay them five times for splitting and once for keeping them together —
+        // pay them five times for splitting and once for keeping them together:
         // a five-fold exploit for anybody who noticed.
         let split = (1...5).map { index in
             ReserveRecipient(id: "R1", account: Fixture.account(index), holdingIds: ["H\(index)"])
@@ -492,7 +492,7 @@ struct ReservePlanningTests {
                 limits: limits(perPayment: 1_000, perPeriod: 400_000_000, spent: 0)
             )
         }
-        // Fits the raw period ceiling, but the period is already part spent —
+        // Fits the raw period ceiling, but the period is already part spent,
         // which is exactly the combination the remaining-based check exists for.
         #expect(throws: (any Error).self) {
             try planner.requireWithinLimits(

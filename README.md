@@ -1,8 +1,11 @@
 # discord-bot
 
-A Discord bot for Algorand projects. Members link a wallet by signing a
-challenge, the bot reads what those wallets hold, grants the roles the project
-defines, and pays holders from a finite reserve on a schedule.
+A Discord bot for Algorand projects, so that holding something on chain means
+something in a server. A member proves a wallet is theirs by signing a
+challenge, the bot reads what that wallet holds, the role beside their name
+follows, and holders can be paid from a finite reserve on a schedule.
+
+That is the product this is meant to become. Almost none of it is written.
 
 ## State
 
@@ -10,14 +13,22 @@ defines, and pays holders from a finite reserve on a schedule.
 at a time, out of a private bot that has been running a live community for
 months. Nothing here is a product yet.
 
-What exists today is one library target, `Reserve`: the payout engine. A finite
-reserve split into named streams, paid out over epochs, with fixed shares that
-cannot move when new holders arrive, integer arithmetic in the asset's smallest
-unit throughout, and guards against paying the same period twice. It builds, it
-is covered by 105 tests, and it knows nothing about Discord or Algorand.
+What exists today is one library target, `Reserve`, and nothing else: the
+payout engine. A finite reserve split into named streams, paid out over epochs,
+with fixed shares that cannot move when new holders arrive, integer arithmetic
+in the asset's smallest unit throughout, and guards against paying the same
+period twice. It builds, it is covered by 105 tests, and it knows nothing about
+Discord or Algorand.
 
 There is no bot here yet: no gateway, no commands, no chain access, nothing you
-can deploy.
+can deploy. Verification, roles, collections, giveaways, the games and the
+scheduler are all unwritten.
+
+What the whole thing is meant to be is written down rather than implied.
+[`INTENT.md`](INTENT.md) and the files under [`hi/`](hi/) are that catalogue:
+nineteen families of plain sentences about what somebody wants from each part,
+every one with an id that never moves. They describe the intended product, not a
+running one. Only the RESERVE family has code behind it today.
 
 The Discord surface, the role synchronisation and the wallet verification flow
 come after that, in that order.
@@ -53,9 +64,9 @@ never sends anything, and it has no idea what a database is.
   configuration refuses to exist.
 - A **schedule** is a count of epochs. Which durations are offered is
   configuration too.
-- A **payout rule** is either `oncePerRecipient` — one slot per person, however
-  many things they hold and however many accounts they spread them across — or
-  `oncePerHeldUnit`, one slot per thing held.
+- A **payout rule** is either `oncePerRecipient`, meaning one slot per person
+  however many things they hold and however many accounts they spread them
+  across, or `oncePerHeldUnit`, meaning one slot per thing held.
 
 The rule that matters most: **a stream divides its share by its fixed
 denominator, never by however many happen to be eligible today.** That is what
@@ -86,7 +97,7 @@ passes    30%                3,000,000,000  whole
 
 Every epoch pays the identical figure. A recipient told `269,230.76923` in the
 first epoch is still being paid `269,230.76923` in the twenty-sixth. The
-alternative — spreading the remainder so a few epochs pay one unit more — makes
+alternative, spreading the remainder so a few epochs pay one unit more, makes
 every epoch a slightly different number and makes that promise impossible.
 
 The residue is never paid and never hidden:
@@ -116,7 +127,7 @@ Each is here because removing it reintroduces a specific failure.
 
 **One epoch at a time.** Reading the ledger, planning against it and paying all
 suspend. Two overlapping runs see the same untouched ledger, build the identical
-plan, and pay *everybody* twice — walking straight past the per-epoch record,
+plan, and pay *everybody* twice, walking straight past the per-epoch record,
 because the record is only read once at the start. One gate covers every stream,
 not one gate each, because the reserve's state is a single value written back
 whole: two streams saving snapshots taken before each other's would lose one
@@ -125,13 +136,13 @@ stream's finished epoch while its epoch record still said "complete".
 **One epoch per period.** The per-epoch record does not object to running epoch 2
 immediately after epoch 1, so without a cadence key the entire schedule can be
 spent in an afternoon by running the command repeatedly. A firing is identified
-by its *period* — an ISO week, a month — never by a timestamp, so two runs an
+by its *period*: an ISO week, a month. Never by a timestamp, so two runs an
 hour apart collide and a genuinely missed period is still paid late.
 
 **The claim is written before the payment.** The window between handing value
 over and recording it is where one payment becomes two: the value has left,
 nothing on disk says so, and the next run pays again. Claiming first inverts the
-risk. A crash now leaves a claim with no payment — under-paying by one slot and
+risk. A crash now leaves a claim with no payment, under-paying by one slot and
 leaving the value in the reserve, which is the direction you can recover from.
 
 **Limits are checked before the first payment.** An epoch that pays 111 of 200
@@ -186,7 +197,7 @@ let outcome = try await runner.run(
 
 You supply two things.
 
-**`ReserveStore`** is where the ledger lives — four async methods, load and save
+**`ReserveStore`** is where the ledger lives: four async methods, load and save
 for the reserve's state and for one epoch's record. An implementation has two
 obligations: a row that cannot be read must throw rather than come back empty,
 and a save must be durable before it returns, because the claim-before-pay
@@ -194,8 +205,8 @@ discipline rests on the claim being on disk when the payment is attempted. An
 `InMemoryReserveStore` ships for tests.
 
 **`ReservePayer`** is whoever actually moves the value, and it may optionally
-declare spending limits and an available balance. It returns a reference — a
-transaction id, a receipt number — so a payment is evidenced rather than
+declare spending limits and an available balance. It returns a reference: a
+transaction id, a receipt number. A payment is evidenced rather than
 asserted. It throws `ReservePaymentRefusal` when it can *prove* nothing moved, in
 which case the slot is handed back; anything else it throws keeps the claim,
 because a payment that might have gone through must never be retried.
@@ -219,10 +230,12 @@ where a real run would.
 ## How this repository works
 
 Intent is written down before code, as plain sentences about what somebody wants,
-each with an id that never moves. See `hi/`, and
-[`hi/reserve.md`](hi/reserve.md) in particular: the engine's 52 criteria were
-written before any of it was built, and the tests cite them by id. Module
-contracts live alongside the code and are kept in step with it.
+each with an id that never moves. [`INTENT.md`](INTENT.md) indexes the families
+and `hi/` holds them. [`hi/reserve.md`](hi/reserve.md) is the only one with an
+implementation behind it: the engine's 52 criteria were written before any of it
+was built, and the tests cite them by id. The other eighteen families are intent
+waiting on code, and are marked as such rather than dressed up as features.
+Module contracts live alongside the code and are kept in step with it.
 
 Every change arrives through a pull request.
 

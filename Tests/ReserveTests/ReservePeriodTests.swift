@@ -77,7 +77,7 @@ struct ReservePeriodTests {
 
     @Test("Period keys do not move with the host's timezone")
     func keysAreUTC() {
-        // The same instant, asked for twice, cannot disagree with itself — and
+        // The same instant, asked for twice, cannot disagree with itself, and
         // because everything here pins UTC explicitly, the answer does not
         // depend on where the process happens to be running.
         let moment = Date(timeIntervalSince1970: 1_758_000_000)
