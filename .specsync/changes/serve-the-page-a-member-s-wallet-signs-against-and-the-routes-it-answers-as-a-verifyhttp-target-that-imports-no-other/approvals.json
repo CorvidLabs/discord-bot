@@ -1,0 +1,85 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1789858173,
+      "digest": "29e0a4d8cd186dadeda0ce0b29b502d0b97401e27b214eab83d45d9936f35532",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "serve-the-page-a-member-s-wallet-signs-against-and-the-routes-it-answers-as-a-verifyhttp-target-that-imports-no-other",
+        "title": "Serve the page a member's wallet signs against, and the routes it answers, as a VerifyHTTP target that imports no other target in this package and that nothing links yet",
+        "description": "Serve the page a member's wallet signs against, and the routes it answers, as a VerifyHTTP target that imports no other target in this package and that nothing links yet",
+        "kind": "feature",
+        "affected_specs": [
+          "verify",
+          "verify-http"
+        ],
+        "affected_paths": [
+          "Package.swift",
+          "Sources/VerifyHTTP",
+          "Tests/VerifyHTTPTests"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "A member's wallet can be served the page and its signature accepted over HTTP from the operator's own machine, without the page interpolating any value into its markup, loading any third-party script, or the target reaching any other target in this package. Concretely: the page is a string constant so no missing resource bundle can trap the process; the account name, code and expiry are written as text nodes by the script rather than templated server-side; responses carry a Content-Security-Policy with no third-party origin plus nosniff, X-Frame-Options DENY and frame-ancestors; a rate limiter bounds the routes; TargetShapeTests reads the target's own sources and fails if it ever imports Store, Chain, Gating, Reserve, Games, Surface, SurfaceDiscord, Runtime, DiscordBM or Algorand, or reads an environment variable; and no executable links the target, so the program binds no listener of its and /verify stays unregistered. 1264 tests in 105 suites pass, and specsync check --strict reports 225/225 files."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "verify": "5b7cfb16bceac5f615ccc918da8fd8fd6d0e79a88546a919a97458fa743e65e9",
+        "verify-http": "3fbdd517f086cefc9c62f80f242f912ae72661025f5615e128fd96e49beda2fd"
+      }
+    },
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1789858626,
+      "digest": "0d114403a29ca751bed1572a61497e6dc427b90bed94276d28b6a50bd8781859",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "serve-the-page-a-member-s-wallet-signs-against-and-the-routes-it-answers-as-a-verifyhttp-target-that-imports-no-other",
+        "title": "Serve the page a member's wallet signs against, and the routes it answers, as a VerifyHTTP target that imports no other target in this package and that nothing links yet",
+        "description": "Serve the page a member's wallet signs against, and the routes it answers, as a VerifyHTTP target that imports no other target in this package and that nothing links yet",
+        "kind": "feature",
+        "affected_specs": [
+          "verify",
+          "verify-http"
+        ],
+        "affected_paths": [
+          ".specsync/config.toml",
+          "Package.resolved",
+          "Package.swift",
+          "Sources/VerifyHTTP",
+          "Tests/VerifyHTTPTests",
+          "specs/verify",
+          "specs/verify-http"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "A member's wallet can be served the page and its signature accepted over HTTP from the operator's own machine, without the page interpolating any value into its markup, loading any third-party script, or the target reaching any other target in this package. Concretely: the page is a string constant so no missing resource bundle can trap the process; the account name, code and expiry are written as text nodes by the script rather than templated server-side; responses carry a Content-Security-Policy with no third-party origin plus nosniff, X-Frame-Options DENY and frame-ancestors; a rate limiter bounds the routes; TargetShapeTests reads the target's own sources and fails if it ever imports Store, Chain, Gating, Reserve, Games, Surface, SurfaceDiscord, Runtime, DiscordBM or Algorand, or reads an environment variable; and no executable links the target, so the program binds no listener of its and /verify stays unregistered. 1264 tests in 105 suites pass, and specsync check --strict reports 225/225 files."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "verify": "5b7cfb16bceac5f615ccc918da8fd8fd6d0e79a88546a919a97458fa743e65e9",
+        "verify-http": "3fbdd517f086cefc9c62f80f242f912ae72661025f5615e128fd96e49beda2fd"
+      }
+    }
+  ],
+  "reopenings": []
+}

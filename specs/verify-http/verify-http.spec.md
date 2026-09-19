@@ -1,6 +1,6 @@
 ---
 module: verify-http
-version: 1
+version: 2
 status: active
 files:
   - Sources/VerifyHTTP/VerifyHTTPHost.swift
@@ -352,3 +352,4 @@ sense belongs to.
 |------|--------|--------|
 | 2026-09-19 | maintainers | Review fixes: a query string refused for free, per-source budgets sized for an instance and said to be, an unreadable claim answerable and refused, the claim asked again before a proof is handed over, the peer budget made the whole request's, connections in flight bounded, a real ceiling on the limiter's table, framing a sender cannot choose, and a content type that cannot end a header block. |
 | 2026-09-19 | maintainers | Spec written with the `VerifyHTTP` library target: the page, the three calls it makes, the socket underneath them, the rate limit on all four, and the link whose session id lives in a fragment. It discharges the host obligations `specs/verify` records as unevidenced, except the chat command, the pending record and the operator's release path, which belong to the program. |
+| 2026-09-19 | SpecSync | serve-the-page-a-member-s-wallet-signs-against-and-the-routes-it-answers-as-a-verifyhttp-target-that-imports-no-other: Serve the page a member's wallet signs against, and the routes it answers, as a VerifyHTTP target that imports no other target in this package and that nothing links yet |

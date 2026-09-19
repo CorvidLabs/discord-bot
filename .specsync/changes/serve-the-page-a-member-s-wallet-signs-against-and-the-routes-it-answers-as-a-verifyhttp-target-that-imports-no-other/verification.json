@@ -1,0 +1,27 @@
+{
+  "timestamp": 1789858634,
+  "commit": "a0a17b13b8e9f70e052e8727d51932b5111f2c9f",
+  "contract_digest": "0d114403a29ca751bed1572a61497e6dc427b90bed94276d28b6a50bd8781859",
+  "execution_digest": "77eeaff3192bab26a1f303072f2f31294d57c498028b7d6c011d6de454f927ae",
+  "workspace_digest": "cc065706ed5f497efbcfb1dde2db567def8bc4314b227487406a8fe168ede26f",
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec verify --spec verify-http",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": [
+    "REQ-verify-009",
+    "REQ-verify-http-001",
+    "REQ-verify-http-002",
+    "REQ-verify-http-003",
+    "REQ-verify-http-004",
+    "REQ-verify-http-005",
+    "REQ-verify-http-006",
+    "REQ-verify-http-007",
+    "REQ-verify-http-008",
+    "REQ-verify-http-009"
+  ]
+}

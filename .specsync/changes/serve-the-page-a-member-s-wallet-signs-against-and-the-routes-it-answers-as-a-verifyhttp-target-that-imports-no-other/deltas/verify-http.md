@@ -1,32 +1,13 @@
 ---
-spec: verify-http.spec.md
+change: serve-the-page-a-member-s-wallet-signs-against-and-the-routes-it-answers-as-a-verifyhttp-target-that-imports-no-other
+module: verify-http
 ---
 
-## User Stories
+# Semantic delta: verify-http
 
-- As a member, I want to open one link and prove a wallet, without installing
-  anything and without the page feeling like a phishing page (VERIFY-1).
-- As a member, I want the page to tell me whose link this is before I sign
-  anything, so that a link somebody sent me is one I can see is not mine
-  (VERIFY-1, VERIFY-6).
-- As a member, I want a refusal I can act on: whether a new link would help,
-  or whether waiting is the only thing that will (VERIFY-1).
-- As a member, I want nothing that could be replayed against my session to
-  end up in a log, a screenshot or a referrer header (VERIFY-7, VERIFY-7.b).
-- As somebody running this, I want verification without standing up a second
-  web service, and without asking my members to trust anybody but me
-  (VERIFY-5, HOST-1).
-- As somebody running this, I want no member, however fast they type, to be
-  able to spend the day's budget for reading the chain (RUN-11).
-- As somebody deciding whether to install this, I want to be told plainly
-  what the page does not do yet, rather than finding out from a member
-  (TRUST-1, BUILD-4).
-- As a contributor, I want the whole surface exercised with no chat token, no
-  node, no database and no wallet (BUILD-2, BUILD-2.a).
+## Modified
 
-## Requirements
-
-### REQ-verify-http-001
+### REQUIREMENT REQ-verify-http-001
 
 The target SHALL serve a page a member's wallet signs against and SHALL
 accept the signed blob on a route of its own, handing both to
@@ -39,7 +20,7 @@ per request in the listener (VERIFY-5, HOST-1, BUILD-2).
 Acceptance Criteria
 - Covered by the suites named in this change's `testing.md`.
 
-### REQ-verify-http-002
+### REQUIREMENT REQ-verify-http-002
 
 The session id SHALL be treated as a bearer credential. It SHALL reach the
 page in the fragment of the link and SHALL NOT appear in a query string, a
@@ -53,7 +34,7 @@ REQ-verify-009).
 Acceptance Criteria
 - Covered by the suites named in this change's `testing.md`.
 
-### REQ-verify-http-003
+### REQUIREMENT REQ-verify-http-003
 
 Before a member is asked to sign, the page SHALL name the chat account the
 session belongs to, in the display name that member's own client would show,
@@ -67,7 +48,7 @@ name (REQ-verify-010, VERIFY-6).
 Acceptance Criteria
 - Covered by the suites named in this change's `testing.md`.
 
-### REQ-verify-http-004
+### REQUIREMENT REQ-verify-http-004
 
 Every route SHALL be rate limited per source, and every route carrying a
 session id SHALL be rate limited per session as well, against a
@@ -85,7 +66,7 @@ where an operator changing them will read it
 Acceptance Criteria
 - Covered by the suites named in this change's `testing.md`.
 
-### REQ-verify-http-005
+### REQUIREMENT REQ-verify-http-005
 
 A refusal SHALL carry a sentence written for a member, a non-reversible
 handle, and whether trying again from the same page could help. It SHALL NOT
@@ -97,7 +78,7 @@ be lined up, and a test SHALL pin them against each other
 Acceptance Criteria
 - Covered by the suites named in this change's `testing.md`.
 
-### REQ-verify-http-006
+### REQUIREMENT REQ-verify-http-006
 
 An address SHALL be bound to the session before the host is asked whether it
 belongs to another member, so that question is only ever asked about an
@@ -115,7 +96,7 @@ reader configured, the refusal SHALL stand
 Acceptance Criteria
 - Covered by the suites named in this change's `testing.md`.
 
-### REQ-verify-http-007
+### REQUIREMENT REQ-verify-http-007
 
 A checked proof SHALL be handed to the host and SHALL bind nothing here. The
 member SHALL be told to confirm where they ran the command. A proof the host
@@ -125,7 +106,7 @@ could not hold SHALL be reported as that rather than shown as a success
 Acceptance Criteria
 - Covered by the suites named in this change's `testing.md`.
 
-### REQ-verify-http-008
+### REQUIREMENT REQ-verify-http-008
 
 The page SHALL be a static asset this target serves, with no build step, no
 bundler and no resource bundle that can be missing at runtime. No value SHALL
@@ -138,7 +119,7 @@ extension point and SHALL say plainly what an operator still has to add
 Acceptance Criteria
 - Covered by the suites named in this change's `testing.md`.
 
-### REQ-verify-http-009
+### REQUIREMENT REQ-verify-http-009
 
 The listener SHALL bound one peer's whole request rather than one read of
 it, and SHALL bound how many connections are being read at once, refusing
@@ -153,18 +134,3 @@ SHALL ignore SIGPIPE; this target is a library and cannot (RT-001).
 
 Acceptance Criteria
 - Covered by the suites named in this change's `testing.md`.
-
-## Out of Scope
-
-Said here rather than left to be assumed.
-
-- **The chat command.** Minting a session, delivering the link where only the
-  member can see it, and rate limiting the command are the program's.
-- **The pending record and the confirmation.** This target hands a checked
-  proof over and says so; where it waits, how long for, and what confirming
-  means belong to the program and its store.
-- **Releasing an address bound to the wrong member**, with an audit line, is
-  an operator surface the program owns.
-- **TLS.** The listener speaks plain HTTP on the address it is given. Public
-  traffic belongs behind the operator's own terminator, which is also how the
-  reference deployment serves its administrator page.

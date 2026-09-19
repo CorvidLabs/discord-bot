@@ -168,25 +168,26 @@ produces SHALL be a distinct public type named for what it is
 
 ### REQ-verify-009
 
-*Host obligation.* Exactly one prover route SHALL be named explicitly in
-configuration, with naming none and naming both each stopping the boot and
-naming both variables. Startup SHALL state which route is live and, on an
-asserted route, SHALL say in words that the proof is the other service's word.
-A prover that fails after boot SHALL disable verification and nothing else.
-The session id SHALL be delivered only in the reply the member alone can see,
-carried to the page in a fragment or a request body and never in a query
-string, and never written to any log or report. Adoption SHALL require a
-confirmation by the subject, and the checked proof SHALL wait in a pending
-record keyed by the subject with an expiry of its own, binding nothing until
-it is confirmed. An authorising key SHALL come only from the host's own read
-of that exact account's authorising address field, at most once per session.
-The command and the submit route SHALL both be rate limited, per member and
-per source. An address another member already proved SHALL be refused at the
-connect and again at adoption and SHALL be releasable by an operator with an
-audit line. The operator's label SHALL be validated at boot, naming the
-variable. A balance another service supplied SHALL set no read timestamp,
-determine no tier and grant no role
-(ADOPT-2, ADOPT-9, SEE-7, VERIFY-2, VERIFY-5.b, ROLE-1.a, RUN-11).
+The obligations this module states for a host — the page a wallet signs
+against and the routes it answers — SHALL remain obligations of a host rather
+than of this module, and this module SHALL continue to reach no network, read
+no clock, hold no key and read no setting. What changes is that a host now
+exists in this package, `verify-http`, which depends on this module while this
+module SHALL continue to know nothing about it. The dependency SHALL run in
+that direction only, and `specs/verify/testing.md` SHALL record which of the
+host obligations that target now evidences and which remain unevidenced,
+rather than marking them all satisfied because a host appeared.
+
+Acceptance Criteria
+- `Tests/VerifyTests/TargetShapeTests.swift` proves this module still
+  constructs no client, names no request type, logs nothing and reads no
+  environment variable, unchanged by the arrival of a host.
+- `Tests/VerifyHTTPTests/TargetShapeTests.swift` proves the dependency runs
+  one way: the host imports this module, and this module imports nothing of
+  the host's.
+- `specs/verify/testing.md` names the obligations `verify-http` now evidences
+  and leaves the chat command, the pending record and the operator's release
+  path marked unevidenced.
 
 ### REQ-verify-010
 
