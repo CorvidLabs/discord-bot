@@ -25,7 +25,7 @@ offline, all covered by tests, and none of them wired to anything.
 | `StoreSQLite` | The same store on a file, using the SQLite the operating system already ships. One connection, every durability setting read back at start, an exclusive lease so two instances cannot pay the same week, and no new entry in `Package.resolved`. |
 
 ```
-swift test    # 645 tests in 48 suites
+swift test    # 635 tests in 47 suites
 ```
 
 The store's conformance suite is one test with thirty three behaviours, run

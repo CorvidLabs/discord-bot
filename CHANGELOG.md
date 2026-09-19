@@ -46,13 +46,14 @@ compare against.
   ids, written before the code and cited by the tests.
 - `specs/`, a contract per module, checked against the exported API by
   `specsync check --strict` in CI.
-- 645 tests in 48 suites, all offline. No test reaches a network, and none
+- 635 tests in 47 suites, all offline. No test reaches a network, and none
   needs a key, a funded wallet or a Discord server.
 - `docs/CONFIGURATION.md`: every environment variable an operator sets,
   grouped by what they are deciding rather than alphabetically, each with its
   default and one sentence on what goes wrong when it is wrong. It states
   which mistakes refuse by name and which load silently, and ends in a worked
-  `.env` for a small community that a test reads out of the document and loads
+  `.env` for a small community, loaded through the real loaders while the
+  document was written. Nothing re-runs it yet, and the document says so
   through the real loaders, so the example cannot quietly stop working
   (ADOPT-2, ADOPT-4).
 - `docs/README.md`: which document owns which fact, and the rules that keep

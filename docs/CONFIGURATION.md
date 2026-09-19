@@ -70,7 +70,7 @@ read for, and what every amount a member sees is denominated in.
 
 | Variable | Required | Default | What it is | What goes wrong if it is wrong |
 |----------|----------|---------|------------|-------------------------------|
-| `TOKEN_ASSET_ID` | yes | none | The on-chain id of your asset. | A wrong id reads as nobody holding anything, so the next sweep takes every tier role in the server away at once; an id of `0` is refused outright, because zero names the chain's own currency and an unset variable arrives here as zero. |
+| `TOKEN_ASSET_ID` | yes | none | The on-chain id of your asset. | A wrong id reads as nobody holding anything, so the next sweep takes every tier role in the server away at once; leaving it out is refused by name as a missing variable, and setting it to `0` is refused separately, with the value quoted, because zero names the chain's own currency rather than an asset anybody opts into. The two are different refusals from different places, so the message you get tells you which mistake you made. |
 | `TOKEN_SYMBOL` | yes | none | The ticker printed beside an amount. | Nothing miscalculates, and every card, reply and leaderboard in your server says the wrong word for your token. |
 | `TOKEN_DECIMALS` | yes | none | How many decimal places your asset has. Every whole-token threshold in the package is converted through this and nothing else. At most 19. | One place out and every balance in the process is out by a factor of ten, in a direction that either promotes everybody or demotes everybody, and nothing looks broken. See [Decimals](#decimals-and-why-there-is-no-default). |
 | `TOKEN_NAME` | no | the symbol | The longer name, for a card's title. | Cosmetic. |
@@ -420,8 +420,9 @@ back what actually loaded rather than the file you wrote.
 
 A small community: one token, one collection, three tiers, no pools, no
 payouts. Every value is obviously fake, and the file is complete enough to load
-through the real loaders. A test does exactly that on every run, reading this
-block out of this file, so if the example is wrong the build is red.
+through the real loaders. It was loaded that way while this section was
+written, and every figure below came from that run. Nothing re-runs it yet:
+see "Checking it yourself" below, which says plainly what does not exist.
 
 The role ids and addresses below are deliberately words rather than the long
 numbers and 58-character addresses they should be. Nothing validates either, so
