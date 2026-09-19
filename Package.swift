@@ -54,7 +54,8 @@ let package = Package(
         // ships. Separate from `Store` so a host that wants the records and
         // the in-memory backend never links a database at all.
         .library(name: "StoreSQLite", targets: ["StoreSQLite"]),
-        .library(name: "Verify", targets: ["Verify"])
+        .library(name: "Verify", targets: ["Verify"]),
+        .library(name: "Surface", targets: ["Surface", "SurfaceDiscord"])
     ],
     // Up to the next *minor*, not the next major. Semantic versioning gives a
     // 0.x release no compatibility promise at all across a minor bump, so
@@ -78,7 +79,16 @@ let package = Package(
         // pin, and TRUST-1.b is that something new to reach is a diff
         // somebody reads. Already resolved at 3.15.1 through the line above,
         // so this moves no version.
-        .package(url: "https://github.com/apple/swift-crypto.git", .upToNextMajor(from: "3.15.1"))
+        .package(url: "https://github.com/apple/swift-crypto.git", .upToNextMajor(from: "3.15.1")),
+
+        // The chat client, and the largest single thing this package reaches
+        // for: it brings a networking stack with it and takes the resolved
+        // graph from three pins to roughly twenty five. That is a real cost
+        // for a repository whose answer to "should I install this" is that
+        // you can read what it depends on, so it is declared here where a
+        // reader sees it rather than arriving inside a feature, and only one
+        // target may name it.
+        .package(url: "https://github.com/DiscordBM/DiscordBM.git", .upToNextMinor(from: "1.16.0"))
     ],
     targets: [
         .target(
@@ -247,6 +257,44 @@ let package = Package(
         .testTarget(
             name: "VerifyTests",
             dependencies: ["Verify"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+
+        // What a member touches, minus the chat client. Command definitions,
+        // the validator that refuses one Discord would refuse, the router and
+        // its acknowledgement rules, the payload bounds, the cards, and the
+        // handlers. It lists no chat client, so `import DiscordBM` in here is
+        // a missing module: the whole surface is exercised with no token, no
+        // network and no guild (BUILD-2).
+        .target(
+            name: "Surface",
+            dependencies: ["Store", "Gating", "Chain"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+
+        // The only target in this package that knows what a snowflake is.
+        // Everything in it is a mapping: our values to Discord's payloads and
+        // back. A cycle from here to `Store` is a build failure, which is what
+        // keeps a member a `String` down there.
+        .target(
+            name: "SurfaceDiscord",
+            dependencies: [
+                "Surface",
+                "Store",
+                "Gating",
+                "Chain",
+                .product(name: "DiscordBM", package: "DiscordBM")
+            ],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+        .testTarget(
+            name: "SurfaceTests",
+            dependencies: ["Surface", "Store", "Gating", "Chain"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+        .testTarget(
+            name: "SurfaceDiscordTests",
+            dependencies: ["SurfaceDiscord", "Surface"],
             swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
         ),
 
