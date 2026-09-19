@@ -4,7 +4,8 @@ spec: reserve.spec.md
 
 ## Automated Testing
 
-`swift test` runs the whole suite: 105 tests in 7 suites, all offline.
+`swift test --filter ReserveTests` runs this target's suite: 110 tests in 7
+suites, all offline.
 
 | Test File | Type | What It Covers |
 |-----------|------|----------------|
@@ -12,7 +13,7 @@ spec: reserve.spec.md
 | `ReserveConfigurationTests.swift` | Unit | Every configuration refusal: shares that do not sum, indivisible splits, duplicate ids, zero denominators and zero-epoch schedules. |
 | `ReservePeriodTests.swift` | Unit | ISO week, month and day keys, the Monday to Monday boundary, and independence from the host's timezone. |
 | `ReservePlanningTests.swift` | Unit | Slot counting under both payout rules, skips, incomplete lists, and plans that stay inside the allocation. |
-| `ReserveRunnerTests.swift` | Unit | The four guards end to end: the gate, the period key, claim before pay, and limits checked before the first payment. |
+| `ReserveRunnerTests.swift` | Unit | The four guards end to end: the gate, the period key, claim before pay, and limits checked before the first payment, for being current as well as for being big enough. |
 | `ReserveStateTests.swift` | Unit | Duration locking, epoch completion that cannot skip, and spend recorded and released. |
 | `ReserveStoreTests.swift` | Unit | Round-tripping state and epoch rows, and a row that will not decode throwing rather than reading as unpaid. |
 | `ReserveFixtures.swift` | Fixture | The worked example reserve the other suites plan against. |
@@ -38,3 +39,5 @@ spec: reserve.spec.md
 | An epoch number of zero, or past the last epoch | Refused with `epochOutOfRange` or `scheduleComplete`, never wrapped. |
 | An asset with 20 or more decimals | Refused at construction, because ten to the twentieth does not fit in 64 bits. |
 | A stored row that will not decode | The store throws; it never reads as an unpaid epoch. |
+| Limits from a period that ended before the run starts | Refused with `spendLimitsExpired` before anything is claimed, and the period is left unclaimed so the epoch is postponed rather than lost. |
+| Limits with no stated `periodEnd` | Checked for size only; an undated boundary is not an expired one. |

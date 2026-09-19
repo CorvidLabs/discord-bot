@@ -23,7 +23,7 @@ targets, all offline, all covered by tests, and none of them wired to anything.
 | `Chain` | Reading what an account holds on an Algorand node, and the two brakes that stop it reading too much: a per-second limiter and a per-UTC-day request budget. |
 
 ```
-swift test    # 571 tests in 39 suites: Reserve 105, Gating 133, Games 158, Chain 175
+swift test    # 594 tests in 39 suites: Reserve 110, Gating 133, Games 167, Chain 184
 ```
 
 Everything runs offline. No test reaches a network, and none needs a key, a
@@ -241,8 +241,14 @@ asserted. It throws `ReservePaymentRefusal` when it can *prove* nothing moved, i
 which case the slot is handed back; anything else it throws keeps the claim,
 because a payment that might have gone through must never be retried.
 
+Limits are checked for being current before they are checked for being big
+enough: a set whose `periodEnd` has passed is refused, because a ceiling from a
+period that is over says nothing about what is left of this one, and a host
+that computes its figures from a stored total can hand one over without
+noticing.
+
 Also useful: `runner.audit(eligible:)` previews the whole reserve without moving
-anything, and `runner.rehearse(streamId:recipients:)` plans the next epoch
+anything, and `runner.rehearse(streamId:recipients:now:)` plans the next epoch
 through the very same guards a real run uses, writes nothing, and refuses exactly
 where a real run would.
 
@@ -303,6 +309,13 @@ not be read is not a pool worth nothing. Every figure it hands out is a
 `ChainReading`, which carries whether it is the whole answer, and the only two
 routes from one into a decision turn a short answer into **unknown** rather than
 into a smaller number.
+
+The budget has two kinds of consumer and only one of them can stop anywhere. A
+sweep of everybody's roles reads an account at a time; a payout either pays the
+whole list or should never have begun, so it takes its requests in one piece
+with `reserveRequests`, before the first one leaves. A reservation that does
+not fit is refused without spending anything and without pausing, so what is
+left of the day still reaches the work that can use it in pieces.
 
 It shares `Gating`'s token, pool, readings and totals rather than declaring its
 own, so an operator writes each of them down once and cannot write one down

@@ -61,6 +61,24 @@ that plays exactly as it does for somebody who holds nothing.
 - Covered by `GamePerksTests.swift`, `GameTypesTests.swift` and
   `ShinyTests.swift` (ADOPT-1.b, ADOPT-1.c, ADOPT-3.a, ADOPT-6.a, ADOPT-6.b).
 
+### REQ-games-004.a
+
+A collection the host asked about and could not read SHALL be expressible, and
+SHALL never be treated as one the player holds none of.
+`GameHoldings.reading(of:)` SHALL answer held, not held or unknown, and
+`GamePerks.unresolved(for:)` SHALL name the configured perks left outstanding.
+No perk SHALL be earned on an unknown. The daily claim SHALL be withheld as
+`Chips.DailyClaim.undecided` rather than settled short whenever an unreadable
+collection carries a bonus that would change it, because the claim comes once
+a UTC day and cannot be topped up; a perk that cannot change the figure SHALL
+not withhold it. Everything else, the forage wait and the loot table included,
+SHALL carry on without the perk, because those are re-decided at no cost on the
+next action and refusing to deal would take away more than the perk was worth.
+A stored table written before this existed SHALL decode as a player nothing
+failed for.
+
+- Covered by `GamePerksTests.swift` (PLAY-1, PLAY-9, ADOPT-3).
+
 ### REQ-games-005
 
 A perk configuration that is blank, padded, duplicated, negative, not a number,

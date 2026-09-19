@@ -183,6 +183,7 @@ Every exported symbol of the `Reserve` library target, in source order.
 | `notTheNextEpoch` | Asked to pay an epoch that is not the one the ledger says is next. |
 | `overPaymentLimit` | One payment is over the per-payment limit. |
 | `overPeriodLimit` | The epoch is over what is left of the period's limit. |
+| `spendLimitsExpired` | The spending limits describe a period that has already ended, so what they say is left of it describes nothing. |
 | `ReserveFormatting` | Writing integer smallest units out for a person to read. |
 | `grouped` | `1234567` as `1,234,567`. |
 | `amount` | Smallest units written as a decimal amount, with no digit lost. |
@@ -205,7 +206,7 @@ Every exported symbol of the `Reserve` library target, in source order.
 | `eligibleUnits` | Eligible slots in a recipient list, under one rule. |
 | `planEpoch` | Plans what one epoch still owes. |
 | `planGuardedEpoch` | Plans an epoch and refuses it if it would cross a denominator, an allocation, or an epoch that is already finished. |
-| `requireWithinLimits` | Refuses an epoch the paying account's limits cannot carry. |
+| `requireWithinLimits` | Refuses an epoch the paying account's limits cannot carry, and refuses limits from a period that has ended before it looks at their size. |
 | `ReserveRecipient` | One account, who it belongs to, and what it is currently known to hold. |
 | `id` | The person. Two accounts owned by one person share this. |
 | `holdingIds` | Ids of the qualifying things this account is known to hold, unique and sorted so a plan built from the same facts is byte-for-byte the same. |
@@ -218,7 +219,7 @@ Every exported symbol of the `Reserve` library target, in source order.
 | `ReserveRunner` | Runs one epoch, end to end, with all four guards in the right order. |
 | `state` | The reserve's state as the store has it. |
 | `activate` | Chooses the duration, or refuses because the schedule has begun. |
-| `rehearse` | Plans the next epoch and stops, having written and moved nothing. |
+| `rehearse` | Plans the next epoch and stops, having written and moved nothing. Takes the instant the run would start at, so it checks the limits against the same moment a live run would. |
 | `run` | Pays one epoch of one stream. |
 | `ReserveSchedule` | How long the reserve takes to pay out, as a count of epochs. |
 | `label` | What a person reads: `six months`. |
@@ -236,8 +237,9 @@ Every exported symbol of the `Reserve` library target, in source order.
 | `maxPerPaymentWholeUnits` | Most one payment may move. |
 | `maxPerPeriodWholeUnits` | Most the account may move in one period. |
 | `spentThisPeriodWholeUnits` | What has already gone this period, from every source, not just this reserve. That is the point: an ordinary transfer earlier in the same period has already eaten some of the ceiling. |
-| `periodEnd` | When the period rolls over, when the host knows. |
+| `periodEnd` | When the period these figures describe rolls over, when the host knows. Read to refuse an epoch whose limits are from a period that is over; nil means the host did not say, and then nothing is checked. |
 | `remainingThisPeriodWholeUnits` | What is left of this period's ceiling. Never negative. |
+| `describesPeriod` | Whether these figures still describe the period the given instant falls in. True when no end was stated: an undated boundary is not an expired one. |
 | `ReserveState` | The reserve's own state: the chosen duration, and what each stream has spent. |
 | `scheduleId` | The chosen duration's id, or nil before anybody chooses. |
 | `activatedAt` | When the duration was chosen. |
@@ -316,6 +318,18 @@ Every exported symbol of the `Reserve` library target, in source order.
    payment, and the period limit is measured against
    `ReserveSpendLimits.remainingThisPeriodWholeUnits` rather than the raw
    ceiling. Nothing is clamped to fit.
+9a. They are checked for being **current** before they are checked for being
+   big enough. A ceiling from a period that has ended describes nothing, and a
+   host that computes its figures from a stored total can hand one over: too
+   high refuses an epoch that should have run, too low passes one the paying
+   account then refuses part way down the list. `ReserveSpendLimits.periodEnd`
+   is what makes that provable. What no figure can rule out is a long epoch
+   that crosses the boundary while it runs, because how long a list takes is a
+   fact about the host's payer and not about this module, and an estimate that
+   refused a legitimate payout would cost more than it saved. The crossing is
+   also the milder case: the whole epoch already fits inside one period's
+   ceiling, so the part landing after the rollover cannot cross the next
+   period's ceiling on its own (RESERVE-7.d).
 10. An epoch is closed only by a loop that ran to the end, and only if it is the
     epoch the ledger says is next. `ReserveState.markingComplete` refuses to
     move backwards or to skip, so an epoch can be finished but never skipped.
@@ -354,6 +368,15 @@ Every exported symbol of the `Reserve` library target, in source order.
 - **Then** the planner skips every already-claimed recipient with
   `ReserveSkipReason`, and only the remaining slots are paid
 
+### Scenario: Last week's ceiling does not authorise this week's epoch
+
+- **Given** a payer whose `spendLimits` return figures for an ISO week that
+  ended before `now`, with ample room by their own account
+- **When** the epoch is run
+- **Then** it throws `ReserveError.spendLimitsExpired`, no claim is written, no
+  payment is attempted and the period is not claimed, so the epoch is
+  postponed rather than lost; `rehearse` refuses identically (RESERVE-7.d)
+
 ### Scenario: An incomplete eligibility list pays nobody
 
 - **Given** a `ReserveRecipientList` with one or more `incompleteRecipientIds`
@@ -385,6 +408,8 @@ Every exported symbol of the `Reserve` library target, in source order.
 | A second run inside one period key | `.periodAlreadyPaid` |
 | An eligibility list with holes | `.incompleteRecipients`, nothing sent |
 | Over the per-payment or remaining per-period limit | `.overPaymentLimit` / `.overPeriodLimit`, aborting rather than clamping |
+| Limits whose `periodEnd` is at or before `now` | `.spendLimitsExpired(periodKey:periodEnd:now:)`, checked before either size check, because a stale ceiling makes both of those answers meaningless |
+| Limits with no `periodEnd` | Checked for size only. An undated boundary is not an expired one, and refusing every host that leaves it nil would refuse most of them |
 | A stored row that will not decode | The store throws; it never reads as an unpaid epoch |
 | A payer that proves nothing moved | `ReservePaymentRefusal`, and the slot is handed back |
 | A payer that fails ambiguously | The claim is kept and the value stays in the reserve |
@@ -400,3 +425,4 @@ Every exported symbol of the `Reserve` library target, in source order.
 | Date | Author | Change |
 |------|--------|--------|
 | 2026-09-18 | maintainers | Spec written for the shipped `Reserve` library target. |
+| 2026-09-18 | maintainers | `ReserveSpendLimits.periodEnd` is read rather than carried: `requireWithinLimits` now takes `now` and refuses limits from a period that has ended, before it checks their size. |

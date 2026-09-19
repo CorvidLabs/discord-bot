@@ -4,8 +4,8 @@ spec: games.spec.md
 
 ## Automated Testing
 
-`swift test` runs the whole package: 389 tests in 26 suites. The `Games`
-target's own share is 158 tests in 9 suites, all offline, with no network, no
+`swift test` runs the whole package: 594 tests in 39 suites. The `Games`
+target's own share is 167 tests in 9 suites, all offline, with no network, no
 key and no database (`swift test --filter GamesTests`).
 
 | Test File | Type | What It Covers |
@@ -80,6 +80,18 @@ key and no database (`swift test --filter GamesTests`).
 - `GameTypesTests.swift`: "Holding nothing and having linked nothing is a valid
   way to play"; "Holdings name collections by the host's own ids"; "A context
   with nothing said about perks has none, which is fine".
+
+### REQ-games-004.a, a collection nobody could read
+
+- `GamePerksTests.swift`: "A collection that could not be read is unknown, not
+  unheld"; "Positive evidence beats a failed read for the same collection"; "A
+  perk is never earned on a read that failed, and never passes for absent"; "An
+  unreadable collection nobody configured a perk for holds nothing up"; "The
+  daily claim is held rather than settled short, because it comes once a day";
+  "A perk that cannot change the claim does not withhold it"; "A game still
+  deals while a collection is unreadable, and the wait is the plain one"; "A
+  table stored before anything could be unreadable still loads"; "Unreadable
+  collections survive a round trip through storage".
 
 ### REQ-games-005, a bad configuration refuses at construction
 

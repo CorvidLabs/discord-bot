@@ -46,4 +46,16 @@ public struct GameContext: Sendable {
     public var activePerks: [CollectionPerk] {
         perks.active(for: player.holdings)
     }
+
+    /// The configured perks whose collections could not be read for this
+    /// player, in configuration order.
+    ///
+    /// A table still deals with these outstanding: the find, the wait and the
+    /// loot table are all re-decided on the next action at no cost to anybody,
+    /// so refusing to play would take away more than the perk is worth. It is
+    /// here so that whatever draws the card can say so out loud, because the
+    /// failure this type exists for is the silent one.
+    public var unresolvedPerks: [CollectionPerk] {
+        perks.unresolved(for: player.holdings)
+    }
 }

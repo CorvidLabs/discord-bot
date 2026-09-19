@@ -39,6 +39,9 @@ public enum ReserveError: Error, Equatable, LocalizedError, Sendable {
     case overPaymentLimit(requested: UInt64, limit: UInt64)
     /// The epoch is over what is left of the period's limit.
     case overPeriodLimit(total: UInt64, remaining: UInt64, limit: UInt64)
+    /// The spending limits describe a period that has already ended, so what
+    /// they say is left of it describes nothing.
+    case spendLimitsExpired(periodKey: String, periodEnd: Date, now: Date)
 
     public var errorDescription: String? {
         switch self {
@@ -87,6 +90,13 @@ public enum ReserveError: Error, Equatable, LocalizedError, Sendable {
             return "The epoch charges \(ReserveFormatting.grouped(total)) whole units against this period's "
                 + "limit of \(ReserveFormatting.grouped(limit)), of which "
                 + "\(ReserveFormatting.grouped(remaining)) is left. Aborting; not clamped."
+        case .spendLimitsExpired(let periodKey, let periodEnd, let now):
+            return "The spending limits are for `\(periodKey)`, which ended on "
+                + "\(ReservePeriod.day(periodEnd)) UTC, and it is now \(ReservePeriod.day(now)). What "
+                + "they say is left of that period says nothing about the period this epoch would be "
+                + "paid in: measured against the wrong ceiling, an epoch can pass here and still be "
+                + "refused by the paying account half way down the list. Read the limits again and "
+                + "run it."
         }
     }
 }

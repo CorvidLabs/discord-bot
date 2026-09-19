@@ -19,9 +19,11 @@ import Foundation
 /// 3. **The claim is written before the payment.** The crash window then
 ///    under-pays and leaves value in the reserve instead of paying somebody the
 ///    ledger has no record of.
-/// 4. **Limits are checked before the first payment.** An epoch that pays a
-///    hundred and eleven of two hundred recipients is the half-finished payout
-///    the whole design exists to prevent.
+/// 4. **Limits are checked before the first payment**, and checked for being
+///    current before they are checked for being big enough. An epoch that pays
+///    a hundred and eleven of two hundred recipients is the half-finished
+///    payout the whole design exists to prevent, and an epoch measured against
+///    a ceiling from a period that has ended is measured against nothing.
 public struct ReserveRunner: Sendable {
 
     // MARK: - Properties
@@ -115,13 +117,21 @@ public struct ReserveRunner: Sendable {
     ///
     /// It claims nobody's slot, closes no epoch, counts against no limit and
     /// leaves nothing behind that a later run would skip.
+    ///
+    /// - Parameters:
+    ///   - streamId: The stream to plan.
+    ///   - recipients: Who is eligible.
+    ///   - now: Injected so a test can pin every timestamp. A rehearsal checks
+    ///     the limits against the same instant a live run would, or it would
+    ///     agree with a run that is about to be refused.
     public func rehearse(
         streamId: String,
-        recipients: ReserveRecipientList
+        recipients: ReserveRecipientList,
+        now: Date = Date()
     ) async throws -> ReserveEpochPlan {
         let context = try await prepare(streamId: streamId, recipients: recipients)
         if let limits = try await payer.spendLimits() {
-            try planner.requireWithinLimits(plan: context.plan, limits: limits)
+            try planner.requireWithinLimits(plan: context.plan, limits: limits, now: now)
         }
         return context.plan
     }
@@ -224,9 +234,10 @@ public struct ReserveRunner: Sendable {
         let context = try await prepare(streamId: streamId, recipients: recipients)
 
         // Guard 4. Before the first payment, against what is *left* of the
-        // period rather than the raw ceiling.
+        // period rather than the raw ceiling, and only if the figures still
+        // describe the period this run is starting in.
         if let limits = try await payer.spendLimits() {
-            try planner.requireWithinLimits(plan: context.plan, limits: limits)
+            try planner.requireWithinLimits(plan: context.plan, limits: limits, now: now)
         }
 
         var record = context.record

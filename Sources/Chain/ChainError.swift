@@ -35,6 +35,14 @@ public enum ChainError: Error, Equatable, LocalizedError, Sendable {
     /// cause.
     case providerRefusedQuota(until: Date)
 
+    /// Today's budget cannot cover a reservation that had to be taken whole.
+    ///
+    /// Deliberately not a pause and deliberately not ``requestBudgetSpent``.
+    /// The day still has requests in it, and they belong to every caller that
+    /// can use them one at a time; only the indivisible piece of work was
+    /// refused, before it started, having spent nothing.
+    case requestBudgetCannotCover(requested: UInt64, remaining: UInt64)
+
     /// Something a caller needed could not be read, so there is no complete
     /// answer to give it.
     case incompleteRead(gaps: [ChainReadGap])
@@ -65,6 +73,12 @@ public enum ChainError: Error, Equatable, LocalizedError, Sendable {
         case .providerRefusedQuota(let until):
             return "The node's provider refused: its own quota is spent. Reads and signing are paused until "
                 + "\(UTCDay.stamp(until)) UTC. Retrying now spends nothing and fixes nothing."
+        case .requestBudgetCannotCover(let requested, let remaining):
+            return "This work needs \(ChainFormatting.grouped(requested)) requests reserved together and "
+                + "\(ChainFormatting.grouped(remaining)) are left of today's budget, so it was refused "
+                + "before it started rather than stopping half way through. Nothing was reserved and "
+                + "nothing is paused: everything that reads a request at a time carries on. Raise "
+                + "\(ChainEnvironment.dailyRequestBudget), or run this earlier in the UTC day."
         case .incompleteRead(let gaps):
             let reasons = gaps.map(\.summary).joined(separator: "; ")
             return "The chain could not be read completely, so there is no answer to give: \(reasons). "

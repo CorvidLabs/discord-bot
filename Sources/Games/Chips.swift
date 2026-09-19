@@ -62,17 +62,49 @@ public enum Chips: Sendable {
         return "\(year)-\(month)-\(day)"
     }
 
+    /// What the daily claim owes, or why it cannot be settled yet.
+    ///
+    /// Two cases rather than an `Int`, and there is deliberately no accessor
+    /// that hands back a number with the unknown part dropped. The claim is
+    /// once a UTC day: pay the base alone to somebody whose collection could
+    /// not be read and the bonus is gone for good, because there is no second
+    /// claim to make it up with. An `Int` return makes that the default
+    /// behaviour of the first caller in a hurry.
+    public enum DailyClaim: Sendable, Equatable {
+
+        /// Every perk that could change the figure was read. Pay this.
+        case payable(chips: Int)
+
+        /// One or more of the host's collections could not be read for this
+        /// player, so the claim is not theirs to keep or to lose yet. Naming
+        /// them, in configuration order.
+        ///
+        /// Hold the claim and offer it again: the day has not been used up, and
+        /// a read that recovers in an hour pays the whole thing.
+        case undecided(collectionIds: [String])
+    }
+
     /// Chips the daily claim pays: the base, plus each held collection's bonus.
     ///
-    /// Always positive, because the base is positive and a bonus cannot be
-    /// negative. A player who holds nothing and has linked nothing can still play
-    /// tomorrow, which is the point of the claim (`ADOPT-3`, `PLAY-8`).
+    /// Always positive when it is payable, because the base is positive and a
+    /// bonus cannot be negative. A player who holds nothing and has linked
+    /// nothing can still play tomorrow, which is the point of the claim
+    /// (`ADOPT-3`, `PLAY-8`).
+    ///
+    /// Undecided only for a perk that could actually move this number. A
+    /// collection whose bonus is zero cannot change the claim, so an unreadable
+    /// one does not hold it up: it still shortens a forage and still shifts the
+    /// loot table, and neither of those is spent once a day.
     ///
     /// - Parameters:
-    ///   - holdings: What the player holds.
+    ///   - holdings: What the player holds, and what could not be read.
     ///   - perks: The host's configuration. Empty pays the base alone.
-    /// - Returns: Chips to pay, at least one.
-    public static func dailyStipend(_ holdings: GameHoldings, perks: GamePerks = .empty) -> Int {
+    /// - Returns: Chips to pay, or the collections standing in the way.
+    public static func dailyClaim(_ holdings: GameHoldings, perks: GamePerks = .empty) -> DailyClaim {
+        let blocking = perks.unresolved(for: holdings).filter { $0.dailyBonusChips > 0 }
+        guard blocking.isEmpty else {
+            return .undecided(collectionIds: blocking.map(\.id))
+        }
         var total = baseDailyStipend
         for perk in perks.active(for: holdings) {
             // Saturating rather than trapping: a host who types too many zeroes
@@ -80,7 +112,7 @@ public enum Chips: Sendable {
             let (sum, overflow) = total.addingReportingOverflow(perk.dailyBonusChips)
             total = overflow ? Int.max : sum
         }
-        return total
+        return .payable(chips: total)
     }
 
     /// Chips a won call pays at the streak the win produced.
@@ -103,6 +135,14 @@ public enum Chips: Sendable {
     /// whole milliseconds at every step, because that is what the JavaScript
     /// original did and because flooring once at the end gives a different answer.
     /// Never returns less than ``minimumForageCooldown``.
+    ///
+    /// A collection that could not be read shortens nothing, and unlike the
+    /// daily claim this one does not hold anything up. The difference is
+    /// whether it can be had again: a wait that was thirty seconds instead of
+    /// fifteen is over by the next forage, while a claim paid short is short
+    /// until tomorrow. Refusing to forage over a failed read would take the
+    /// game away to protect a perk that was never promised, and the game is the
+    /// part somebody came for (`PLAY-1`).
     ///
     /// - Parameters:
     ///   - holdings: What the player holds.

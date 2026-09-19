@@ -28,11 +28,13 @@ struct ChipsTests {
 
     @Test("Somebody who holds nothing can still claim tomorrow")
     func stipendWithoutHoldings() throws {
-        #expect(Chips.dailyStipend(.empty) == 40)
+        #expect(Chips.dailyClaim(.empty) == .payable(chips: 40))
         // Configured perks change nothing for somebody who holds none of them,
         // which is the ordinary case for most members of most servers.
-        #expect(Chips.dailyStipend(.empty, perks: try Fixture.perks()) == 40)
-        #expect(Chips.dailyStipend(.empty, perks: try Fixture.perks()) > 0)
+        #expect(Chips.dailyClaim(.empty, perks: try Fixture.perks()) == .payable(chips: 40))
+        // Positive whatever happens: the base is positive and no bonus can be
+        // negative, so the claim is never a way to end the day poorer.
+        #expect(Chips.baseDailyStipend > 0)
     }
 
     @Test("Every collection held adds its own bonus to the claim")
@@ -48,21 +50,21 @@ struct ChipsTests {
                 expected += bonuses[index]
             }
             let holdings = GameHoldings(collectionIds: held, address: "ACCOUNT")
-            #expect(Chips.dailyStipend(holdings, perks: perks) == expected)
+            #expect(Chips.dailyClaim(holdings, perks: perks) == .payable(chips: expected))
         }
-        #expect(Chips.dailyStipend(Fixture.holding(Fixture.founders), perks: perks) == 120)
+        #expect(Chips.dailyClaim(Fixture.holding(Fixture.founders), perks: perks) == .payable(chips: 120))
         #expect(
-            Chips.dailyStipend(
+            Chips.dailyClaim(
                 Fixture.holding(Fixture.founders, Fixture.companions, Fixture.wardens, Fixture.relics),
                 perks: perks
-            ) == 170
+            ) == .payable(chips: 170)
         )
     }
 
     @Test("Holding a collection nobody configured a perk for changes nothing")
     func unknownCollectionIsIgnored() throws {
         let perks = try Fixture.perks()
-        #expect(Chips.dailyStipend(Fixture.holding("something-else"), perks: perks) == 40)
+        #expect(Chips.dailyClaim(Fixture.holding("something-else"), perks: perks) == .payable(chips: 40))
     }
 
     @Test("An absurd bonus gives an absurd claim rather than a dead process")
@@ -71,7 +73,7 @@ struct ChipsTests {
             CollectionPerk(id: "one", dailyBonusChips: .max),
             CollectionPerk(id: "two", dailyBonusChips: .max)
         ])
-        #expect(Chips.dailyStipend(Fixture.holding("one", "two"), perks: perks) == Int.max)
+        #expect(Chips.dailyClaim(Fixture.holding("one", "two"), perks: perks) == .payable(chips: .max))
     }
 
     // MARK: - The forage cooldown

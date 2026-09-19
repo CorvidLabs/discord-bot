@@ -306,8 +306,34 @@ public struct GamePerks: Sendable, Equatable {
     /// Configuration order, not holdings order: see the type's own note. This is
     /// the single place that decides the sequence, so there is one thing to read
     /// when a replay disagrees with itself.
+    ///
+    /// Only what was **read as held**. A collection nobody could read earns
+    /// nothing here, because granting a perk on a failed read hands somebody
+    /// something they may never have owned, and the free gift is the half of
+    /// this that cannot be taken back. What it must not do is pass for an
+    /// answer: ``unresolved(for:)`` is the other half, and a caller settling
+    /// anything a member cannot re-take later reads both (`PLAY-4` retired says
+    /// a perk is not a promise, which is why the games keep dealing rather than
+    /// stopping for one).
     public func active(for holdings: GameHoldings) -> [CollectionPerk] {
-        ordered.filter { holdings.holds($0.id) }
+        ordered.filter { holdings.reading(of: $0.id) == .held }
+    }
+
+    /// The configured perks whose collection could not be read for this player,
+    /// in configuration order.
+    ///
+    /// Empty means the perks are settled: every collection anybody configured
+    /// was either held or not, and ``active(for:)`` is the whole answer. A
+    /// non-empty list means the answer is short by these, and a caller deciding
+    /// something a member cannot come back for tomorrow should wait rather than
+    /// settle it.
+    ///
+    /// Only *configured* perks are named. A collection nobody could read and
+    /// nobody wrote a perk for cannot change anything, and refusing over it
+    /// would punish a host for a failure that costs their members nothing
+    /// (`ADOPT-3`).
+    public func unresolved(for holdings: GameHoldings) -> [CollectionPerk] {
+        ordered.filter { holdings.reading(of: $0.id) == .unknown }
     }
 
     /// The configured perk for a collection id, or nil.

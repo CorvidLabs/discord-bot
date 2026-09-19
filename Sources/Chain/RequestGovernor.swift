@@ -84,34 +84,59 @@ public actor RequestGovernor {
     /// rather than finding out about the ceiling by being cut off part way
     /// through a sweep.
     public func reserveRequest(now: Date = Date()) throws {
-        try throwIfPaused(now: now)
-        switch budget.reserve(now: now) {
-        case .exhausted(let until):
-            schedulePersist()
-            pause(
-                until: until,
-                cause: .budgetSpent,
-                at: now,
-                kind: .budgetSpent(until: until),
-                message: "The daily request budget of \(ChainFormatting.grouped(budget.limit)) requests is "
-                    + "spent. Raise \(ChainEnvironment.dailyRequestBudget), or read the chain less often."
-            )
-            throw ChainError.requestBudgetSpent(until: until)
-        case .allowed(let used, let limit, let crossedThreshold):
-            if let threshold = crossedThreshold {
-                record(
-                    ChainNotice(
-                        kind: .budgetThresholdCrossed(percent: threshold, used: used, limit: limit),
-                        at: now,
-                        message: "\(threshold)% of today's request budget is gone "
-                            + "(\(ChainFormatting.grouped(used)) of \(ChainFormatting.grouped(limit)) requests)."
-                    )
-                )
-            }
-            if used % persistEvery == 0 {
-                schedulePersist()
-            }
-        }
+        try spend(1, now: now)
+    }
+
+    /// Spends `count` requests from today's budget, all of them or none.
+    ///
+    /// For a consumer whose work cannot be half done. The budget is shared, and
+    /// its two consumers are not alike: a sweep of everybody's roles reads one
+    /// account at a time and can stop anywhere, while a payout run either pays
+    /// the whole list or should never have started. The payout's own spending
+    /// limits are checked up front for exactly that reason, and then the day's
+    /// requests, the one resource nobody reserved, ran out in the middle
+    /// instead. The errors that arrive then are not the payout's own refusal,
+    /// so every claim is correctly kept, the epoch under-pays and it closes
+    /// nothing: the half-finished payout the design exists to prevent, arriving
+    /// through the side door.
+    ///
+    /// Not fitting is **not** a pause. ``ChainError/requestBudgetCannotCover``
+    /// leaves the counter untouched and the breaker open, because what is left
+    /// of the day is still useful to everything that reads a request at a time.
+    /// Only a day with nothing at all left pauses, exactly as one request would.
+    ///
+    /// There is no way to give a reservation back. A budget that can be handed
+    /// back is one two consumers can each believe they hold, and the handing
+    /// back is the write a crash skips. Reserve from a figure the work itself
+    /// produced, and treat the difference as a day under-used.
+    ///
+    /// Nothing in `Reserve` calls this, and nothing in it can: that module
+    /// depends on Foundation alone, which is what keeps its arithmetic testable
+    /// with no network in the package. **The host joins the two.** Before
+    /// calling the runner it rehearses the epoch, multiplies the entries by the
+    /// requests one payment costs it, adds what reading eligibility cost, and
+    /// reserves that here. A refusal is reported and the epoch is not started;
+    /// the ledger is untouched, so the same epoch runs later in the day or
+    /// tomorrow with nobody paid twice.
+    ///
+    /// - Parameters:
+    ///   - count: Requests to take. Zero takes nothing and reports nothing.
+    ///   - now: Injected so a test pins the day.
+    public func reserveRequests(_ count: UInt64, now: Date = Date()) throws {
+        try spend(count, now: now)
+    }
+
+    /// Requests left today, or nil when no budget is set.
+    ///
+    /// Nil rather than zero, because a caller sizing an all-or-nothing job has
+    /// to tell "there is no ceiling" from "there is no room", and the zero on
+    /// ``RequestBudgetSnapshot/remainingRequests`` cannot.
+    ///
+    /// It reports the counter, not the breaker. Work can be paused with the
+    /// day's budget barely touched, so a caller that means "may I read?" asks
+    /// ``pausedUntil(now:)`` as well, or simply reserves and handles the throw.
+    public func remainingRequests(now: Date = Date()) -> UInt64? {
+        budget.remaining(at: now)
     }
 
     /// Trips the breaker when `error` is the provider's own quota refusal.
@@ -201,6 +226,51 @@ public actor RequestGovernor {
     }
 
     // MARK: - Private Methods
+
+    /// The one path every reservation takes, whatever size it is.
+    ///
+    /// One path rather than two, so the pause, the threshold notice and the
+    /// write of the counter cannot come to mean different things depending on
+    /// how many requests a caller asked for at once.
+    private func spend(_ count: UInt64, now: Date) throws {
+        try throwIfPaused(now: now)
+        switch budget.reserve(count: count, now: now) {
+        case .exhausted(let until):
+            schedulePersist()
+            pause(
+                until: until,
+                cause: .budgetSpent,
+                at: now,
+                kind: .budgetSpent(until: until),
+                message: "The daily request budget of \(ChainFormatting.grouped(budget.limit)) requests is "
+                    + "spent. Raise \(ChainEnvironment.dailyRequestBudget), or read the chain less often."
+            )
+            throw ChainError.requestBudgetSpent(until: until)
+        case .notEnoughBudget(let requested, let remaining):
+            // No notice. This refusal is answered to its caller there and then,
+            // and it is the one a scheduled run repeats every time it retries;
+            // a notice per retry would push the pause announcement out of a
+            // buffer an operator reads precisely when things are already bad.
+            throw ChainError.requestBudgetCannotCover(requested: requested, remaining: remaining)
+        case .allowed(let used, let limit, let crossedThreshold):
+            if let threshold = crossedThreshold {
+                record(
+                    ChainNotice(
+                        kind: .budgetThresholdCrossed(percent: threshold, used: used, limit: limit),
+                        at: now,
+                        message: "\(threshold)% of today's request budget is gone "
+                            + "(\(ChainFormatting.grouped(used)) of \(ChainFormatting.grouped(limit)) requests)."
+                    )
+                )
+            }
+            // A reservation of many requests can leap clean over the write
+            // interval without ever landing on a multiple of it, so it is
+            // written down at once instead.
+            if count > 1 || (count == 1 && used % persistEvery == 0) {
+                schedulePersist()
+            }
+        }
+    }
 
     private func throwIfPaused(now: Date) throws {
         guard let until = pauseEndsAt else { return }

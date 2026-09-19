@@ -79,7 +79,13 @@ nobody was paid for, and an eligibility list with holes in it SHALL pay nobody.
 
 An epoch that will not fit the payer's limits SHALL be refused before the first
 payment, measured against what is left of the period rather than the whole
-ceiling, and SHALL never be clamped to fit.
+ceiling, and SHALL never be clamped to fit. Limits SHALL first be checked for
+being current: a set whose `periodEnd` is at or before the instant the run
+starts SHALL be refused with `ReserveError.spendLimitsExpired` before either
+size check, because what they say is left of a period that has ended describes
+nothing. Limits with no stated end SHALL be checked for size alone. Nothing
+SHALL be refused on an estimate of how long a run will take, which is a fact
+about the host's payer rather than about this module.
 
 - Covered by `ReserveRunnerTests.swift` and `ReservePlanningTests.swift`
   (RESERVE-7.d).

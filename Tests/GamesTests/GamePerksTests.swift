@@ -32,7 +32,7 @@ struct GamePerksTests {
 
         let perks = try GamePerks([perk])
         let holdings = Fixture.holding("quiet")
-        #expect(Chips.dailyStipend(holdings, perks: perks) == Chips.baseDailyStipend)
+        #expect(Chips.dailyClaim(holdings, perks: perks) == .payable(chips: Chips.baseDailyStipend))
         #expect(Chips.forageCooldown(holdings, perks: perks) == Chips.defaultForageCooldown)
         #expect(Shiny.weights(perks: perks.active(for: holdings)) == Shiny.weights(perks: []))
     }
@@ -63,6 +63,131 @@ struct GamePerksTests {
             address: "ACCOUNT"
         )
         #expect(forwards.active(for: other).map(\.id) == forwards.active(for: holdings).map(\.id))
+    }
+
+    // MARK: - A collection nobody could read
+
+    @Test("A collection that could not be read is unknown, not unheld")
+    func unreadableIsNotUnheld() {
+        let holdings = GameHoldings(
+            collectionIds: [Fixture.founders],
+            unreadableCollectionIds: [Fixture.companions],
+            address: "ACCOUNT"
+        )
+        #expect(holdings.reading(of: Fixture.founders) == .held)
+        #expect(holdings.reading(of: Fixture.companions) == .unknown)
+        #expect(holdings.reading(of: Fixture.wardens) == .notHeld)
+        #expect(holdings.hasUnreadableCollections)
+        // The cheap question still answers false, which is why it is not the
+        // question anything withholding a perk should ask.
+        #expect(holdings.holds(Fixture.companions) == false)
+    }
+
+    @Test("Positive evidence beats a failed read for the same collection")
+    func heldBeatsUnreadable() {
+        let holdings = GameHoldings(
+            collectionIds: [Fixture.founders],
+            unreadableCollectionIds: [Fixture.founders],
+            address: "ACCOUNT"
+        )
+        #expect(holdings.reading(of: Fixture.founders) == .held)
+    }
+
+    @Test("A perk is never earned on a read that failed, and never passes for absent")
+    func unreadableEarnsNothingAndSaysSo() throws {
+        let perks = try Fixture.perks()
+        let holdings = GameHoldings(
+            collectionIds: [Fixture.wardens],
+            unreadableCollectionIds: [Fixture.founders],
+            address: "ACCOUNT"
+        )
+        // Nothing is granted on an unknown: a perk handed out on a failed read
+        // is the half of this that cannot be taken back.
+        #expect(perks.active(for: holdings).map(\.id) == [Fixture.wardens])
+        // And it does not pass for "they hold none of it" either.
+        #expect(perks.unresolved(for: holdings).map(\.id) == [Fixture.founders])
+        #expect(try GamePerks([]).unresolved(for: holdings).isEmpty)
+    }
+
+    @Test("An unreadable collection nobody configured a perk for holds nothing up")
+    func unreadableWithoutAPerkIsQuiet() throws {
+        let perks = try Fixture.perks()
+        let holdings = GameHoldings(
+            collectionIds: [],
+            unreadableCollectionIds: ["a_collection_nobody_configured"],
+            address: "ACCOUNT"
+        )
+        #expect(perks.unresolved(for: holdings).isEmpty)
+        #expect(Chips.dailyClaim(holdings, perks: perks) == .payable(chips: Chips.baseDailyStipend))
+    }
+
+    @Test("The daily claim is held rather than settled short, because it comes once a day")
+    func dailyClaimWaitsForAnUnreadableCollection() throws {
+        let perks = try Fixture.perks()
+        let holdings = GameHoldings(
+            collectionIds: [Fixture.wardens],
+            unreadableCollectionIds: [Fixture.founders],
+            address: "ACCOUNT"
+        )
+        // Paying the base plus the wardens bonus would quietly cost them the
+        // founders bonus for good: there is no second claim today to fix it
+        // with. The figure is withheld and the collection named.
+        #expect(Chips.dailyClaim(holdings, perks: perks) == .undecided(collectionIds: [Fixture.founders]))
+        // Once the read recovers, the whole claim is payable.
+        let recovered = GameHoldings(
+            collectionIds: [Fixture.wardens, Fixture.founders],
+            address: "ACCOUNT"
+        )
+        #expect(Chips.dailyClaim(recovered, perks: perks) == .payable(chips: 40 + 15 + 80))
+    }
+
+    @Test("A perk that cannot change the claim does not withhold it")
+    func zeroBonusDoesNotWithholdTheClaim() throws {
+        let perks = try GamePerks([
+            CollectionPerk(id: "quiet", forageCooldownFactor: 0.5),
+            CollectionPerk(id: "generous", dailyBonusChips: 25)
+        ])
+        let holdings = GameHoldings(unreadableCollectionIds: ["quiet"], address: "ACCOUNT")
+        #expect(perks.unresolved(for: holdings).map(\.id) == ["quiet"])
+        #expect(Chips.dailyClaim(holdings, perks: perks) == .payable(chips: Chips.baseDailyStipend))
+    }
+
+    @Test("A game still deals while a collection is unreadable, and the wait is the plain one")
+    func playCarriesOnWithoutThePerk() throws {
+        let perks = try Fixture.perks()
+        let holdings = GameHoldings(unreadableCollectionIds: [Fixture.founders], address: "ACCOUNT")
+        // The founders perk halves the wait. Unread, it shortens nothing, and
+        // the next forage decides again at no cost to anybody: refusing to
+        // play would take away more than the perk was ever worth.
+        #expect(Chips.forageCooldown(holdings, perks: perks) == Chips.defaultForageCooldown)
+        #expect(Shiny.weights(perks: perks.active(for: holdings)) == Shiny.weights(perks: []))
+        // The context carries the unknown so a card can say so out loud.
+        let context = Fixture.context(seed: 7, holdings: holdings, perks: perks)
+        #expect(context.activePerks.isEmpty)
+        #expect(context.unresolvedPerks.map(\.id) == [Fixture.founders])
+    }
+
+    @Test("A table stored before anything could be unreadable still loads")
+    func olderStoredHoldingsStillDecode() throws {
+        let stored = Data(#"{"collectionIds":["founders"],"address":"ACCOUNT"}"#.utf8)
+        let holdings = try JSONDecoder().decode(GameHoldings.self, from: stored)
+        #expect(holdings.reading(of: Fixture.founders) == .held)
+        // Absent means the writer knew of nothing unreadable, which is the only
+        // honest reading of a row written before the question existed.
+        #expect(holdings.hasUnreadableCollections == false)
+        #expect(holdings.reading(of: Fixture.companions) == .notHeld)
+    }
+
+    @Test("Unreadable collections survive a round trip through storage")
+    func unreadableHoldingsRoundTrip() throws {
+        let holdings = GameHoldings(
+            collectionIds: ["a"],
+            unreadableCollectionIds: ["b"],
+            address: "ACCOUNT",
+            pictureUrl: "https://example.test/a.png"
+        )
+        let data = try JSONEncoder().encode(holdings)
+        #expect(try JSONDecoder().decode(GameHoldings.self, from: data) == holdings)
     }
 
     // MARK: - Refusals

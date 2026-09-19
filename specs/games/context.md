@@ -127,6 +127,17 @@ spec: games.spec.md
   somebody else's nouns around. For the same reason `CollectionPerk.name`
   defaults to the id: any default this package supplied would be somebody
   else's word in somebody else's server.
+- It also carries what could **not** be read. A bare set of ids can only say
+  held or absent, so the first registry lookup that failed would have read as a
+  member who holds nothing, and they would have quietly lost their bonus and
+  their perks until it recovered. `GameHoldingReading` is written out here
+  rather than shared with the role rules, which keep the same distinction,
+  because this module depends on Foundation alone and that is worth more than
+  the dozen lines. What is done about an unknown differs by whether the member
+  can have it again: the daily claim is once a UTC day and is withheld rather
+  than paid short, while a forage still deals on the plain wait and the plain
+  loot table, because refusing to play would take away more than a perk that
+  was never promised.
 - The channel-wide variant of higher or lower, where the whole room voted on
   one hand, was removed rather than kept behind an option. A table the room can
   play is not your table. What the room gets is the result.

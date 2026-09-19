@@ -231,7 +231,33 @@ public struct ReservePlanner: Sendable {
     /// Checked before the first payment, never discovered on the twelfth. The
     /// period limit is measured against what is *left* of it rather than the raw
     /// ceiling, because something else may already have spent part of it.
-    public func requireWithinLimits(plan: ReserveEpochPlan, limits: ReserveSpendLimits) throws {
+    ///
+    /// The limits are checked for being current before they are checked for
+    /// being big enough, because a ceiling from a period that has ended makes
+    /// both of the other answers meaningless. It lives here rather than in the
+    /// runner so that there is no way to check an epoch against a set of limits
+    /// and skip it.
+    ///
+    /// - Parameters:
+    ///   - plan: The epoch about to be paid.
+    ///   - limits: What the paying account may move.
+    ///   - now: When the run is starting. A parameter, never a clock read here:
+    ///     everything in this type is pure, and every figure in the suite is
+    ///     pinned because of it.
+    public func requireWithinLimits(
+        plan: ReserveEpochPlan,
+        limits: ReserveSpendLimits,
+        now: Date
+    ) throws {
+        guard limits.describesPeriod(at: now) else {
+            throw ReserveError.spendLimitsExpired(
+                periodKey: limits.periodKey,
+                // Checked above, so the nil case cannot be reached; a period
+                // the host did not date is never called expired.
+                periodEnd: limits.periodEnd ?? now,
+                now: now
+            )
+        }
         for entry in plan.entries {
             let cost = configuration.asset.wholeUnitsRoundingUp(baseUnits: entry.baseUnitsAmount)
             if cost > limits.maxPerPaymentWholeUnits {

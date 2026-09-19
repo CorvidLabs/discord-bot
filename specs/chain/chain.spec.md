@@ -142,6 +142,7 @@ type each sense belongs to: `assetId`, `amount`, `name`, `decimals`, `id`,
 | `assetDecimalsDisagree` | The chain says the asset has a different precision from the configured one. Every balance would be wrong by a factor of ten per missing place. |
 | `requestBudgetSpent` | Today's request budget is spent. Reads and signing are paused until the UTC day rolls over. |
 | `providerRefusedQuota` | The provider refused with its own quota error: as a `ChainError`, as a `ChainNotice.Kind` and as a pause reason. The same pause a spent budget causes, deliberately kept a separate fact, because an operator does something different about it. |
+| `requestBudgetCannotCover` | Today's budget cannot cover a reservation that had to be taken whole. Deliberately neither a pause nor a spent budget: the day still has requests in it, and they belong to every caller that can use them one at a time. |
 | `incompleteRead` | Something a caller needed could not be read, so there is no complete answer to give it. |
 | `poolAddressNotFound` | A pool's reserve account could not be found, so its reserves cannot be read. |
 | `isProviderQuotaRefusal` | Whether an error is a provider refusing because its own quota is spent, recognised on both the raw refusal and this layer's own pauses. |
@@ -202,11 +203,12 @@ type each sense belongs to: `assetId`, `amount`, `name`, `decimals`, `id`,
 | `limit` | Requests permitted per UTC day, on the budget and on the snapshot of it. Zero means no budget is set. |
 | `used` | Requests reserved so far in the current UTC day. |
 | `dayStart` | Midnight UTC at the start of the day a count belongs to: on the budget, on the snapshot, and stored with the written count rather than inferred on read, so yesterday's number is recognised as yesterday's. |
-| `remaining` | Requests left today. Always zero when there is no budget, so a caller sizing a batch has to look at `limit` as well. |
+| `remaining` | Requests left today: the property, always zero when there is no budget, so a caller sizing a batch has to look at `limit` as well; and `remaining(at:)`, which answers for the day the given instant falls in and is nil when there is no budget, because a consumer that has to take its whole allowance at once cannot read a zero as either answer. |
 | `Decision` | What happened when a request was reserved. |
 | `allowed` | The request may proceed. The crossed threshold is set only on the first reservation to reach that percentage today. |
 | `exhausted` | The budget is spent. The caller pauses until the given time, the same pause a provider's own refusal causes. |
-| `reserve` | Reserves one request against today's budget, before the request is sent rather than counted after it returns. |
+| `notEnoughBudget` | The day has requests left, but fewer than a reservation that has to be taken whole asked for. Nothing was reserved, and nothing is paused: pausing because one indivisible consumer did not fit would hand the rest of the day to nobody. |
+| `reserve` | Reserves requests against today's budget, before they are sent rather than counted after they return. One request, or a count taken all or nothing for work that cannot be half done. |
 | `restore` | Applies a counter written earlier in the same UTC day, taking the larger of what is on disk and what this process has already spent. A snapshot from another day is ignored. |
 | `nativeCurrencyAssetId` | The asset id that names the chain's own currency rather than an asset. Zero, on this chain, and a side that is it is read from the account's balance rather than from a holding. Declared on `Gating.LiquidityPool` by this module, which is the module that knows what zero means. |
 | `isNativeCurrency` | Whether a side of a pair is the chain's own currency. |
@@ -236,7 +238,7 @@ type each sense belongs to: `assetId`, `amount`, `name`, `decimals`, `id`,
 | `URLSessionHeaderProbe` | A probe that makes a plain HTTP request and reads the response headers, because a typed client hands back a decoded body with the headers thrown away. |
 | `RequestBudgetSnapshot` | What has been spent of today's request budget, and whether work is paused. One value, so the health page, the status command and the logs cannot disagree. |
 | `usedRequests` | Requests reserved so far in the day, on the snapshot and on the count as it is written down. |
-| `remainingRequests` | Requests left today. Zero when no budget is set, so read `hasBudget` before drawing a conclusion from it. |
+| `remainingRequests` | Requests left today: on the snapshot, zero when no budget is set, so read `hasBudget` before drawing a conclusion from it; on the governor, nil when no budget is set, and reporting the counter rather than the breaker, so a caller that means "may I read?" asks `pausedUntil` too. |
 | `pauseReason` | Why work is paused, or nil when nothing is paused. |
 | `hasBudget` | Whether a budget is set at all. |
 | `isPaused` | Whether reads and signing are refused right now. |
@@ -253,6 +255,7 @@ type each sense belongs to: `assetId`, `amount`, `name`, `decimals`, `id`,
 | `maxRetainedNotices` | How many notices are kept for a host that has not drained them: enough that an overnight incident is still readable, bounded so a process that never drains cannot grow without limit. |
 | `restoreFromStore` | Applies a counter written earlier in the same UTC day. Called once at boot; an unreadable row throws rather than granting a budget nobody gave. |
 | `reserveRequest` | Spends one request from today's budget, throwing before the request leaves rather than finding out about the ceiling by being cut off mid sweep. |
+| `reserveRequests` | Spends a count of requests, all of them or none, for a consumer whose work cannot be half done. A reservation that does not fit takes nothing and pauses nothing; a day with nothing left pauses exactly as one request would. There is no way to hand a reservation back. |
 | `recordRequestFailure` | Trips the breaker when the error is the provider's own quota refusal, and returns the error the caller should throw. |
 | `unpause` | Lifts a pause by hand, for a refusal that turned out to be a revoked token or a misread. The budget itself is untouched. |
 | `snapshot` | Everything a status surface needs, in one value. |
@@ -362,6 +365,15 @@ checked by a test that finishes instantly.
    leaves the process, and a provider refusal is reported back to the same
    governor. The counter covers reads and signing together, so the number an
    operator sets is the whole process (SEE-9).
+6a. The budget has two kinds of consumer and only one of them can stop
+   anywhere. A sweep of everybody's roles reads an account at a time; a payout
+   run pays the whole list or should never have begun. The second kind takes
+   its requests with `reserveRequests` before it starts, because the errors a
+   spent budget raises mid-run are not that run's own refusal, so its claims
+   are all correctly kept and the epoch under-pays and closes nothing. A
+   reservation that does not fit is refused without spending anything and
+   without pausing, so what is left of the day still reaches the consumers that
+   can use it in pieces (SEE-9, RESERVE-7.d).
 7. The day the budget counts is a UTC day from `UTCDay`, never the host's
    local day, and the counter is written to `RequestBudgetStore` every
    `budgetPersistEvery` requests so a restart does not hand the process a
@@ -472,6 +484,16 @@ checked by a test that finishes instantly.
   leaves the process, one notice is recorded rather than one per refusal, and
   `snapshot` reports the same pause to every surface that asks (SEE-9, SEE-5)
 
+### Scenario: Work that cannot be half done does not start half covered
+
+- **Given** a `RequestGovernor` with a daily budget of 100 requests, 96 of them
+  spent, and a payout that needs 10 requests or none
+- **When** the host calls `reserveRequests(10)`
+- **Then** it throws `ChainError.requestBudgetCannotCover(requested: 10,
+  remaining: 4)`, the counter still reads 96, nothing is paused, and the next
+  `reserveRequest` from the role sweep succeeds: the four that are left belong
+  to the caller that can use them (SEE-9)
+
 ### Scenario: A restart does not hand the process a fresh budget
 
 - **Given** a store holding 3,000 requests used against today's UTC day start
@@ -508,6 +530,9 @@ checked by a test that finishes instantly.
 | Configured decimals disagreeing with the chain | `ChainError.assetDecimalsDisagree`, refusing to start |
 | Today's request budget spent | `ChainError.requestBudgetSpent(until:)`, paused until UTC midnight |
 | A 403 from the provider mentioning a quota | `ChainError.providerRefusedQuota(until:)`, the same pause from a different cause |
+| A bulk reservation larger than what is left of the day | `ChainError.requestBudgetCannotCover(requested:remaining:)`. Nothing reserved, nothing paused, no notice recorded: the refusal is answered to its caller, and a scheduled run that repeats it must not be able to push the pause announcement out of a bounded buffer |
+| A bulk reservation on a day with nothing left | `ChainError.requestBudgetSpent(until:)` and the ordinary pause, because at that point every size is refused |
+| A bulk reservation of zero | Allowed, spending nothing and recording nothing, so sizing an empty job cannot be what pauses a process |
 | A caller asking a short reading for a number | `ChainError.incompleteRead(gaps:)` from `requireComplete()` |
 | A pool token naming no reserve account | `ChainError.poolAddressNotFound`, rather than reporting an empty pool |
 | A budget row that cannot be read at boot | `restoreFromStore` rethrows the store's error; refusing to start beats starting with a budget nobody granted |
@@ -535,4 +560,5 @@ checked by a test that finishes instantly.
 | Date | Author | Change |
 |------|--------|--------|
 | 2026-09-18 | maintainers | Spec written for the `Chain` library target, after `ChainAsset` was removed and the module took `Gating.TokenProfile` as its one token. |
+| 2026-09-18 | maintainers | `RequestGovernor.reserveRequests` takes a whole job's requests at once for a consumer that cannot be half done, refusing without spending or pausing when they do not fit; `remainingRequests` answers nil when there is no budget. |
 | 2026-09-18 | maintainers | One `LiquidityPool` and one `CombinedBalance`, both `Gating`'s; `PoolReserves` and `PoolShare` renamed their sides counted and other; `GatingBridge` added, so a `ChainReading` reaches the rules as a `Reading` and a `[WalletCheck]` reaches them as a `MemberHoldings`; the environment read through `Gating.NumberedEnvironment`. |

@@ -41,9 +41,11 @@ It reads no clock, reaches no global generator, reads no environment variable
 and asks nothing of a chain. The wall clock, the player, the host's perk
 configuration and the seeded generator all arrive as parameters on
 `GameContext`, so a stored table replays card for card and every rule is pinned
-by an offline test. What a player holds arrives as a set of the host's own
+by an offline test. What a player holds arrives as the host's own
 collection ids, already read from whatever cache the host keeps, so however much
-anybody plays it costs no chain request (`PLAY-11`). Those ids are matched
+anybody plays it costs no chain request (`PLAY-11`). A collection the host
+asked about and could not read arrives as unreadable rather than as absent,
+because those two lead to opposite decisions and only one of them is true. Those ids are matched
 exactly and arrive normalised, so `GamePerks.init` refuses a perk whose id is
 not: a mismatch between the two spellings is a perk that fires for nobody and
 says nothing about it. Rendering is data:
@@ -136,7 +138,10 @@ other meanings are named in the same line.
 | `defaultForageCooldown` | Seconds between forages with no collections held. |
 | `minimumForageCooldown` | The absolute floor on the wait between forages, whatever perks stack. |
 | `utcDay` | UTC `yyyy-MM-dd` key for the daily claim, on a fixed Gregorian UTC calendar rather than the process locale. |
-| `dailyStipend` | Chips the daily claim pays: the base, plus each held collection's bonus. Saturating, and always at least one. |
+| `dailyClaim` | What the daily claim owes: the base plus each held collection's bonus, saturating, and always at least one. Undecided instead when a collection that could change the figure could not be read, because the claim comes once a UTC day and a short one cannot be topped up. |
+| `DailyClaim` | What the daily claim owes, or why it cannot be settled yet. Two cases rather than an `Int`, and deliberately no accessor that hands the number back with the unknown part dropped. |
+| `payable` | Every perk that could change the figure was read. Pay this. |
+| `undecided` | A collection could not be read, so the claim is not the member's to keep or to lose yet. Names the collections. Hold it and offer it again. |
 | `streakPayout` | Chips a won call pays at the streak the win produced. |
 | `forageCooldown` | Seconds a player waits between forages, after their collections shorten it. Never below the floor. |
 | `applying` | A chip total after a delta, floored at zero and saturating at both ends. |
@@ -156,12 +161,20 @@ other meanings are named in the same line.
 | `perks` | What holding one of the host's collections is worth. Carried rather than reached for as a global. |
 | `rng` | Seeded generator, mutated as the game draws. |
 | `activePerks` | The perks this player's holdings actually earn, in configuration order. |
-| `GameHoldings` | Which of the host's collections a player holds, plus the account they were read from. Ids, not flags for two named collections. |
+| `unresolvedPerks` | The configured perks whose collections could not be read for this player. A table still deals with these outstanding; it is here so a card can say so out loud. |
+| `GameHoldingReading` | What this layer was told about one of the host's collections: held, not held, or unreadable. Three answers because two collapse "holds none" into "nobody could read it", silently, at whatever moment the host's cache is having a bad afternoon. |
+| `held` | The player is known to hold at least one. |
+| `notHeld` | The player is known to hold none. |
+| `unknown` | Nobody could read it. Not zero, and not none. |
+| `GameHoldings` | Which of the host's collections a player holds, what could not be read, and the account they were read from. Ids, not flags for two named collections. |
 | `collectionIds` | Collection ids the player holds at least one of. |
+| `unreadableCollectionIds` | Collection ids somebody asked about for this player and could not answer. Empty means everything asked about was read, not that nobody checked. An id in both sets is held: positive evidence beats a failed read. |
 | `address` | The account the ids were read from, empty when nothing is linked. Carried for a card to name; never parsed, validated or looked up here. |
 | `pictureUrl` | A picture this player holds, for the corner of a card. Read from the host's cache, never from a chain. |
 | `empty` | No collections and no account: the ordinary case, not a degraded one. Also `GamePerks.empty`, no perks configured at all, and `Shiny.empty(cooldown:)`, a fresh pouch at nest one. |
-| `holds` | Whether the player holds anything from a collection id. |
+| `holds` | Whether the player is **known** to hold anything from a collection id. False for one nobody could read, which is why it is the right question for granting something and the wrong one for withholding it. |
+| `reading` | What is known about one collection: held, not held, or unreadable. |
+| `hasUnreadableCollections` | Whether anything about this player could not be read. |
 | `GameButtonStyle` | The button styles a chat client is expected to understand. Plain cases, no client types. |
 | `GameButton` | One button under a game card. |
 | `style` | Which of the five button styles this button is drawn in. |
@@ -203,7 +216,8 @@ other meanings are named in the same line.
 | `GamePerks` | The host's whole perk configuration, in the order it was written down. The order is the contract. |
 | `ordered` | Every configured perk, in configuration order. |
 | `isEmpty` | Whether any perk is configured at all. |
-| `active` | The perks these holdings earn, in configuration order rather than holdings order. |
+| `active` | The perks these holdings earn, in configuration order rather than holdings order. Only what was read as held: a perk granted on a failed read is the half of this that cannot be taken back. |
+| `unresolved` | The configured perks whose collection could not be read for this player, in configuration order. Empty means the perks are settled and `active` is the whole answer. Only configured perks are named, because a collection nobody wrote a perk for cannot change anything. |
 | `perk` | The configured perk for a collection id, or nil. |
 | `multiply` | Scale the weight so far. `0.6` makes a kind rarer. |
 | `add` | Add to the weight so far. |
@@ -283,6 +297,18 @@ other meanings are named in the same line.
    variable. What a player holds arrives on `GameHoldings`, already read from
    whatever cache the host keeps, so no amount of play costs a chain request
    (`PLAY-11`).
+3a. A collection nobody could read is **unknown**, and unknown is not "holds
+   none". `GameHoldings.reading(of:)` is the three-valued answer and
+   `GamePerks.unresolved(for:)` names what is outstanding. Nothing is ever
+   granted on an unknown, because a perk handed out on a failed read cannot be
+   taken back. What is done with the rest turns on whether the member can have
+   it again: the daily claim comes once a UTC day, so `Chips.dailyClaim`
+   withholds rather than settling it short and losing them the bonus for good,
+   while the forage wait and the loot table are re-decided on the next action
+   at no cost, so a game still deals rather than stopping over a perk that was
+   never promised (`PLAY-1`, `PLAY-4` retired). The vocabulary is this module's
+   own: the role rules keep the same distinction and this depends on Foundation
+   alone (`PLAY-9`).
 4. The number of draws an action spends is part of the contract, not an
    implementation detail. A coin is spent whenever its perk is eligible,
    whether or not the outcome is used, and `GameRNG.int(below:)` spends a draw
@@ -373,6 +399,17 @@ other meanings are named in the same line.
   comes back with only `message` replaced by the phase it is in, so a duplicate
   tap is answered rather than re-rendered unchanged
 
+### Scenario: A collection that could not be read holds the daily claim rather than shrinking it
+
+- **Given** a player known to hold one collection worth 15 chips a day, and a
+  second collection worth 80 that the host asked about and could not read
+- **When** the daily claim is worked out
+- **Then** it is `.undecided`, naming the unreadable collection, rather than
+  `.payable(chips: 55)`: the claim comes once a day, so paying it short would
+  cost them the 80 for good. The same player's forage still deals, on the
+  plain wait and the plain loot table, with the unread collection named on
+  `GameContext.unresolvedPerks` (`PLAY-1`)
+
 ### Scenario: A perk id in the shape the operator typed is refused at the door
 
 - **Given** a host whose collection is configured as `Founders Pass`, which the
@@ -399,6 +436,9 @@ that went in plus a line saying why.
 | A loot weight that is negative or not a number | `.invalidWeight`, naming the kind |
 | A reroll or extra-find chance outside `0...1` | `.invalidProbability`, naming the setting |
 | A reroll with no trigger kinds | `.emptyRerollTrigger` |
+| A collection that could not be read, with a perk worth chips a day | `Chips.DailyClaim.undecided`, naming it. Not an error: the claim is held and offered again, and the player still plays |
+| A collection that could not be read, with no perk or a perk worth no chips | The claim is payable. A perk that cannot move the figure does not hold it up |
+| A stored table with no `unreadableCollectionIds` key | Decoded as a player nothing failed for, which is the only honest reading of a row written before the question existed. A row missing its `collectionIds` still refuses to decode |
 | A bet under `Chips.minimumBet`, or over the player's chips | The table comes back untouched with only `message` replaced. No chips, no draws |
 | `deal` on a hand already in play, or already over | The table comes back with only `message` replaced by the phase it landed in. No chips, no draws |
 | `hit` or `stand` on a settled or unbet hand | The same, with the phase on `message`. Chip delta zero |
@@ -435,3 +475,4 @@ that went in plus a line saying why.
 | 2026-09-18 | maintainers | Spec written for the shipped `Games` library target. |
 | 2026-09-18 | maintainers | Perk ids must arrive normalised; `GamePerks.init` refuses any other shape. |
 | 2026-09-18 | maintainers | Every blackjack refusal writes a line, so no press answers with the card that was pressed. |
+| 2026-09-18 | maintainers | `GameHoldings` can say a collection was unreadable; a perk is never earned on one, and `Chips.dailyClaim` replaces `dailyStipend` so the once-a-day figure cannot be settled short in silence. |
