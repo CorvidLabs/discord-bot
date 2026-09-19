@@ -38,6 +38,26 @@ missing; `INTENT.md` says why the engine came first.
 3. **Code.** `Sources/<Module>/`, with a test in `Tests/<Module>Tests/` whose
    name cites the criterion id it protects.
 
+All three happen inside a **change workspace**, which is the ledger that makes
+the order above checkable rather than aspirational. Anything touching
+`Sources/`, `Tests/`, `hi/`, `Package.swift`, `fledge.toml` or `.github/` needs
+one, and `specsync change audit` refuses by name when it does not have one.
+
+```
+specsync change new "<what you are about to do>" --path Sources/<Module>
+specsync change answer <id> <question> <answer>     # until the interview is done
+specsync change approve <id> --actor <who agreed>   # never yourself
+# build it, contract and tests together
+specsync change check <id>
+specsync change review <id> --reviewer <who read it>
+specsync change finalize <id>                       # before merge, not after
+```
+
+Two rules that are not negotiable. **Approval is somebody else's**: you may
+prepare the definition, and you may not record agreement you did not receive.
+**Finalize before merge**: merging first orphans the verification evidence and
+blocks every earlier change sharing a delivery input from archiving.
+
 ## Where things live
 
 | Path | What it holds |

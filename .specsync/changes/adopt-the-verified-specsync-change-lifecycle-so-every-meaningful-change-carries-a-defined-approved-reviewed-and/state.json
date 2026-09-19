@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "adopt-the-verified-specsync-change-lifecycle-so-every-meaningful-change-carries-a-defined-approved-reviewed-and",
+  "slug": "adopt-the-verified-specsync-change-lifecycle-so-every-meaningful-change-carries-a-defined-approved-reviewed-and",
+  "title": "Adopt the verified SpecSync change lifecycle so every meaningful change carries a defined, approved, reviewed and archived workspace",
+  "description": "Adopt the verified SpecSync change lifecycle so every meaningful change carries a defined, approved, reviewed and archived workspace",
+  "kind": "operations",
+  "state": "approved",
+  "base_commit": "c381eaed999fb232bafcc920f61dd82717309e18",
+  "created_at": 1789788970,
+  "updated_at": 1789789123,
+  "affected_specs": [],
+  "affected_paths": [
+    ".specsync/sdd.json",
+    ".specsync/config.toml"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "This turns the lifecycle on. It changes no module behaviour and no canonical spec text; the contracts under specs/ are unchanged by it.",
+  "acceptance_criteria": [
+    "specsync change audit passes with the gate on. A change touching Sources, Tests, hi, Package.swift or the workflows without an active workspace is refused by name rather than merged. The verification command is the same fledge verify lane the Trust gate already runs, so the lifecycle and CI cannot disagree about what passing means. Adoption itself is covered by this workspace, which is the first proof the gate works."
+  ],
+  "selected_artifacts": [
+    "context",
+    "plan",
+    "testing"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "public_contract": "no"
+  }
+}

@@ -26,6 +26,27 @@ If a criterion turns out to be wrong, the criterion is the fix as much as the
 code is. Retire it with a reason and replace it. A criterion nobody can check is
 worse than none.
 
+## The change lifecycle
+
+Every meaningful change is defined before it is built, approved before it is
+implemented, and reviewed against its own definition before it merges. That is
+not ceremony: this repository pays real people in tokens they cannot get back,
+and the interview asks the questions somebody would otherwise answer to
+themselves halfway through.
+
+`specsync change new` opens a workspace and hands you a deterministic
+interview. Answer it, fill the artifacts it selected, and get the definition
+approved by the person whose call it is. Then build, with the contract and the
+tests in the same change. Then `check`, then `review`, then `finalize`, and
+only then merge.
+
+The policy lives in `.specsync/sdd.json`. Its verification command is the same
+`fledge lanes run verify` lane the Trust gate runs in CI, so there is one
+definition of passing rather than two that can drift.
+
+You cannot approve your own change, and you cannot record a review you did not
+perform. A ledger holding one invented approval is worth less than no ledger.
+
 ## Specs
 
 `specs/<module>/` is a module's contract, one per target. It changes in the
