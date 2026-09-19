@@ -56,6 +56,19 @@ public enum CombinedBalance: Sendable {
         /// what they hold, or only the part in front of us?
         public let otherAccountsExist: Bool
 
+        /// How many accounts went into it.
+        public let accountCount: Int
+
+        /// Accounts whose figure came from a stored balance rather than a
+        /// fresh read, so somebody looking at the total can tell how old part
+        /// of it is.
+        ///
+        /// Empty is the ordinary case: a sweep reads every account. A name in
+        /// here is an account nobody read this time, standing in on what was
+        /// last known about it, which is a complete answer and is recorded as
+        /// such rather than being indistinguishable from a fresh one.
+        public let accountsFromStoredBalances: [String]
+
         // MARK: - Initializers
 
         /// - Parameters:
@@ -63,12 +76,27 @@ public enum CombinedBalance: Sendable {
         ///   - liquidity: Held in pools, across every account.
         ///   - combined: The two added together.
         ///   - otherAccountsExist: Whether there is more than the one account
-        ///     in hand.
-        public init(direct: UInt64, liquidity: UInt64, combined: UInt64, otherAccountsExist: Bool) {
+        ///     in hand. From `afterLinking` that means an account besides the
+        ///     one just linked; from `across` it means the list held more than
+        ///     one. The two readings agree on the question and differ on what
+        ///     "the one" is, so read it with the constructor that made it.
+        ///   - accountCount: How many accounts went into it.
+        ///   - accountsFromStoredBalances: Accounts that stood in on a stored
+        ///     figure rather than a fresh read.
+        public init(
+            direct: UInt64,
+            liquidity: UInt64,
+            combined: UInt64,
+            otherAccountsExist: Bool,
+            accountCount: Int,
+            accountsFromStoredBalances: [String] = []
+        ) {
             self.direct = direct
             self.liquidity = liquidity
             self.combined = combined
             self.otherAccountsExist = otherAccountsExist
+            self.accountCount = accountCount
+            self.accountsFromStoredBalances = accountsFromStoredBalances
         }
     }
 
@@ -99,7 +127,8 @@ public enum CombinedBalance: Sendable {
                 direct: direct,
                 liquidity: liquidity,
                 combined: saturatingSum(direct, liquidity),
-                otherAccountsExist: accounts.count > 1
+                otherAccountsExist: accounts.count > 1,
+                accountCount: accounts.count
             )
         )
     }
@@ -136,7 +165,8 @@ public enum CombinedBalance: Sendable {
             direct: direct,
             liquidity: liquidity,
             combined: saturatingSum(direct, liquidity),
-            otherAccountsExist: !others.isEmpty
+            otherAccountsExist: !others.isEmpty,
+            accountCount: others.count + 1
         )
     }
 

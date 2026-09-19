@@ -11,27 +11,51 @@ That is the product this is meant to become. Almost none of it is written.
 
 **Early. Not runnable yet.** This repository is being built in the open, a piece
 at a time, out of a private bot that has been running a live community for
-months. Nothing here is a product yet.
+months. There is no bot here: no gateway, no slash commands, no database, no
+executable target and nothing you can deploy. What exists is four library
+targets, all offline, all covered by tests, and none of them wired to anything.
 
-What exists today is one library target, `Reserve`, and nothing else: the
-payout engine. A finite reserve split into named streams, paid out over epochs,
-with fixed shares that cannot move when new holders arrive, integer arithmetic
-in the asset's smallest unit throughout, and guards against paying the same
-period twice. It builds, it is covered by 105 tests, and it knows nothing about
-Discord or Algorand.
+| Target | What it is |
+|--------|------------|
+| `Reserve` | The payout engine. A finite pot, split into named streams, paid over epochs, with fixed shares and four guards against paying a period twice. Foundation only. |
+| `Gating` | What holding something earns somebody in a server: the tier ladder, the collections, the pools, and the rule that turns what a member holds into the roles they should have. Pure values, no chain, no Discord, no clock. |
+| `Games` | Three games of cards and chance, as reducers. Clock and randomness arrive as parameters, so a table replays from a seed. Nothing here can reach a chain or sign anything. |
+| `Chain` | Reading what an account holds on an Algorand node, and the two brakes that stop it reading too much: a per-second limiter and a per-UTC-day request budget. |
 
-There is no bot here yet: no gateway, no commands, no chain access, nothing you
-can deploy. Verification, roles, collections, giveaways, the games and the
-scheduler are all unwritten.
+```
+swift test    # 571 tests in 39 suites: Reserve 105, Gating 133, Games 158, Chain 175
+```
 
-What the whole thing is meant to be is written down rather than implied.
-[`INTENT.md`](INTENT.md) and the files under [`hi/`](hi/) are that catalogue:
-nineteen families of plain sentences about what somebody wants from each part,
-every one with an id that never moves. They describe the intended product, not a
-running one. Only the RESERVE family has code behind it today.
+Everything runs offline. No test reaches a network, and none needs a key, a
+funded wallet or a Discord server.
 
-The Discord surface, the role synchronisation and the wallet verification flow
-come after that, in that order.
+### What is missing
+
+Most of it, and what is missing is the part a person would actually use:
+
+- **No Discord surface.** No gateway connection, no slash commands, no embeds,
+  no buttons. A role is a plain string in `Gating` and nothing turns it into a
+  Discord role.
+- **No wallet verification.** Nothing signs a challenge and nothing records
+  that an account belongs to a member, which is the first thing the product is
+  for.
+- **No persistence.** Every store in the package is a protocol with an
+  in-memory implementation for tests. There is no schema and no file format.
+- **No executable.** `Package.swift` declares four libraries and no binary, so
+  there is nothing to run and nothing to deploy.
+- **No host.** The four targets do not know about each other beyond `Chain`
+  depending on `Gating`. Nothing sweeps, nothing schedules, nothing pays.
+- **No giveaways, no draws, no cards to look at, no announcements.** The
+  `hi/` families describing them have nothing behind them.
+
+Four of the nineteen intent families have code standing behind part of what they
+describe: RESERVE, ROLE, ADOPT and PLAY. The rest are wants that have been
+written down and agreed, not features that work.
+[`INTENT.md`](INTENT.md) indexes them and [`hi/`](hi/) holds them, every line
+with an id that never moves.
+
+The Discord surface, the wallet verification flow and a host that wires the four
+libraries together come next, in that order.
 
 ## Why the engine first
 
@@ -48,9 +72,10 @@ and documented first.
 
 # The `Reserve` engine
 
-The one library target that exists today. A finite **reserve**, split into named
-**streams**, paid to **recipients** over **epochs**. It plans and it records. It
-never sends anything, and it has no idea what a database is.
+The first of the four, and the one with the most written down about it. A finite
+**reserve**, split into named **streams**, paid to **recipients** over
+**epochs**. It plans and it records. It never sends anything, and it has no idea
+what a database is.
 
 ## The shape
 
@@ -227,21 +252,76 @@ where a real run would.
 
 ---
 
+# The other three
+
+## `Gating`
+
+What holding something earns. A **tier ladder** an operator numbers from 1, a
+**collection catalogue** with its own match rule per collection, a **pool
+catalogue**, and `RoleRules.decide`, which takes what a member holds and the
+roles they have now and answers which roles they should have.
+
+Two rules run through all of it. **A role the operator did not configure is
+never touched**, so a badge a moderator handed out by hand survives every sweep.
+And **a fact nobody read manages nothing**: the roles that fact would have
+decided drop out of the managed set and are held rather than stripped. That
+second rule is why `Reading` exists, and why it deliberately has no accessor
+that hands back a value with a default. Silence from a data provider is not
+evidence that somebody sold up, and a sweep that acts as though it were takes
+roles away from people who did nothing.
+
+Nothing in it is a fact about one project. The ladder, the thresholds, the
+collections, the pools and every role id are read from numbered environment
+variables, the first gap ends each list, and a half-written entry is a refusal
+naming the variable rather than a default somebody else chose.
+
+## `Games`
+
+Games of cards and chance as reducers over a `GameContext` that carries the
+clock and the randomness. A table replays exactly from a seed, so a rule can be
+pinned by a test rather than played until it looks right.
+
+Chips are a **score**. There is no path from a game to anything that moves
+value, no conversion in either direction, and the target has no dependency
+through which it could acquire one.
+
+## `Chain`
+
+Reading an account, a pool and an asset from an Algorand node, behind two
+brakes: a per-second rate limiter on a monotonic clock, and a per-UTC-day
+request budget that counts reads and signing together and is written down so a
+restart does not hand the process a fresh one.
+
+The other half of its job is refusing to invent an answer. A request that did
+not come back is not an account holding nothing, and a pool whose reserves could
+not be read is not a pool worth nothing. Every figure it hands out is a
+`ChainReading`, which carries whether it is the whole answer, and the only two
+routes from one into a decision turn a short answer into **unknown** rather than
+into a smaller number.
+
+It shares `Gating`'s token, pool, readings and totals rather than declaring its
+own, so an operator writes each of them down once and cannot write one down
+twice differently.
+
+---
+
 ## How this repository works
 
 Intent is written down before code, as plain sentences about what somebody wants,
 each with an id that never moves. [`INTENT.md`](INTENT.md) indexes the families
-and `hi/` holds them. [`hi/reserve.md`](hi/reserve.md) is the only one with an
-implementation behind it: the engine's 52 criteria were written before any of it
-was built, and the tests cite them by id. The other eighteen families are intent
-waiting on code, and are marked as such rather than dressed up as features.
-Module contracts live alongside the code and are kept in step with it.
+and `hi/` holds them. [`hi/reserve.md`](hi/reserve.md) is the fullest: the
+engine's 52 criteria were written before any of it was built, and the tests cite
+them by id. Module contracts live in `specs/` beside the code and change in the
+same pull request it does. All four targets have one, and every source
+directory is registered with the gate, so an export that grows without a
+contract fails a pull request rather than passing unread.
 
 Every change arrives through a pull request.
 
 ```bash
 swift build
 swift test
+specsync check --strict
 ```
 
 ## Licence

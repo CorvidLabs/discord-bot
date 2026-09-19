@@ -4,11 +4,16 @@ import PackageDescription
 
 let package = Package(
     name: "discord-bot",
+    // Raised from macOS 11 / iOS 15 by the Chain target, whose rate limiter
+    // measures with `ContinuousClock`. A limiter that reads the wall clock
+    // hands out free requests whenever the clock is stepped backwards, which
+    // is the one thing a limiter exists to prevent, so the floor moves rather
+    // than the clock.
     platforms: [
-        .macOS(.v11),
-        .iOS(.v15),
-        .tvOS(.v15),
-        .watchOS(.v8),
+        .macOS(.v13),
+        .iOS(.v16),
+        .tvOS(.v16),
+        .watchOS(.v9),
         .visionOS(.v1)
     ],
     products: [
@@ -17,7 +22,11 @@ let package = Package(
         // would, so the engine can never quietly acquire a Discord import.
         .library(name: "Reserve", targets: ["Reserve"]),
         .library(name: "Gating", targets: ["Gating"]),
-        .library(name: "Games", targets: ["Games"])
+        .library(name: "Games", targets: ["Games"]),
+        .library(name: "Chain", targets: ["Chain"])
+    ],
+    dependencies: [
+        .package(url: "https://github.com/CorvidLabs/swift-algorand.git", from: "0.1.0")
     ],
     targets: [
         .target(
@@ -56,6 +65,23 @@ let package = Package(
         .testTarget(
             name: "GamesTests",
             dependencies: ["Games"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+
+        // Reading the chain, and the two brakes that stop it reading too much:
+        // a per-second limiter and a per-day budget. An answer this layer
+        // could not complete says so rather than returning zero.
+        .target(
+            name: "Chain",
+            dependencies: [
+                "Gating",
+                .product(name: "Algorand", package: "swift-algorand")
+            ],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+        .testTarget(
+            name: "ChainTests",
+            dependencies: ["Chain", "Gating"],
             swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
         )
     ]

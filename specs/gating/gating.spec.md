@@ -87,6 +87,8 @@ declared on more than one type is listed once, where it first appears.
 | `liquidity` | Held inside liquidity positions, across every account. |
 | `combined` | The two added together. This is what the ladder is read against. |
 | `otherAccountsExist` | Whether the member has more than the one account in hand: more than one account in the list after `across`, and something on record besides the account that just signed after `afterLinking`. |
+| `accountCount` | How many accounts the totals were summed over. Distinct from `otherAccountsExist`, which is a yes or no: a caller deciding whether a figure is worth trusting needs the number. |
+| `accountsFromStoredBalances` | The accounts whose figure came from what was stored rather than from a fresh read, named rather than counted, so a caller can say which part of a total is old. |
 | `across` | Adds every account up, or says that nothing was added up. An empty list is `unknown`, never a total of nothing. |
 | `afterLinking` | The totals to decide roles on straight after a member links an account. The linked account is dropped from the stored figures first, so the figure just read wins over the one beside it. |
 | `GatingConfiguration` | Everything an operator decides about what holding something earns. One value, loaded once, and the only thing the rules read. |
