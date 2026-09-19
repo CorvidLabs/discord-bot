@@ -1,6 +1,6 @@
 ---
 id: satisfy-four-criteria-the-catalogue-states-and-the-code-does-not-which-period-a-boundary-crossing-payout-was-counted
-state: implementing
+state: verifying
 type: feature
 base_commit: b848c0ea12f88511c6da86562bf793b407526d35
 ---

@@ -11,20 +11,24 @@
   "canonical_applied": true,
   "base_commit": "b848c0ea12f88511c6da86562bf793b407526d35",
   "created_at": 1789789650,
-  "updated_at": 1789857899,
+  "updated_at": 1789857965,
   "affected_specs": [
     "reserve",
     "chain",
     "store"
   ],
   "affected_paths": [
-    "Sources",
-    "Tests",
-    "specs",
-    "README.md",
-    "AGENTS.md",
-    "CHANGELOG.md",
-    "docs"
+    "Sources/Chain",
+    "Sources/Reserve",
+    "Sources/Store",
+    "Sources/StoreSQLite",
+    "Sources/StoreTestKit",
+    "Tests/ChainTests",
+    "Tests/ReserveTests",
+    "Tests/StoreSQLiteTests",
+    "specs/chain",
+    "specs/reserve",
+    "specs/store"
   ],
   "no_spec_change": false,
   "no_spec_change_rationale": null,

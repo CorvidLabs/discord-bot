@@ -1,13 +1,13 @@
 {
-  "timestamp": 1789857897,
-  "commit": "1d9e48b087f9ca46ee0f241af64e7f78694bfa64",
-  "contract_digest": "a0ba97a6d5f44d448c38c5129b45c23a1cfb4c6743f1dd3557cd891f243dec06",
-  "execution_digest": "f7ccb698bcf550b28f0d74d176c3ac8a12620c3c8f94fd296511eaec48860336",
+  "timestamp": 1789857963,
+  "commit": "1a4cfbe4e9b596a2ccf3496f057b9fbe82c7e86c",
+  "contract_digest": "fc1cd969a3f54cde9fc9815d0b01238ed64577e7c2b077bc1859062aa80448d2",
+  "execution_digest": "dcc0c45d8ae0e85b263f641c5509338cf9234e7b6fa4fe6eb05046677a96a5b2",
   "workspace_digest": "d4c2b15fc79e6b98d2834321830eb55cdc8ba13f91ade7ef9aafb4aaa04f9a84",
   "passed": true,
   "commands": [
     {
-      "command": "specsync check --spec chain --spec games --spec gating --spec reserve --spec runtime --spec store --spec surface --spec verify",
+      "command": "specsync check --spec chain --spec reserve --spec store",
       "success": true,
       "exit_code": 0
     }

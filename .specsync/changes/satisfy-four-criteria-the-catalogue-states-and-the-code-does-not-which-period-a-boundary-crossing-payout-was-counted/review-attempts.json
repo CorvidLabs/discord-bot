@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "satisfy-four-criteria-the-catalogue-states-and-the-code-does-not-which-period-a-boundary-crossing-payout-was-counted",
+      "reviewer": "0xLeif",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "1a4cfbe4e9b596a2ccf3496f057b9fbe82c7e86c",
+      "contract_digest": "a0ba97a6d5f44d448c38c5129b45c23a1cfb4c6743f1dd3557cd891f243dec06",
+      "execution_digest": "f7ccb698bcf550b28f0d74d176c3ac8a12620c3c8f94fd296511eaec48860336",
+      "workspace_digest": "d4c2b15fc79e6b98d2834321830eb55cdc8ba13f91ade7ef9aafb4aaa04f9a84",
+      "timestamp": 1789857903
+    }
+  ]
+}

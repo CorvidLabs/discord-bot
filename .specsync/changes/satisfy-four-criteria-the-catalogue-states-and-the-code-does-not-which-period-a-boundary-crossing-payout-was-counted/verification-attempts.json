@@ -96,6 +96,30 @@
         "REQ-store-016",
         "REQ-store-017"
       ]
+    },
+    {
+      "timestamp": 1789857963,
+      "commit": "1a4cfbe4e9b596a2ccf3496f057b9fbe82c7e86c",
+      "contract_digest": "fc1cd969a3f54cde9fc9815d0b01238ed64577e7c2b077bc1859062aa80448d2",
+      "execution_digest": "dcc0c45d8ae0e85b263f641c5509338cf9234e7b6fa4fe6eb05046677a96a5b2",
+      "workspace_digest": "d4c2b15fc79e6b98d2834321830eb55cdc8ba13f91ade7ef9aafb4aaa04f9a84",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec chain --spec reserve --spec store",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-chain-020",
+        "REQ-chain-021",
+        "REQ-chain-022",
+        "REQ-chain-023",
+        "REQ-reserve-009",
+        "REQ-store-016",
+        "REQ-store-017"
+      ]
     }
   ]
 }
