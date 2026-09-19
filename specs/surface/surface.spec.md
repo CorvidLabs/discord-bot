@@ -1,6 +1,6 @@
 ---
 module: surface
-version: 1
+version: 3
 status: active
 files:
   - Sources/Surface/Boot/BootReport.swift
@@ -574,6 +574,15 @@ in the same line.
   `externalId`. No snowflake type appears in `Surface`, which a test greps
   for, and `Store` declares no chat client at all, so the reverse is a missing
   module rather than a review comment.
+- **The role list sent is the managed half of the target plus what the
+  member already holds outside the managed set.** It is never built from
+  ``Gating/RoleDecision/held``: `held` is every configured role the decision
+  deliberately left alone because the fact behind it was not read, and
+  leaving a role alone means neither granting nor revoking it. Sending it
+  turns every unread fact into a grant, which is `ROLE-1.a` exactly
+  backwards, and it is the whole reason ``Gating/RoleDecision/target``
+  exists. The arithmetic is a static function taking a decision and a role
+  set, so it needs no token and is pinned by a test.
 - **Only `SurfaceDiscord` imports the chat client.** A test greps every file
   under `Sources/` for the import statement and allows one directory.
 - **The catalogue is the single source of what exists.** Registration maps it
@@ -712,6 +721,12 @@ total is unknown and every rung is held.
 accept thread, served on a thread of its own, and dropped when the receive
 timeout expires. Everything else carries on being served throughout.
 
+**Nobody can say which collection an asset belongs to.** Every collection's
+roles come back in ``Gating/RoleDecision/held`` rather than in `granted` or
+`revoked`, and the list that goes out to the chat client carries whichever of
+them the member already had and no more. A member who has never held a piece
+of that collection does not collect its badge for the outage.
+
 **A configured role id has a wrong digit.** The member update succeeds, the
 chat client drops the id, the read back after it finds the difference, and a
 line naming the exact id is reported. Without it the bot looks like it works
@@ -807,3 +822,11 @@ their commands do.
   ``DiscordGuildMemberRoles/setRoles(ofMember:to:)`` reads back what landed,
   and ``DiscordGatewayConnection/stop()`` waits for the socket's pending work
   before the process exits.
+- **2**. The list sent to the chat client is built from the managed half of
+  ``Gating/RoleDecision/target`` rather than from
+  ``Gating/RoleDecision/held``. Unioning `held` granted every configured role
+  whose deciding fact had not been read, which meant every collection badge
+  on every `/verify`, because the callback builds holdings with no asset
+  catalogue and therefore holds every collection. Found by review, fixed
+  against five tests that failed first.
+| 2026-09-19 | re-read-what-every-member-holds-and-move-their-roles-to-match-as-a-sweep-module-with-the-loop-the-batching-the-run: Re-read what every member holds and move their roles to match, as a Sweep module with the loop, the batching, the run record and the per-member reasons, that nothing calls yet |

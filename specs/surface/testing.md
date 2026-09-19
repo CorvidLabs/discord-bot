@@ -5,9 +5,9 @@ spec: surface.spec.md
 ## Automated Testing
 
 `swift test` runs the whole package: 812 tests in 66 suites. This module's
-own share is 177 tests in 19 suites, with no token, no network, no guild and
+own share is 182 tests in 20 suites, with no token, no network, no guild and
 no key (`swift test --filter SurfaceTests` gives 150 in 16, and
-`swift test --filter SurfaceDiscordTests` gives 27 in 3). Five of them open a
+`swift test --filter SurfaceDiscordTests` gives 32 in 4). Five of them open a
 socket, on the loopback address and on port zero so the kernel picks a free
 port; nothing else here touches the machine it runs on.
 
@@ -28,6 +28,7 @@ port; nothing else here touches the machine it runs on.
 | `CallbackResponderTests.swift` | Unit | A callback before the store is open refused rather than dropped, a scanner that cannot spend the portal's budget, the callback route itself counted, verification off closing the route to any key, and health answered on that port throughout. |
 | `ListenerTests.swift` | Unit and socket | The accept failure policy's backoff, its forgiveness and its giving up; one request answered end to end on a real socket; and more silent peers than the machine has cores failing to stop anybody else being served. |
 | `TargetShapeTests.swift` | Unit | The chat library confined to one directory, the manifest naming it once, no snowflake type below the adapter, no inherited name, no literal account or chat id, no inherited host, and a suite that cannot read the environment or open a session. |
+| `RoleListTests.swift` | Unit | The exact set of role ids one decision sends: a badge held for an unread fact never granted, the same badge left on a member who already had it, a hand-granted role surviving, a rung the member sold out of dropped, and nothing outside the managed set invented from the decision alone. |
 | `AdapterTests.swift` | Unit | `attachments` present on every edit and every first reply, inert mentions, embeds, button rows of five, command payloads including a subcommand that is never required, and four interaction shapes decoded from the JSON Discord actually sends. |
 
 ## Manual Testing

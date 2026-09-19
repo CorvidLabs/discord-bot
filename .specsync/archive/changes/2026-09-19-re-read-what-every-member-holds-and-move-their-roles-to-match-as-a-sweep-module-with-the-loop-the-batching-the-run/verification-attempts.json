@@ -1,0 +1,671 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1789858374,
+      "commit": "3efbbf9e8ad527116e959424063fedfdb869a5a5",
+      "contract_digest": "c4c0bb87e051bf824a6730bb73b73e29d0d7f2d41672b63e92662ccf0341deec",
+      "execution_digest": "8e30bb24af94be9373f092ec257c1ecf458e65cde92a2abe67bc97258a1455ce",
+      "workspace_digest": "63235e5e1ac47c774803df790171b1a546e977e0fd38c739e34a4862aa9df9e0",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec surface --spec sweep",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-surface-019",
+        "REQ-sweep-001",
+        "REQ-sweep-002",
+        "REQ-sweep-003",
+        "REQ-sweep-004",
+        "REQ-sweep-005",
+        "REQ-sweep-006",
+        "REQ-sweep-007",
+        "REQ-sweep-008",
+        "REQ-sweep-009",
+        "REQ-sweep-010",
+        "REQ-sweep-011",
+        "REQ-sweep-012",
+        "REQ-sweep-013",
+        "REQ-sweep-014",
+        "REQ-sweep-015",
+        "REQ-sweep-016",
+        "REQ-sweep-017",
+        "REQ-sweep-018",
+        "REQ-sweep-019",
+        "REQ-sweep-020",
+        "REQ-sweep-021",
+        "REQ-sweep-022",
+        "REQ-sweep-023",
+        "REQ-sweep-024"
+      ]
+    },
+    {
+      "timestamp": 1789858720,
+      "commit": "7452a08c0338e7c7091f47ab21ef02963b255df0",
+      "contract_digest": "58f570d6018286735c7f619ec909314106daed5543edf2747ad9ca351cdae3f1",
+      "execution_digest": "41da64c2fcbd186423bdf2a1465bde3cb8949404583c18ad8c57d867b59ca241",
+      "workspace_digest": "37b1982df0f44cda98ba23d61d85a3e8cfbb195c2954783d82239b89bfa0dbe2",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec surface --spec sweep",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-surface-019",
+        "REQ-sweep-001",
+        "REQ-sweep-002",
+        "REQ-sweep-003",
+        "REQ-sweep-004",
+        "REQ-sweep-005",
+        "REQ-sweep-006",
+        "REQ-sweep-007",
+        "REQ-sweep-008",
+        "REQ-sweep-009",
+        "REQ-sweep-010",
+        "REQ-sweep-011",
+        "REQ-sweep-012",
+        "REQ-sweep-013",
+        "REQ-sweep-014",
+        "REQ-sweep-015",
+        "REQ-sweep-016",
+        "REQ-sweep-017",
+        "REQ-sweep-018",
+        "REQ-sweep-019",
+        "REQ-sweep-020",
+        "REQ-sweep-021",
+        "REQ-sweep-022",
+        "REQ-sweep-023",
+        "REQ-sweep-024"
+      ]
+    },
+    {
+      "timestamp": 1789858729,
+      "commit": "ba5d79a4a0ede7408e534e7c0fee5970ca7e37db",
+      "contract_digest": "58f570d6018286735c7f619ec909314106daed5543edf2747ad9ca351cdae3f1",
+      "execution_digest": "41da64c2fcbd186423bdf2a1465bde3cb8949404583c18ad8c57d867b59ca241",
+      "workspace_digest": "37b1982df0f44cda98ba23d61d85a3e8cfbb195c2954783d82239b89bfa0dbe2",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec surface --spec sweep",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-surface-019",
+        "REQ-sweep-001",
+        "REQ-sweep-002",
+        "REQ-sweep-003",
+        "REQ-sweep-004",
+        "REQ-sweep-005",
+        "REQ-sweep-006",
+        "REQ-sweep-007",
+        "REQ-sweep-008",
+        "REQ-sweep-009",
+        "REQ-sweep-010",
+        "REQ-sweep-011",
+        "REQ-sweep-012",
+        "REQ-sweep-013",
+        "REQ-sweep-014",
+        "REQ-sweep-015",
+        "REQ-sweep-016",
+        "REQ-sweep-017",
+        "REQ-sweep-018",
+        "REQ-sweep-019",
+        "REQ-sweep-020",
+        "REQ-sweep-021",
+        "REQ-sweep-022",
+        "REQ-sweep-023",
+        "REQ-sweep-024"
+      ]
+    },
+    {
+      "timestamp": 1789858733,
+      "commit": "46bf85a9fa9e34f87304f2dac1da03fdff7c7e46",
+      "contract_digest": "58f570d6018286735c7f619ec909314106daed5543edf2747ad9ca351cdae3f1",
+      "execution_digest": "41da64c2fcbd186423bdf2a1465bde3cb8949404583c18ad8c57d867b59ca241",
+      "workspace_digest": "37b1982df0f44cda98ba23d61d85a3e8cfbb195c2954783d82239b89bfa0dbe2",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec surface --spec sweep",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-surface-019",
+        "REQ-sweep-001",
+        "REQ-sweep-002",
+        "REQ-sweep-003",
+        "REQ-sweep-004",
+        "REQ-sweep-005",
+        "REQ-sweep-006",
+        "REQ-sweep-007",
+        "REQ-sweep-008",
+        "REQ-sweep-009",
+        "REQ-sweep-010",
+        "REQ-sweep-011",
+        "REQ-sweep-012",
+        "REQ-sweep-013",
+        "REQ-sweep-014",
+        "REQ-sweep-015",
+        "REQ-sweep-016",
+        "REQ-sweep-017",
+        "REQ-sweep-018",
+        "REQ-sweep-019",
+        "REQ-sweep-020",
+        "REQ-sweep-021",
+        "REQ-sweep-022",
+        "REQ-sweep-023",
+        "REQ-sweep-024"
+      ]
+    },
+    {
+      "timestamp": 1789858733,
+      "commit": "bb32957309fa39882371188f47bfd7c26c45cfaa",
+      "contract_digest": "58f570d6018286735c7f619ec909314106daed5543edf2747ad9ca351cdae3f1",
+      "execution_digest": "41da64c2fcbd186423bdf2a1465bde3cb8949404583c18ad8c57d867b59ca241",
+      "workspace_digest": "37b1982df0f44cda98ba23d61d85a3e8cfbb195c2954783d82239b89bfa0dbe2",
+      "acceptance_input_digest": "c5fa80e90aaf61ae2fe532cb8353a854c8675663a5e3e6ee8ff926fd5af343d1",
+      "acceptance_manifest": {
+        "schema_version": 1,
+        "entries": [
+          {
+            "path": ".specsync/config.toml",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "8e739c7097df232a0167423d90e38e82a8394df6a07ff5a3531951d2dda49480",
+            "entry_digest": "b091ccb0740428daceb2a5210a5ea5fa9064b41ee79b175547bedb8e7861539c",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "Package.resolved",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "2d94182550e446b3a2de763f37f77f5c0a628665c8aa7c6c9fe33511e9d5ece8",
+            "entry_digest": "6eeca0589b11db40e72084eb8a1e7b09a317c1e4bf252af573fec8930fb8f1c0",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "Package.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "4e5223ba4a5408635a1c191e4dc98919123b7b9111b5dae5d479949be4064c5d",
+            "entry_digest": "214312a0619e013be48834b7cc3b6137f4ef79c3b0202e22606ddca9f81f5167",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "Sources/SurfaceDiscord/DiscordRoleApplier.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "dd918fddb9d285c121752f5f3e0437dd48af9492a541035263c0ea4a01f55576",
+            "entry_digest": "5cbeec0bb286f59fa6d03ec84a793fc06c4a71d4e78ae98cd62cff506b269bc3",
+            "owners": [
+              "surface"
+            ]
+          },
+          {
+            "path": "Sources/Sweep",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "609878cf3094a4c01329375c20ab95af35d0f16667bff1b8ed66addf36bbf1b5",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "Sources/Sweep/CollectionRegistry.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "178091a0c3d8a2aaf002b3cbffbf4b0aaa23048dd5153d61d4469021ac3dc4ba",
+            "entry_digest": "9192a8a960988a052436b209c589c6fef6db0eea2ec6440b01bbb8eb9158f040",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "Sources/Sweep/MemberSweepOutcome.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "50c0d2c66ddd6a74ddd747bda11b763fcf85bce50dad64c857c21ed63fc27d2d",
+            "entry_digest": "c817639708800bd720faa54c9837fc8d154d7797ec0e849724f48601ca305555",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "Sources/Sweep/RoleGateway.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "3b3f8d7f1fca0dc3785016263b377a9fbfc232caea76d7d45f8d8d7b2bfb5d17",
+            "entry_digest": "0ff44867d26d1e914f79405425d2391a4450154697a3dc19c080b4acaa588ab6",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "Sources/Sweep/RoleSweep.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "5af0cc9cb396e4a9a5f8543d90a3d8497e5265c380f05ae2385ec2d7f0ee1ff8",
+            "entry_digest": "43c49daec13be4b2b235a86faadc4877709bc293ae097594fe24bae193e3d9e4",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "Sources/Sweep/SweepChainReader.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "08254d82c80af2f1b3cb65192e5b1f3a4626134ee00d37aacfe0d680afa5ce2b",
+            "entry_digest": "86725dc1760720f060ad29b1dd5c453a401266033592e905b04c9a66266f72bc",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "Sources/Sweep/SweepDirectory.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "abaa2d4c5937c48631013929145aa1aeb6808dd2a013ef4ebfe9858c917541e6",
+            "entry_digest": "f63d877e9fb6eb55300383698afebbf3d9dfc7e4acc6a4997e8718636b5b7214",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "Sources/Sweep/SweepJournal.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "878a09895d7101afa1949fc7191b484f37f70290215cc8d7e04d32e2a37995a1",
+            "entry_digest": "3c96d7c09ebc67624bb1b858ea221b76d556a0ef6442505abfd5da5cc0e4a781",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "Sources/Sweep/SweepLimits.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "5b032c39764ce953022a675cdc4d328b8ad8213500a78a802c5e25530d2aea1d",
+            "entry_digest": "cd8541b2020e4d43c631a0bb55e3a49ec7ce2e4768f39704ba7782d5ba67d002",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "Sources/Sweep/SweepLog.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "94615846583570f85668e0d43302a9d5cc0570b1f3376b27eb544f7ce5e19996",
+            "entry_digest": "524d4a0b74210fda431d17fa116bdedcbb9ec8cdcb3e55b75e14e93258bf8fed",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "Sources/Sweep/SweepProblem.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b4063a305b4f97a849aea536c26f109ba49d0682466d63cb816d63df5b604771",
+            "entry_digest": "02fb66abd17b731770d1dfef7deb7b4c246c7fe3a132c1126ecd1690e07a0ef6",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "Sources/Sweep/SweepRecord.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b26b70351bce7d12fd3f0657c180695b264c74e5fc7721b127c6c0f036c6e34d",
+            "entry_digest": "e32a900081197fefa41d95454e80bf73326b9cc8831b19dbb5c88e1083be6c16",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "Sources/Sweep/SweepReport.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "0fd07bd6825058cdad7d7aba2a553ce23912eb26f97eda9af42d40cb05b5f223",
+            "entry_digest": "ad3da1d185cee437b377ddab1732599845bfb59b371e24cb536fb9f0fa2a933b",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "Sources/Sweep/SweepSchedule.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "fbff6a00874165d6b432813f5cb3a8c482ad1b60310736c2bf4d0e1502c46ad7",
+            "entry_digest": "ac4f664c978cd65129b706bf326b8f1c70e6615999c16145af556dbd793abda0",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "Sources/Sweep/SweepTally.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "fb424da0e930060a421f28844aa60ef0dce5af48c89f8905e1ffa295220d1688",
+            "entry_digest": "561e6d191fbf2d217be3ab4089cde1419bd4cf139c24428ffb2c4351317f09b9",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "Tests/SurfaceDiscordTests/RoleListTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "4168ef2c8974862423afcca439a363f762dff2137f41e02f76dcd7971b141f3b",
+            "entry_digest": "ca44b7f2609f93f077b598a53ff5eb6ff203fa5ca8e137cfbe5fb33f758e199f",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/SweepTests",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "acd773b5d6d2184581ecf5504814bfceb16d1bce255707fafac8dfb348772d88",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/SweepTests/CallerAndBalanceTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "760e2bee85957297f515876699981ac04ed382cbfb9a92328aa810aa18503d73",
+            "entry_digest": "9f4bd8033fa8c03af53431098f330c8a0e706a7f88762189dc283baf80ef1b59",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/SweepTests/HeldAndMissedTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "06ad1ac23fc65e08ea1910972ae82ab3ba5a32ee49043d6600843ed891294f3e",
+            "entry_digest": "edd73e395456a1d24df0f0141276941b9212b341a8950e75fe17bcb046d3a38a",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/SweepTests/MidSweepChangeTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "1b7ed4ba84ed2b461b211a40a0493bc8489286b9dc56a851bf962359b4840ffc",
+            "entry_digest": "a72d59690b985f9b8c8217e10aa4f858395fa237ca455e0d917a9cb731ea4181",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/SweepTests/NeverDemoteTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "c13be7bdaea140bd7fa303d24e11ebbb299424b972ce3cc0aeffacd0e2bf0a8f",
+            "entry_digest": "9d9a5aeea7c4dd407069fa8a57957358a9487142d1dbbb7fc68b98adbb488997",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/SweepTests/OrphanSweepTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "63e1e46593d29dc2b02490721fe04a261aca7f4b1e17dee8c940b11029a10eff",
+            "entry_digest": "af2ecc652c54b1c8afb9bd7ab835a30154f07540687abc17e541445ad585852e",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/SweepTests/SweepDoubles.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "fbb12ab694206190908c7f66661966f27adbd9247605224b1afc8e1991d1c930",
+            "entry_digest": "12c08b7b23e396eb4ca84af22e89654c0714a020c2e2bf974276dfeb0464502b",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/SweepTests/SweepFixtures.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "8b41a294a43016edb6bf07f95b1a7534ebf0fa620443477f9416402f6bc59e1d",
+            "entry_digest": "0b9acac1636c9abe1d3f76c19b5fa009df9531b11657156fd74d370b11eb1b8f",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/SweepTests/SweepHarness.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "278178f07ef6554636f1a6d03561d79aa94a3c6f2f1ee6e346c28d19210835c9",
+            "entry_digest": "9fe4c359f9aec5a7b7299e2c494829e70687b2c065e5cc62b06a474038b8e1f8",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/SweepTests/SweepLoopTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "07a3912931b0791bc314ed8883fca169a48edfe74b52a0c94494d7082110280d",
+            "entry_digest": "97400a0742a7ec69157f8189e6d1cbe8b51448ad6b4a7ee9fb4de51b7ebea2be",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/SweepTests/SweepRecordingTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "c872914362a3be3e02e083f89cd2c4f6c6b4acc4105157e2f4055555952171a5",
+            "entry_digest": "5365b92e71662e1872e1e3b0624a3c9d7c7503c37ea71b15e480dae742336c8f",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/SweepTests/SweepScheduleTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "df69af410d57edaa39ed331b72ef1b3203d61ea459c60289815c7cfc990a4001",
+            "entry_digest": "3fd07d312209bc6dbbbb6b48450b14d3e18166219288b9ce92973e0623e5a2d8",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/SweepTests/SweepValueTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b2fde9e526409a4b8cda9a503e9920b9c4d64df7a6583f74a7aaec183801cc5b",
+            "entry_digest": "e1b7080e8cad3bc5b5af14d1f795cc1233371f3528e2ebf8e3883ed17b9c42ec",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "specs/surface",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "5dbcf54661183a9a347ab2e628d806012e1d578f6288afa1c3310d70d44fae04",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "specs/surface/context.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "8576120a092b83a07417150263c7d25cc2c96b38dddf2568eabddf89aa2357b5",
+            "entry_digest": "090ae5da11f5c50a96105c11f9e8d0d8784da2286f78a78a9ba8ba0a46880a68",
+            "owners": [
+              "surface"
+            ]
+          },
+          {
+            "path": "specs/surface/requirements.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b0b5f3b7a4f209745027c7fa1b0ea2866e9931718e2c829b041e6642665aac04",
+            "entry_digest": "1f450e31c7de5b40c1a2c9d12abd09cfd859f37362eb8cc13096db9a25317a42",
+            "owners": [
+              "surface"
+            ]
+          },
+          {
+            "path": "specs/surface/surface.spec.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "3b5e0c8edbffe66d428def047715d96735cc2388e3b431caf065a9abc2d6e6f5",
+            "entry_digest": "685ee56bff52e0415016d51cd30c544a813a4ec6530121d297710e10ed58fa02",
+            "owners": [
+              "surface"
+            ]
+          },
+          {
+            "path": "specs/surface/tasks.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "1b6ba1b8d9e0148d3ed802d32fce52fe3f2c35a18afdf335434efba7dfbe2926",
+            "entry_digest": "e8212b1ba73a3d11cbff07aca1e96f20a638b4a860898e810bc25c16b4a3497a",
+            "owners": [
+              "surface"
+            ]
+          },
+          {
+            "path": "specs/surface/testing.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "f973ceb4aa965a055f5cda44c7537386c3526fcc2d150fd459646dc7b503178b",
+            "entry_digest": "b3a54d36b4e352ae5035569b013a67d14f12e569eb330f177215f1b51a706264",
+            "owners": [
+              "surface"
+            ]
+          },
+          {
+            "path": "specs/sweep",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "671011106b68352e77d5dbbb8fd880742132552cc545414aa06e5a78fda32f8f",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "specs/sweep/context.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "aad5d29c4b275b029282b5c1a99e511533fefb65c0ca17c5bd2b1dc83be6023e",
+            "entry_digest": "9b0ed4fac6b7f325e8fa6e72bad6f9b41edea6315cc9ffecf757caabb04b001d",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "specs/sweep/requirements.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "c0d44b11b2662c58b0cf9410c8035cc1ecce5f97860130a29fbe3920fadef589",
+            "entry_digest": "e2b6ef9d33cd7ffefaebcb9cd1c652b76f5eaaed49cdac4d732e6e05fdfa621a",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "specs/sweep/sweep.spec.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "07c2e930e46c9b24ad2a7bbea20120ed3ccfb74a1a271fda7426f2920ad1b637",
+            "entry_digest": "44a767f57ec9a3405311e7c83c49ea764e30c56c3beb8456b03ac1bc3614ea9d",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "specs/sweep/tasks.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "3fa89a59786c3c8d47183c5faae21c19b06ea8de34851a3c788f672055037abc",
+            "entry_digest": "8d2aeb87654893b345853410ff8e80c73adee03b83fba33557161834fdb4d53a",
+            "owners": [
+              "sweep"
+            ]
+          },
+          {
+            "path": "specs/sweep/testing.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "33b3893c1828e1e9ab05faa64982d25ba48692e281755adf3a463090439f931f",
+            "entry_digest": "88b416adec71b35d8a046c7e605bd94fd8fbad1792e4653a7e405a1dc4dea5a0",
+            "owners": [
+              "sweep"
+            ]
+          }
+        ]
+      },
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec surface --spec sweep",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-surface-019",
+        "REQ-sweep-001",
+        "REQ-sweep-002",
+        "REQ-sweep-003",
+        "REQ-sweep-004",
+        "REQ-sweep-005",
+        "REQ-sweep-006",
+        "REQ-sweep-007",
+        "REQ-sweep-008",
+        "REQ-sweep-009",
+        "REQ-sweep-010",
+        "REQ-sweep-011",
+        "REQ-sweep-012",
+        "REQ-sweep-013",
+        "REQ-sweep-014",
+        "REQ-sweep-015",
+        "REQ-sweep-016",
+        "REQ-sweep-017",
+        "REQ-sweep-018",
+        "REQ-sweep-019",
+        "REQ-sweep-020",
+        "REQ-sweep-021",
+        "REQ-sweep-022",
+        "REQ-sweep-023",
+        "REQ-sweep-024"
+      ]
+    }
+  ]
+}

@@ -29,6 +29,7 @@ offering it. What is missing is listed below rather than implied.
 | `Chain` | Reading what an account holds on an Algorand node, and the three brakes that stop it reading too much: a per-second limiter, a per-UTC-day request budget, and one member's share of that budget. |
 | `Store` | What one instance remembers between restarts: members, the accounts they proved, the sweep baseline, the payout ledger and the day's request count. Records, protocols, and a store in memory that needs nothing installed. No Discord in its package graph. |
 | `StoreSQLite` | The same store on a file, using the SQLite the operating system already ships. One connection, every durability setting read back at start, an exclusive lease so two instances cannot pay the same week, and no new entry in `Package.resolved`. |
+| `Sweep` | Re-reading what every member holds and moving their roles to match: the loop, the batching, the per-member reasons and the run record. The decision itself stays in `Gating`. It declares its own chat seam over `String`, so it links no chat SDK, and nothing calls it yet. |
 | `Runtime` | The composition root: eight boot gates in a fixed order, the one description of every variable this build reads, the startup report, and a health endpoint that answers `starting` until the parts that must be up are up. Links no chat client and no database. |
 | `Verify` | Deciding whether somebody controls an Algorand account, from a signature their own wallet produced. The five lines they sign, the session those lines belong to, a tolerant reader for what a wallet sends back, and fifteen ordered refusals. It reads nothing: no network, no clock, no key, no setting. |
 | `Surface` | What a member touches, minus the chat client: the command catalogue, the validator that refuses offline a catalogue Discord would refuse, the interaction router and its acknowledgement rules, the payload bounds counted in UTF-16, the cards, the boot order and four command handlers. It declares no chat client, so all of it is tested with no token, no network and no guild. |
@@ -133,8 +134,11 @@ actually use:
   [`docs/VERIFICATION.md`](docs/VERIFICATION.md) is the contract, and
   `specs/verify/` is what was built against it, with the host's own
   obligations written down and marked as not yet evidenced.
-- **No role sweep.** Nothing re-reads what a member holds after the first
-  time, so somebody who sells would keep their rung.
+- **The role sweep is written and nothing runs it.** `Sweep` has the loop,
+  the batching, the run record and the rule that a balance nobody could read
+  holds a rung rather than dropping it. Boot gate eight, where the loops go,
+  is still empty, so somebody who sells keeps their rung until something
+  calls it.
 - **Only the smallest store.** Six tables: members, accounts, the sweep
   baseline, the payout ledger and the day's request count. No cache of what an
   account holds, no payments table, no audit log, no claim offers, no scheduled

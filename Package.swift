@@ -50,6 +50,12 @@ let package = Package(
         // one does. A contributor needs nothing installed to use it.
         .library(name: "Store", targets: ["Store"]),
 
+        // The role sweep: the loop, the batching, the run record and the
+        // per-member reasons. A product because it is the half a host has to
+        // schedule and observe, and keeping it out of the executable's own
+        // target is what stops the loop acquiring a chat client.
+        .library(name: "Sweep", targets: ["Sweep"]),
+
         // The durable store, on the SQLite the operating system already
         // ships. Separate from `Store` so a host that wants the records and
         // the in-memory backend never links a database at all.
@@ -228,6 +234,32 @@ let package = Package(
             // below this line links either of them, so the rest of the
             // package is unchanged by their being here.
             dependencies: ["Runtime", "StoreSQLite", "Surface", "SurfaceDiscord"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+
+        // Making a member's roles follow what they hold, over and over. The
+        // decision itself is `Gating` and is not repeated here: this is the
+        // impure half, which is the loop, the batching of chain reads into
+        // one pass, the record written before the work and again after it,
+        // and the reason kept for every member whose roles did not change.
+        //
+        // It names no chat client. The chat side is two protocols this
+        // target declares over `String`, so the whole sweep is exercised
+        // with no token, no network and no server. Neither is satisfied by
+        // anything in the package yet: `RoleGateway` matches
+        // `Surface.RoleApplier` method for method, so an empty extension on
+        // the Discord adapter would conform it, but only from a target that
+        // sees both and no such edge exists; and nothing here lists guild
+        // members at all, so `ServerRoster` has no implementation of any
+        // kind. `specs/sweep/tasks.md` keeps the list under Gaps.
+        .target(
+            name: "Sweep",
+            dependencies: ["Gating", "Chain", "Store"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+        .testTarget(
+            name: "SweepTests",
+            dependencies: ["Sweep", "Store", "Gating", "Chain"],
             swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
         ),
 

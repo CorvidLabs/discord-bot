@@ -12,6 +12,7 @@ source_dirs = [
     "Sources/Games",
     "Sources/Chain",
     "Sources/Store",
+    "Sources/Sweep",
     "Sources/StoreTestKit",
     "Sources/StoreSQLite",
     "Sources/Runtime",

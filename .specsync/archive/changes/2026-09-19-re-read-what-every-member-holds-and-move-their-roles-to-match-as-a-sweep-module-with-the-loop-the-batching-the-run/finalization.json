@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "re-read-what-every-member-holds-and-move-their-roles-to-match-as-a-sweep-module-with-the-loop-the-batching-the-run",
+  "implementation_commit": "bb32957309fa39882371188f47bfd7c26c45cfaa",
+  "implementation_tree": "2a2063f162ad10e770b552b9229a89c2f4b6f02d",
+  "contract_digest": "58f570d6018286735c7f619ec909314106daed5543edf2747ad9ca351cdae3f1",
+  "workspace_digest": "37b1982df0f44cda98ba23d61d85a3e8cfbb195c2954783d82239b89bfa0dbe2",
+  "closing_digest": "3affffc00a49543215ceff351e74934ab9d4c94eb59d4cb616c82e5724ebc978",
+  "review_digest": "443d8c34ee96cbb94cfe92199d18c5304b396b59fe967417734921dca18a7791",
+  "finalization_digest": "653f042dd601687b845f08f608222e8a2ad3e8102425120f938e693403ef3e25",
+  "timestamp": 1789858748
+}

@@ -82,6 +82,7 @@ blocks every earlier change sharing a delivery input from archiving.
 | `Sources/Games/` | The game engine. Foundation only. |
 | `Sources/Chain/` | Reading the chain, and the three brakes. Depends on `Gating` and on `swift-algorand`. |
 | `Sources/Store/` | The records, the protocols and the store in memory. Depends on `Reserve`, `Gating` and `Chain`, and on no chat client. |
+| `Sources/Sweep/` | The role sweep: the loop, the batching, the run record and the per-member reasons. The decision stays in `Gating`. Depends on `Gating`, `Chain` and `Store`, and declares its own chat seam over `String` so it links no chat SDK. |
 | `Sources/StoreTestKit/` | The conformance suite. A plain target no product reaches, so it never ships. |
 | `Sources/StoreSQLite/` | The durable store, over `Sources/CSQLite`, which wraps the platform's own `libsqlite3`. No new pin. |
 | `Sources/Runtime/` | The composition root: the boot gates, the settings catalogue, the startup report and the health listener. Depends on `Gating`, `Chain` and `Store`. **It may never link a chat SDK or a database**: the chat seam here is a protocol over Foundation types, and the store arrives as `any BotStore`. |

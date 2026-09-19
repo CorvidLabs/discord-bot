@@ -11,11 +11,13 @@ import Surface
 /// six roles. Discord's modify-guild-member endpoint takes the whole role
 /// list, so the decision goes out as one list and either lands or does not.
 ///
-/// The list sent is the member's **current** roles, minus everything the
-/// decision revoked, plus everything it granted. It is built that way rather
-/// than from the decision alone because every role outside
-/// ``Gating/RoleDecision/managed`` has to survive untouched: a badge a
-/// moderator handed out by hand is not this bot's to remove (`ROLE-5`).
+/// The list sent is the managed half of ``Gating/RoleDecision/target`` plus
+/// every role the member currently holds that the decision does **not**
+/// manage. It is built from a fresh read rather than from the decision alone
+/// because every role outside ``Gating/RoleDecision/managed`` has to survive
+/// untouched: a badge a moderator handed out by hand is not this bot's to
+/// remove (`ROLE-5`), and a rung whose balance nobody could read is not
+/// either (`ROLE-1.a`).
 public struct DiscordRoleApplier: RoleApplier {
 
     // MARK: - Properties
@@ -45,6 +47,38 @@ public struct DiscordRoleApplier: RoleApplier {
         self.log = log
     }
 
+    // MARK: - Internal Methods
+
+    /// The exact role list one decision has to send, given what the member
+    /// holds right now.
+    ///
+    /// Separated from the client for the same reason
+    /// ``Surface/RoleWriteCheck`` is: this is arithmetic, it needs no token
+    /// and no server, and the list that goes out is the one thing here worth
+    /// pinning with a test.
+    ///
+    /// **``Gating/RoleDecision/held`` is not part of it.** `held` is every
+    /// configured role the decision deliberately left alone because
+    /// something needed to decide it was not read, and leaving a role alone
+    /// means neither granting nor revoking it. Sending it would turn every
+    /// unread fact into a grant: a member whose collection nobody could look
+    /// up would receive that collection's badge, which is the exact opposite
+    /// of ROLE-1.a. The roles to keep come from the fresh read instead.
+    ///
+    /// - Parameters:
+    ///   - decision: What the rules decided.
+    ///   - current: Every role the member holds now, just read.
+    internal static func rolesToSend(decision: RoleDecision, current: Set<String>) -> Set<String> {
+        // What the rules positively want, which is the managed half of the
+        // target, plus everything outside the managed set the member already
+        // has. The second half is what keeps a hand-granted badge (ROLE-5)
+        // and what keeps a rung whose balance nobody could read (ROLE-1.a).
+        decision.target
+            .intersection(decision.managed)
+            .union(current.subtracting(decision.managed))
+            .subtracting(decision.revoked)
+    }
+
     // MARK: - Public Methods
 
     public func currentRoleIds(externalId: String) async throws -> Set<String> {
@@ -56,13 +90,11 @@ public struct DiscordRoleApplier: RoleApplier {
     }
 
     public func apply(_ decision: RoleDecision, externalId: String) async throws {
-        var wanted = decision.held.union(decision.granted)
-        // Everything outside the managed set the member already has. The
-        // decision does not carry it, because the rules deliberately know
-        // nothing about roles nobody configured.
+        // Read again rather than trusting the set the decision was computed
+        // against: a moderator may have handed out a badge in between, and
+        // that badge has to survive this write.
         let current = try await currentRoleIds(externalId: externalId)
-        wanted.formUnion(current.subtracting(decision.managed))
-        wanted.subtract(decision.revoked)
+        let wanted = Self.rolesToSend(decision: decision, current: current)
 
         guard wanted != current else { return }
 
