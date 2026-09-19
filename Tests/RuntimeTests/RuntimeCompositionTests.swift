@@ -65,12 +65,31 @@ internal struct RuntimeCompositionTests {
         #expect(!declared.contains("\"Games\""))
     }
 
-    @Test("This change adds no package dependency (TRUST-1.b)")
-    internal func noNewPackageDependency() throws {
+    @Test("Every package dependency is one somebody named on purpose (TRUST-1.b)")
+    internal func packageDependenciesAreNamed() throws {
         let text = try Self.manifest
-        let packages = text.components(separatedBy: ".package(url:").count - 1
-        #expect(packages == 1, "the manifest declares \(packages) package dependencies")
-        #expect(text.contains("swift-algorand"))
+        // Named rather than counted. A count fails when a dependency is added
+        // and says nothing about which one, and the first person to see it red
+        // fixes the number. The point of TRUST-1.b is that a new thing to
+        // reach is a diff somebody reads, so this list is the diff: adding a
+        // package means adding it here and in `docs/WHAT-IT-TALKS-TO.md`, and
+        // a reviewer sees both.
+        let expected: Set<String> = ["swift-algorand", "swift-crypto"]
+        let declared = Set(
+            text.components(separatedBy: ".package(url:")
+                .dropFirst()
+                .compactMap { chunk -> String? in
+                    guard
+                        let open = chunk.firstIndex(of: "\""),
+                        let close = chunk[chunk.index(after: open)...].firstIndex(of: "\"")
+                    else { return nil }
+                    let url = String(chunk[chunk.index(after: open)..<close])
+                    return url.split(separator: "/").last.map {
+                        String($0).replacingOccurrences(of: ".git", with: "")
+                    }
+                }
+        )
+        #expect(declared == expected, "the manifest declares \(declared.sorted())")
     }
 
     @Test("There is exactly one executable product, so bare `swift run` is unambiguous")

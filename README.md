@@ -16,6 +16,11 @@ settings, tells you what it made of them, opens its store, checks your asset
 against your node and answers a health endpoint. What it does not have is the
 part your members would see: no gateway, no slash commands, nothing that can
 move value, and nothing that sweeps.
+**Early. Not runnable yet.** This repository is being built in the open, a piece
+at a time, out of a private bot that has been running a live community for
+months. There is no bot here: no gateway, no slash commands, no executable
+target and nothing you can deploy. What exists is seven library targets, all
+offline, all covered by tests, and none of them wired to anything.
 
 | Target | What it is |
 |--------|------------|
@@ -29,6 +34,9 @@ move value, and nothing that sweeps.
 | `BotMain` | The program, as the `bot` executable. The arguments, the one snapshot of the process environment, the live seams, the signals and the exit. It decides nothing. |
 
 ```
+| `Verify` | Deciding whether somebody controls an Algorand account, from a signature their own wallet produced. The five lines they sign, the session those lines belong to, a tolerant reader for what a wallet sends back, and fifteen ordered refusals. It reads nothing: no network, no clock, no key, no setting. There is still no page and no listener to put in front of it. |
+
+swift test    # 763 tests in 55 suites
 ```
 
 The store's conformance suite is one test with thirty four behaviours, run
@@ -96,13 +104,16 @@ Most of it, and what is missing is the part a person would actually use:
 - **No Discord surface.** No gateway connection, no slash commands, no embeds,
   no buttons. A role is a plain string in `Gating` and nothing turns it into a
   Discord role.
-- **No wallet verification.** Nothing signs a challenge. There is now a place
-  to record that an account belongs to a member, and nothing that puts one
-  there. [`docs/VERIFICATION.md`](docs/VERIFICATION.md) is the contract that
-  flow will be built to, complete enough to implement the other half from, and
-  [`docs/decisions/0001-verification-portal.md`](docs/decisions/0001-verification-portal.md)
-  is the open question of whether that other half is a separate web service at
-  all.
+- **No way for a member to reach wallet verification.** The part that decides
+  whether somebody owns an account is now here, offline and tested: `Verify`
+  mints the challenge, keeps the session, reads the signed transaction a
+  wallet sends back and applies fifteen ordered checks to it, with no second
+  service anywhere in it. What is missing is everything a member would touch:
+  the slash command, the listener, and the page their wallet connects to.
+  Until those land, a stranger who clones this still cannot verify anybody.
+  [`docs/VERIFICATION.md`](docs/VERIFICATION.md) is the contract, and
+  `specs/verify/` is what was built against it, with the host's own
+  obligations written down and marked as not yet evidenced.
 - **Only the smallest store.** Six tables: members, accounts, the sweep
   baseline, the payout ledger and the day's request count. No cache of what an
   account holds, no payments table, no audit log, no claim offers, no scheduled
@@ -114,6 +125,8 @@ Most of it, and what is missing is the part a person would actually use:
   assembled, with the budget and the pause on it, and nothing serves it:
   there is no listener, no route and no status code here, because there is no
   executable. Whoever builds the executable owns that half.
+- **No executable.** `Package.swift` declares seven libraries and no binary,
+  so there is nothing to run and nothing to deploy.
 - **No host.** The targets do not know about each other beyond `Chain`
   depending on `Gating` and `Store` depending on all three. Nothing sweeps,
   nothing schedules, nothing pays.
@@ -131,9 +144,10 @@ written down and agreed, not features that work.
 [`INTENT.md`](INTENT.md) indexes them and [`hi/`](hi/) holds them, every line
 with an id that never moves.
 
-The Discord surface, the wallet verification flow and a host that wires the
-libraries together come next, in that order. Verification is written down
-before it is written: [`docs/VERIFICATION.md`](docs/VERIFICATION.md).
+The Discord surface, the half of wallet verification a member can reach, and a
+host that wires the libraries together come next, in that order. Verification
+was written down before it was written:
+[`docs/VERIFICATION.md`](docs/VERIFICATION.md).
 
 ## Why the engine first
 
