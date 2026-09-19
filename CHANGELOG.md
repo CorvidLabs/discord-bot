@@ -19,7 +19,6 @@ compare against.
 
 ### Added
 
-<<<<<<< HEAD
 - **The package is a program.** A `Runtime` target holding the composition
   root and a `BotMain` executable published as `bot`, so `swift run` does
   something. Four verbs: `run`, `check`, `rehearse` and `help`.
@@ -73,13 +72,13 @@ compare against.
     `HEALTH_PORT` (required) and `HEALTH_ADDRESS` (loopback by default).
   - No new package dependency. The chat seam is a protocol over Foundation
     types with a role and a member both `String`.
-
-=======
-- **`Surface` and `SurfaceDiscord`, and an executable called `discord-bot`.**
-  The first version of this that can be run. It connects to a gateway,
-  registers four slash commands in one server, and answers them: `/ping`,
-  `/help`, `/verify` and `/unlink`. Four things in it are worth reading about
-  before trusting it with a server.
+- **`Surface` and `SurfaceDiscord`: a chat surface, not yet wired to the
+  program.** The command catalogue, the router, the cards and four command
+  handlers — `/ping`, `/help`, `/verify` and `/unlink` — with the adapter that
+  would carry them to Discord. The `bot` executable links `Runtime` and
+  `StoreSQLite` only, so nothing in this release registers a command or opens
+  a gateway; wiring is the next change. Four things in it are worth reading
+  about before that happens.
   - **A command list Discord would reject fails a test, not a deploy.**
     `CommandValidator` refuses offline everything Discord refuses at
     registration, including a required option placed after an optional one,
@@ -136,7 +135,6 @@ compare against.
   recording a verification that was thrown away. Every role write is read
   back, because the chat client answers `200` and silently drops a role id it
   does not recognise.
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
 - **`Reserve`**: a finite pot, split into named streams, paid to recipients
   over epochs at a fixed share per slot, with four independent guards against
   paying one period twice. It plans and it records. It never sends anything,
@@ -182,21 +180,12 @@ compare against.
   ids, written before the code and cited by the tests.
 - `specs/`, a contract per module, checked against the exported API by
   `specsync check --strict` in CI.
-<<<<<<< HEAD
-- 694 tests in 48 suites, all offline. No test reaches a network, and none
-- 765 tests in 63 suites, all offline. No test reaches a network, and none
-  needs a key, a funded wallet or a Discord server.
-- 763 tests in 55 suites, all offline. No test reaches a network, and none
+- 1131 tests in 91 suites, all offline. No test reaches a network, and none
   needs a key, a funded wallet or a Discord server. Every signature in the
   verification suite is produced by a real signer over a real challenge with a
-  key generated inside the test, so the production path runs unchanged.
-=======
-- 787 tests in 63 suites, all offline. No test reaches a network, and none
-  needs a key, a funded wallet or a Discord server. The chat surface's own
-  share is 152 of them, and the test target that holds most of them cannot
-  reach a live host at all: it does not depend on the target that can build
-  an HTTP client.
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
+  key generated inside the test, so the production path runs unchanged. The
+  chat surface's own tests cannot reach a live host at all: the target holding
+  most of them does not depend on the one that can build an HTTP client.
 - `docs/CONFIGURATION.md`: every environment variable an operator sets,
   grouped by what they are deciding rather than alphabetically, each with its
   default and one sentence on what goes wrong when it is wrong. It states
@@ -259,7 +248,6 @@ this file is that somebody can tell.
 - **`Reserve`** and **`Chain`**: `ReserveError` gains `spendLimitsExpired` and
   `ChainError` gains `requestBudgetCannotCover`. Both break an exhaustive
   switch.
-<<<<<<< HEAD
 - **`Reserve`**: `ReserveEpochRecord` gains `charges` and
   `ReserveEpochOutcome.periodKey` is renamed `cadencePeriodKey`, so a
   memberwise initialiser call and any reader of that property written against
@@ -305,8 +293,7 @@ this file is that somebody can tell.
   loader still refuses both by name; built in Swift, a percentage above a
   hundred could overflow the share's arithmetic and a burst of zero switched
   the whole guard off in silence.
-=======
-- **`Package.resolved` grows from three entries to twenty-nine.** The chat
+- **`Package.resolved` grows from three entries to twenty-eight.** The chat
   client is a direct dependency and brings a NIO-based HTTP and websocket
   stack with it. Every entry is listed in `docs/WHAT-IT-TALKS-TO.md`, read out
   of the lock file rather than estimated, because `TRUST-4` is that you can
@@ -318,7 +305,6 @@ this file is that somebody can tell.
   default. `docs/WHAT-IT-TALKS-TO.md` previously said the package opened no
   socket and wrote no file, and now says the opposite in the same words rather
   than dropping the claim quietly.
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
 
 
 - `Package.resolved` is committed instead of ignored, so two clones of one
