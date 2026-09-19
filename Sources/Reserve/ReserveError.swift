@@ -29,8 +29,12 @@ public enum ReserveError: Error, Equatable, LocalizedError, Sendable {
     case nothingToPay(streamId: String, epoch: UInt64)
     /// Another epoch is mid-flight. Two at once would pay everyone twice.
     case alreadyRunning
-    /// This stream already paid an epoch in this period.
-    case periodAlreadyPaid(streamId: String, periodKey: String)
+    /// This stream already paid an epoch in this cadence period.
+    ///
+    /// Named for the cadence rather than called `periodKey`, because the
+    /// spending period appears in this same enum on ``spendLimitsExpired`` and
+    /// the two are different facts about different ceilings.
+    case periodAlreadyPaid(streamId: String, cadencePeriodKey: String)
     /// Asked to pay an epoch that is not the one the ledger says is next.
     case notTheNextEpoch(streamId: String, requested: UInt64, next: UInt64)
     /// The eligibility list has holes, so it pays nobody.
@@ -74,9 +78,9 @@ public enum ReserveError: Error, Equatable, LocalizedError, Sendable {
         case .alreadyRunning:
             return "An epoch is already running. Two at once would pay every recipient twice. "
                 + "Wait for it to finish."
-        case .periodAlreadyPaid(let streamId, let periodKey):
-            return "Stream `\(streamId)` already paid an epoch in \(periodKey). One epoch per period; "
-                + "the next one is due next period."
+        case .periodAlreadyPaid(let streamId, let cadencePeriodKey):
+            return "Stream `\(streamId)` already paid an epoch in \(cadencePeriodKey). One epoch per "
+                + "period; the next one is due next period."
         case .notTheNextEpoch(let streamId, let requested, let next):
             return "Stream `\(streamId)` epoch \(requested) is not next: the ledger is on \(next). "
                 + "An epoch can be finished, never skipped."

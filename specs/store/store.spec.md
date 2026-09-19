@@ -117,6 +117,7 @@ types share is described once, at its first declaration.
 | `roleBaseline` | The sweep guard's baseline. |
 | `reserveState` | The reserve's own state. |
 | `reserveEpochs` | One row per epoch per stream. |
+| `reserveEpochCharges` | The ceilings each epoch was measured against, one row per charge. Named here with the others so a forgetting and an unreadable row report it the same way whichever backend is running. |
 | `requestBudget` | The day's request count. |
 | `StoreDate` | The precision every instant is written down at: whole seconds since 1970 UTC, as an integer, with no formatter anywhere near it. |
 | `whole` | An instant rounded down to its second. Down rather than to nearest, so a recorded instant is never later than the one that happened. |
@@ -215,6 +216,7 @@ types share is described once, at its first declaration.
 | `anAbsentEpochIsUnpaid` | An epoch nobody ran reads as unpaid, which is different from missing. |
 | `anEpochRoundTrips` | An epoch's record round-trips, including the order its claims were made in. |
 | `aReleasedClaimIsGone` | A claim given back really leaves the row. |
+| `anEpochGainsACharge` | An epoch saved again with a further ceiling recorded against it reads back naming both, in the order they were charged, which is the case a run cut off under one ceiling and resumed under the next produces. |
 | `anAbsentBudgetIsNil` | A day nobody counted reads as nil, and nil means never written. |
 | `theBudgetRoundTrips` | The day's count round-trips, including a saturated one. |
 | `instantsAreRecordedToTheSecond` | Every instant comes back rounded down to its second, everywhere. |
@@ -351,7 +353,23 @@ types share is described once, at its first declaration.
     hand the second of a normalised pair the first one's member key, and with
     it the first one's wallets and rungs. Text crosses the C boundary with its
     length rather than to its first NUL, for the same reason.
-14. **An open that had to create the store says so.** SQLite makes a missing
+14. **The charges an epoch carries are persisted in order, by every
+    backend.** An epoch row written by a build from before they existed reads
+    as an epoch charged to no period: that is not an exception to invariant 3,
+    because a field absent from a record an older build encoded is not an
+    unreadable row, and no period is ever invented for it from a timestamp.
+    The JSON-backed store decodes a missing `charges` key as an empty list and
+    only that key; the SQLite store keeps them in a table of their own and an
+    epoch with no rows there has no charges (ADOPT-5, SPEND-9.c).
+15. **The charges arrive as a new migration, and its reverse drops the whole
+    table.** A shipped migration is fingerprinted and editing one refuses the
+    start for everybody who already ran it, so a new fact is a new version. The
+    reverse may not depend on dropping a column: the oldest SQLite this package
+    admits at open is older than the release that learned to drop one, and the
+    reverse is what an operator runs when an upgrade went wrong. A test reads
+    the shipped migrations and fails on any reverse that reaches for one
+    (RUN-9).
+16. **An open that had to create the store says so.** SQLite makes a missing
     file and the migrations then run on it, so a volume that did not mount, a
     mistyped path and a deleted file all come back as a healthy store in which
     the reserve has never paid anybody and no period is claimed.
@@ -416,6 +434,7 @@ types share is described once, at its first declaration.
 | Another process holds the store | `SQLiteStoreError.alreadyHeldByAnotherProcess` |
 | The file holds a migration this build does not know | `SQLiteStoreError.schemaFromTheFuture`, naming the versions |
 | An applied migration's text does not match the one shipped | `SQLiteStoreError.schemaDiverged`, naming the version |
+| An epoch row written before the charges existed | Read as an epoch charged to no period. Not an unreadable row, and no period inferred from `started_at`, which is the timestamp arithmetic the criterion abolishes and is wrong precisely for the boundary-crossing epoch |
 | The copy before a migration cannot be taken | `SQLiteStoreError.backupFailed`, and the migration does not run |
 | Forgetting somebody who is not on record | Not an error: nothing is cleared and the answer says so |
 | A behaviour needs a probe a backend cannot supply | `StoreConformance.Outcome.skipped`, with the reason, rather than a pass |
@@ -487,3 +506,4 @@ there (`BUILD-4`).
 | Version | Change |
 |---------|--------|
 | 1 | The first store: members, the accounts they proved, the sweep baseline, the payout ledger and the day's request count, with a conformance suite two backends pass. Identifiers are compared by their bytes, an open that created the store says so, and the unreadable-row rule reaches the reserve's state and the sweep baseline as well. |
+| 2 | An epoch's record carries the ceilings it was measured against, in the order they were charged, in a table of their own with the same cascade the claims rows use and a reverse that drops it whole. A row from the previous version reads as charged to no period rather than failing to load. |

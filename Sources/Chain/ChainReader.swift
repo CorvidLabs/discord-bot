@@ -8,6 +8,13 @@ import Gating
 /// rather than this type's share of it. Nothing here retries: a provider that
 /// has refused once because its quota is spent will refuse again, and asking
 /// it in a loop is how a bot turns a bad morning into a bad day.
+///
+/// **Every read names who it is for**, with no default, and the reason is that
+/// the single choke point that spends a request can only charge somebody it
+/// has been told about. A reader bound once to a caller was the alternative
+/// and it reads better at a single call site; it is a lie at the important
+/// one, because a sweep reads wallets belonging to many members through the
+/// same call as a member's own command.
 public actor ChainReader {
 
     // MARK: - Properties
@@ -55,9 +62,12 @@ public actor ChainReader {
     /// million, tiers are decided on the wrong number, and nothing anywhere
     /// looks broken. Finding out at boot from a message naming the two numbers
     /// is the difference between a five minute fix and a week of confusion.
-    public func verifyAssetDecimals() async throws {
+    /// - Parameter caller: Whose work this is. A boot check is the instance's
+    ///   own, never a member's, and it is the host's composition root that
+    ///   says so.
+    public func verifyAssetDecimals(for caller: RequestCaller) async throws {
         guard configuration.verifiesAssetDecimals else { return }
-        let details = try await assetDetails(configuration.token.assetId)
+        let details = try await assetDetails(configuration.token.assetId, for: caller)
         guard details.decimals == UInt64(configuration.token.decimals) else {
             throw ChainError.assetDecimalsDisagree(
                 assetId: configuration.token.assetId,
@@ -73,9 +83,9 @@ public actor ChainReader {
     /// **complete** answer rather than a failed read: the node told us. It is
     /// the reads that do not come back at all that must never be treated as a
     /// zero.
-    public func account(_ address: String) async throws -> ChainAccount {
+    public func account(_ address: String, for caller: RequestCaller) async throws -> ChainAccount {
         do {
-            return try await requireAccount(address)
+            return try await requireAccount(address, for: caller)
         } catch {
             guard ChainError.isNotFound(error) else { throw error }
             return ChainAccount(address: address, nativeBalance: 0, holdings: [])
@@ -83,28 +93,41 @@ public actor ChainReader {
     }
 
     /// How much of the configured token an account holds.
-    public func balance(of address: String) async throws -> UInt64 {
-        try await account(address).holdings.amount(of: configuration.token.assetId)
+    public func balance(of address: String, for caller: RequestCaller) async throws -> UInt64 {
+        try await account(address, for: caller).holdings.amount(of: configuration.token.assetId)
     }
 
     /// Everything an account has opted into, held or not.
-    public func holdings(of address: String) async throws -> [ChainHolding] {
-        try await account(address).holdings
+    public func holdings(
+        of address: String,
+        for caller: RequestCaller
+    ) async throws -> [ChainHolding] {
+        try await account(address, for: caller).holdings
     }
 
     /// The assets an account created.
-    public func createdAssets(of address: String) async throws -> [ChainAssetDetails] {
-        try await account(address).createdAssets
+    public func createdAssets(
+        of address: String,
+        for caller: RequestCaller
+    ) async throws -> [ChainAssetDetails] {
+        try await account(address, for: caller).createdAssets
     }
 
     /// What the chain says about one asset.
-    public func assetDetails(_ assetId: UInt64) async throws -> ChainAssetDetails {
-        try await run { try await self.dataSource.assetDetails(assetId: assetId) }
+    public func assetDetails(
+        _ assetId: UInt64,
+        for caller: RequestCaller
+    ) async throws -> ChainAssetDetails {
+        try await run(for: caller) { try await self.dataSource.assetDetails(assetId: assetId) }
     }
 
     /// How much of a pool's token an account holds.
-    public func poolTokenBalance(of address: String, poolTokenId: UInt64) async throws -> UInt64 {
-        try await holdings(of: address).amount(of: poolTokenId)
+    public func poolTokenBalance(
+        of address: String,
+        poolTokenId: UInt64,
+        for caller: RequestCaller
+    ) async throws -> UInt64 {
+        try await holdings(of: address, for: caller).amount(of: poolTokenId)
     }
 
     /// What a pool holds, and how many of its tokens are in circulation.
@@ -114,8 +137,12 @@ public actor ChainReader {
     /// from the account that was already read rather than read again, which
     /// used to cost two further requests per pool per sweep for a number
     /// already in hand.
-    public func poolReserves(pool: LiquidityPool, now: Date = Date()) async throws -> PoolReserves {
-        let poolToken = try await assetDetails(pool.lpAssetId)
+    public func poolReserves(
+        pool: LiquidityPool,
+        for caller: RequestCaller,
+        now: Date = Date()
+    ) async throws -> PoolReserves {
+        let poolToken = try await assetDetails(pool.lpAssetId, for: caller)
         guard let poolAddress = poolToken.reserveAddress else {
             throw ChainError.poolAddressNotFound(poolId: pool.id)
         }
@@ -126,7 +153,7 @@ public actor ChainReader {
         // the people who put the liquidity there. A pool that cannot be read
         // has to stay unread, so that it is absent from the reserves and its
         // holders come back short rather than poor.
-        let poolAccount = try await requireAccount(poolAddress)
+        let poolAccount = try await requireAccount(poolAddress, for: caller)
         return PoolReserves(
             pool: pool,
             poolAddress: poolAddress,
@@ -176,11 +203,14 @@ public actor ChainReader {
     /// costs nothing from the day's budget: a malformed address cannot name an
     /// account, and the request spent finding that out is a request a real
     /// wallet needed later in the same sweep.
-    private func requireAccount(_ address: String) async throws -> ChainAccount {
+    private func requireAccount(
+        _ address: String,
+        for caller: RequestCaller
+    ) async throws -> ChainAccount {
         guard dataSource.isValidAddress(address) else {
             throw ChainError.invalidAddress(address)
         }
-        return try await run { try await self.dataSource.account(address: address) }
+        return try await run(for: caller) { try await self.dataSource.account(address: address) }
     }
 
     /// A side's balance in the pool's own account. The chain's own currency is
@@ -192,10 +222,15 @@ public actor ChainReader {
     }
 
     /// Reserves one request, makes it, and reports a provider refusal.
+    ///
+    /// The one place in this type that spends anything, which is why the
+    /// caller has to arrive here: it can only charge somebody it was told
+    /// about.
     private func run<Output: Sendable>(
+        for caller: RequestCaller,
         _ operation: @Sendable () async throws -> Output
     ) async throws -> Output {
-        try await governor.reserveRequest()
+        try await governor.reserveRequest(for: caller)
         do {
             return try await operation()
         } catch {

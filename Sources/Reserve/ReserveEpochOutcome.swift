@@ -65,8 +65,22 @@ public struct ReserveEpochOutcome: Sendable, Equatable {
     /// Epoch number, from 1.
     public let epoch: UInt64
 
-    /// The period this run claimed.
-    public let periodKey: String
+    /// The **cadence** period this run claimed: the week or month that stops
+    /// this schedule being paid twice.
+    ///
+    /// Named for its sense rather than called `periodKey`, because the other
+    /// period in this module, the host's spending ceiling, now appears on the
+    /// same value as ``charges``. Two senses of one word on one report is how
+    /// somebody reconciles a payout against the wrong ceiling.
+    public let cadencePeriodKey: String
+
+    /// The ceilings this run was measured against, in the order they were
+    /// charged, as the epoch's record now holds them.
+    ///
+    /// Carried here so a host can report which ceiling the run was counted
+    /// against without reading the store a second time. Empty means the host
+    /// stated no ceiling, never that the period is unknown.
+    public let charges: [ReserveEpochCharge]
 
     /// Smallest units one slot was paid.
     public let perUnitBaseUnits: UInt64
@@ -92,7 +106,8 @@ public struct ReserveEpochOutcome: Sendable, Equatable {
         streamId: String,
         schedule: ReserveSchedule,
         epoch: UInt64,
-        periodKey: String,
+        cadencePeriodKey: String,
+        charges: [ReserveEpochCharge],
         perUnitBaseUnits: UInt64,
         paid: [ReserveReceipt],
         failed: [ReserveFailedPayment],
@@ -103,7 +118,8 @@ public struct ReserveEpochOutcome: Sendable, Equatable {
         self.streamId = streamId
         self.schedule = schedule
         self.epoch = epoch
-        self.periodKey = periodKey
+        self.cadencePeriodKey = cadencePeriodKey
+        self.charges = charges
         self.perUnitBaseUnits = perUnitBaseUnits
         self.paid = paid
         self.failed = failed
@@ -127,4 +143,11 @@ public struct ReserveEpochOutcome: Sendable, Equatable {
 
     /// True when every planned line was paid.
     public var isClean: Bool { failed.isEmpty }
+
+    /// The spending periods this run was counted against, in the order they
+    /// were charged.
+    ///
+    /// Empty means no ceiling was in force. A resumed epoch names both
+    /// periods, which is the whole reason this is a list.
+    public var chargedPeriodKeys: [String] { charges.map(\.periodKey) }
 }

@@ -151,24 +151,61 @@ public struct ChainHealthReport: Sendable, Equatable {
     /// The things this instance has to reach, and whether it has.
     public let components: [ChainHealthComponent]
 
+    /// What is left of today's request budget, and whether work is paused.
+    ///
+    /// Optional because a host with no chain configured has no budget to
+    /// report, which is a different fact from a budget with nothing left. It
+    /// is the same ``RequestBudgetSnapshot`` every other surface reports, so a
+    /// health page and a status reply cannot disagree about what is left
+    /// (SEE-9).
+    public let budget: RequestBudgetSnapshot?
+
     /// Proof of which provider served the last probe, when there is any.
     public let proof: ProviderProof?
 
     // MARK: - Initializers
 
+    /// A report from figures the caller already holds.
+    ///
+    /// This is the assembly that costs nothing: it reads no clock, makes no
+    /// request and asks nothing of anybody. ``ChainHealthAssembler`` is the
+    /// same answer for a host that would rather hand over a governor than
+    /// carry the snapshot itself.
+    ///
     /// - Parameters:
     ///   - components: What the instance must have reached. An empty list is
     ///     `ok`, so a host that has nothing to wait for does not have to
     ///     invent something.
+    ///   - budget: What is left of today's requests, or nil when no chain is
+    ///     configured.
     ///   - proof: Whatever the last successful probe showed, or nil.
-    public init(components: [ChainHealthComponent], proof: ProviderProof? = nil) {
+    public init(
+        components: [ChainHealthComponent],
+        budget: RequestBudgetSnapshot? = nil,
+        proof: ProviderProof? = nil
+    ) {
         self.components = components
+        self.budget = budget
         self.proof = proof
     }
 
     // MARK: - Public Methods
 
     /// `ok` only when every component has been reached.
+    ///
+    /// **A spent budget is not a status.** An instance that has reached
+    /// everything and is nonetheless refusing chain work, because the day's
+    /// budget is gone or the provider has refused, answers `ok` and says so in
+    /// ``budget``. The status is a statement about reachability and nothing
+    /// else, and the readiness rule that follows from it is part of the
+    /// contract rather than a host's choice: an unreached component is not
+    /// ready, and a reached instance whose budget is gone **is** ready.
+    ///
+    /// Otherwise a deployment gate would roll back a perfectly good version
+    /// because its provider quota ran out at four in the afternoon, which is
+    /// the failure RUN-3 describes arriving by the other door. An operator's
+    /// one check still tells them the budget is gone and when it comes back,
+    /// because that is in the body; monitoring alerts on that field (SEE-1.a).
     public var status: ChainHealthStatus {
         components.allSatisfy(\.reached) ? .ok : .starting
     }
@@ -195,10 +232,55 @@ public struct ChainHealthReport: Sendable, Equatable {
                 .joined(separator: ",")
             parts.append("\"provider\":{\(fields)}")
         }
+        if let budget {
+            parts.append("\"budget\":{\(Self.budgetFields(budget))}")
+        }
         return "{\(parts.joined(separator: ","))}"
     }
 
     // MARK: - Private Methods
+
+    /// The budget section, in a fixed key order.
+    ///
+    /// `configured` is first and is not decoration: without it a reader cannot
+    /// tell an instance with no budget set from one that has spent all of it,
+    /// because both answer zero for what is left. The pause keys appear only
+    /// when something is paused, so a monitoring check can alert on their
+    /// presence rather than on a value.
+    private static func budgetFields(_ budget: RequestBudgetSnapshot) -> String {
+        var fields = [
+            "\"configured\":\(budget.hasBudget)",
+            "\"used\":\(budget.usedRequests)",
+            "\"limit\":\(budget.limit)",
+            "\"remaining\":\(budget.remainingRequests)"
+        ]
+        if let until = budget.pausedUntil {
+            fields.append("\"paused_until\":\"\(escaped(UTCDay.stamp(until)))\"")
+            fields.append("\"paused_reason\":\"\(Self.reason(budget.pauseReason))\"")
+        }
+        if budget.throttledCallers > 0 {
+            fields.append("\"throttled_callers\":\(budget.throttledCallers)")
+        }
+        if budget.callerRefusalsToday > 0 {
+            // The figure that says somebody was actually refused, which the
+            // count above does not: a caller appears there for making one
+            // request inside a refill interval. A guard that refuses quietly
+            // is one an operator cannot tell from a provider outage, and no
+            // single refusal ever writes a notice, so this is the only place
+            // /health says throttling is happening (RUN-11, SEE-9).
+            fields.append("\"caller_refusals\":\(budget.callerRefusalsToday)")
+        }
+        return fields.joined(separator: ",")
+    }
+
+    /// Why work is paused, as a word a monitoring check can match on.
+    private static func reason(_ cause: RequestBudgetSnapshot.PauseReason?) -> String {
+        switch cause {
+        case .budgetSpent: return "budget_spent"
+        case .providerRefusedQuota: return "provider_refused_quota"
+        case .none: return "unknown"
+        }
+    }
 
     /// Escapes a string for JSON by hand.
     ///

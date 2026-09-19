@@ -55,6 +55,17 @@ public actor SQLiteStore: BotStore {
     /// guess: the rows are written out in full.
     internal var lastWrittenClaims: [String: [Int64: [String]]] = [:]
 
+    /// What this handle last wrote as an epoch's charge rows, keyed by stream
+    /// and epoch.
+    ///
+    /// The same memo as the claims above, for the same reason: a runner saves
+    /// the whole record once per recipient and the charges do not change
+    /// between those saves, so the thousands of saves inside one epoch cost one
+    /// charge write between them. An entry it does not have is not a guess: the
+    /// rows are written out in full. A resumed run appends a second charge,
+    /// which the memo notices because it compares the whole prefix.
+    internal var lastWrittenCharges: [String: [ReserveEpochCharge]] = [:]
+
     /// What the migration run at open did, so a host can log it.
     public let migrationReport: MigrationReport
 
@@ -217,9 +228,13 @@ public actor SQLiteStore: BotStore {
     /// takes before it changes anything.
     public func revertEverySchemaStep() throws {
         try SchemaMigrator.revertAll(connection: connection)
-        // The rows the memo describes have just been dropped, and a memo
-        // describing rows that are gone is worse than none.
+        // The rows the memos describe have just been dropped, and a memo
+        // describing rows that are gone is worse than none: the next save
+        // would take the prefix it names as already written and append after
+        // it, leaving the file without rows the record in memory has.
+        // Both memos, because there are two.
         lastWrittenClaims = [:]
+        lastWrittenCharges = [:]
     }
 
     /// The settings the durability promise rests on, as they actually are.

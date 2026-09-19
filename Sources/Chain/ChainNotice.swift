@@ -50,5 +50,14 @@ public struct ChainNotice: Sendable, Equatable {
 
         /// The day's count could not be written down.
         case budgetNotPersisted(reason: String)
+
+        /// As many callers are being tracked for their share as this process
+        /// will track, so a caller nobody is tracking yet is being refused.
+        ///
+        /// Recorded once a day rather than once per refusal, like the pause
+        /// above and for the same reason: a refusal that repeats thousands of
+        /// times would bury the announcement under copies of itself at exactly
+        /// the moment somebody is reading it.
+        case callerTrackingFull(tracked: Int)
     }
 }

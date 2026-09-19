@@ -141,14 +141,18 @@ public struct ReserveRunner: Sendable {
     /// - Parameters:
     ///   - streamId: The stream to pay.
     ///   - recipients: Who is eligible. A list with holes in it pays nobody.
-    ///   - periodKey: Names the period this run belongs to, from
-    ///     ``ReservePeriod``. A stream that already paid in this period is
-    ///     refused.
+    ///   - cadencePeriodKey: Names the **cadence** period this run belongs
+    ///     to, from ``ReservePeriod``: the week or month that stops this
+    ///     schedule being paid twice. A stream that already paid in this
+    ///     period is refused. It is not the host's spending period, and it is
+    ///     never recorded as one: what the run was measured against comes from
+    ///     ``ReservePayer/spendLimits()`` and is recorded on the epoch as a
+    ///     ``ReserveEpochCharge``.
     ///   - now: Injected so a test can pin every timestamp.
     public func run(
         streamId: String,
         recipients: ReserveRecipientList,
-        periodKey: String,
+        cadencePeriodKey: String,
         now: Date = Date()
     ) async throws -> ReserveEpochOutcome {
         // Guard 1. Refuses rather than queues: a second payout that waits its
@@ -158,7 +162,7 @@ public struct ReserveRunner: Sendable {
             let outcome = try await execute(
                 streamId: streamId,
                 recipients: recipients,
-                periodKey: periodKey,
+                cadencePeriodKey: cadencePeriodKey,
                 now: now
             )
             await gate.release()
@@ -221,27 +225,45 @@ public struct ReserveRunner: Sendable {
     private func execute(
         streamId: String,
         recipients: ReserveRecipientList,
-        periodKey: String,
+        cadencePeriodKey: String,
         now: Date
     ) async throws -> ReserveEpochOutcome {
         // Guard 2. Checked before the plan is built so a refused run does no
         // work at all, and before anything is written so it leaves no trace.
         let preflightState = try await store.loadState()
-        if preflightState.lastPeriodKey(streamId) == periodKey {
-            throw ReserveError.periodAlreadyPaid(streamId: streamId, periodKey: periodKey)
+        if preflightState.lastPeriodKey(streamId) == cadencePeriodKey {
+            throw ReserveError.periodAlreadyPaid(
+                streamId: streamId,
+                cadencePeriodKey: cadencePeriodKey
+            )
         }
 
         let context = try await prepare(streamId: streamId, recipients: recipients)
+
+        var record = context.record
+        var state = context.state
 
         // Guard 4. Before the first payment, against what is *left* of the
         // period rather than the raw ceiling, and only if the figures still
         // describe the period this run is starting in.
         if let limits = try await payer.spendLimits() {
             try planner.requireWithinLimits(plan: context.plan, limits: limits, now: now)
+            // Written after the check and before the first claim, for the same
+            // reason the claim goes before the payment: a charge written
+            // afterwards is a charge a crash loses, and a crash is when an
+            // operator goes looking for it. It appends, so an epoch resumed
+            // under a later ceiling names both periods in the order they were
+            // charged (SPEND-9.c). One write per run rather than one per
+            // recipient, so the quadratic-write problem that shaped the claim
+            // rows does not arise here.
+            record.recordCharge(
+                periodKey: limits.periodKey,
+                checkedWholeUnits: context.plan.limitCostWholeUnits(asset: configuration.asset),
+                at: now
+            )
+            try await store.save(epoch: record)
         }
 
-        var record = context.record
-        var state = context.state
         var paid: [ReserveReceipt] = []
         var failed: [ReserveFailedPayment] = []
         var paidBaseUnits: UInt64 = 0
@@ -296,14 +318,15 @@ public struct ReserveRunner: Sendable {
         try await store.save(epoch: record)
         state = state
             .markingComplete(streamId: streamId, epoch: context.epoch)
-            .claimingPeriod(streamId: streamId, periodKey: periodKey)
+            .claimingPeriod(streamId: streamId, periodKey: cadencePeriodKey)
         try await store.save(state: state)
 
         return ReserveEpochOutcome(
             streamId: streamId,
             schedule: context.schedule,
             epoch: context.epoch,
-            periodKey: periodKey,
+            cadencePeriodKey: cadencePeriodKey,
+            charges: record.charges,
             perUnitBaseUnits: context.plan.perUnitBaseUnits,
             paid: paid,
             failed: failed,

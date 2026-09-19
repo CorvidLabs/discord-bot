@@ -43,6 +43,34 @@ public enum ChainError: Error, Equatable, LocalizedError, Sendable {
     /// refused, before it started, having spent nothing.
     case requestBudgetCannotCover(requested: UInt64, remaining: UInt64)
 
+    /// One caller has taken their share of today's requests.
+    ///
+    /// Deliberately not ``requestBudgetSpent``. The day is not spent, nothing
+    /// is paused, and every other caller carries on: only this one is waiting,
+    /// and only until their allowance has refilled enough, which is what
+    /// `nextAllowedAt` says. It is never queued, because a read that waits
+    /// holds a chat interaction open until it times out, which turns a
+    /// throttle into a visible failure.
+    ///
+    /// Nothing here names the caller. An error is written for an operator and
+    /// may be logged by a host, and an identifier that came from this layer
+    /// into a log is an identifier this layer leaked (HOST-2).
+    case callerShareSpent(requested: UInt64, shareRemaining: UInt64, nextAllowedAt: Date)
+
+    /// One caller asked for more requests at once than any allowance can hold.
+    ///
+    /// Deliberately not ``callerShareSpent``, and deliberately carrying no
+    /// instant. An allowance never holds more than its burst, so a count above
+    /// the burst cannot be served at any instant however long the caller
+    /// waits, and a refusal that named one would send a host away to retry at
+    /// a moment where it would be refused in exactly the same way, forever.
+    /// This is the share's version of ``requestBudgetCannotCover``, which
+    /// already says "this will never fit" at the day level and carries no date
+    /// either.
+    ///
+    /// Nothing here names the caller, for the same reason as above.
+    case callerShareCannotCover(requested: UInt64, burst: UInt64)
+
     /// Something a caller needed could not be read, so there is no complete
     /// answer to give it.
     case incompleteRead(gaps: [ChainReadGap])
@@ -79,6 +107,19 @@ public enum ChainError: Error, Equatable, LocalizedError, Sendable {
                 + "before it started rather than stopping half way through. Nothing was reserved and "
                 + "nothing is paused: everything that reads a request at a time carries on. Raise "
                 + "\(ChainEnvironment.dailyRequestBudget), or run this earlier in the UTC day."
+        case .callerShareSpent(let requested, let shareRemaining, let nextAllowedAt):
+            return "This caller has used its share of today's requests: it asked for "
+                + "\(ChainFormatting.grouped(requested)) and has \(ChainFormatting.grouped(shareRemaining)) "
+                + "left. The next one is allowed at \(UTCDay.stamp(nextAllowedAt)) UTC, as the share "
+                + "refills. Nothing is paused and nobody else is affected. Raise "
+                + "\(ChainEnvironment.callerSharePercent) or \(ChainEnvironment.callerBurstRequests) if "
+                + "one member should be allowed more of the day."
+        case .callerShareCannotCover(let requested, let burst):
+            return "This work needs \(ChainFormatting.grouped(requested)) requests reserved together and "
+                + "no one caller may hold more than \(ChainFormatting.grouped(burst)) at once, so waiting "
+                + "would never make it fit and it was refused before it started. Nothing was taken from "
+                + "the caller or from the day, and nothing is paused. Ask for less in one piece, or raise "
+                + "\(ChainEnvironment.callerBurstRequests)."
         case .incompleteRead(let gaps):
             let reasons = gaps.map(\.summary).joined(separator: "; ")
             return "The chain could not be read completely, so there is no answer to give: \(reasons). "

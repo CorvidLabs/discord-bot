@@ -75,11 +75,11 @@ blocks every earlier change sharing a delivery input from archiving.
 | `Sources/Reserve/` | The payout engine. Foundation only. |
 | `Sources/Gating/` | The role rules and the operator's configuration. Foundation only. |
 | `Sources/Games/` | The game engine. Foundation only. |
-| `Sources/Chain/` | Reading the chain, and the two brakes. Depends on `Gating` and on `swift-algorand`. |
+| `Sources/Chain/` | Reading the chain, and the three brakes. Depends on `Gating` and on `swift-algorand`. |
 | `Sources/Store/` | The records, the protocols and the store in memory. Depends on `Reserve`, `Gating` and `Chain`, and on no chat client. |
 | `Sources/StoreTestKit/` | The conformance suite. A plain target no product reaches, so it never ships. |
 | `Sources/StoreSQLite/` | The durable store, over `Sources/CSQLite`, which wraps the platform's own `libsqlite3`. No new pin. |
-| `Tests/` | 635 tests in 47 suites, all offline. Six targets; `swift test` is the only figure worth quoting, because a per-target filter matches suite names across targets and double counts. |
+| `Tests/` | 694 tests in 48 suites, all offline. Six targets; `swift test` is the only figure worth quoting, because a per-target filter matches suite names across targets and double counts. |
 | `docs/README.md` | Which document owns which fact, and the rules that keep the set from contradicting itself. Read it before putting a fact in a new place. |
 | `docs/CONFIGURATION.md` | Every environment variable an operator sets: what it means, its default, and what goes wrong when it is wrong. A pull request that adds, renames or redefaults a variable edits it in the same pull request. Its worked example is loaded by a test, so it cannot quietly stop being true. |
 | `docs/WHAT-IT-TALKS-TO.md` | Every outside service and every secret, derived from the source. A pull request that adds an outbound call, a host, a dependency or a secret edits it in the same pull request. |
@@ -123,6 +123,12 @@ red, which is the point.
   were each declared twice and each cost something real.
 - Nothing falls back to a value somebody else chose. A missing required
   variable is a refusal naming it.
+- Every read of the chain says whose it is. There is no default caller,
+  because a default is silent either way: default to a member and the sweep
+  gets throttled, default to the instance and the next command somebody writes
+  is unlimited.
+- Nothing on the health path spends a request. A check that costs the thing it
+  is checking on is a check nobody can run at the moment it matters.
 - No force unwrap, no `try!`, no `as!`. Explicit access control on every
   declaration. Four-space indentation, opening brace on the same line.
 - This repository is public. No real address, asset id, Discord snowflake or
