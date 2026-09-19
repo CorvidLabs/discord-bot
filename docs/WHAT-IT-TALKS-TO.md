@@ -29,6 +29,8 @@ more than a long plausible one.
 | Does it listen on a socket? | Yes, one: `GET /health`, on `HEALTH_ADDRESS` (the loopback address unless you say otherwise) and `HEALTH_PORT` (required, no default). One route, nothing else, and it accepts no input beyond the request line. |
 | Does it need a secret? | One, optionally: `CHAIN_API_TOKEN`, if your node provider issues tokens. |
 | Does it talk to Discord? | No. There is no Discord code in the package yet. |
+| Does proving a wallet contact anything? | No. `Verify` checks the signature in this process and opens no connection. A page has to serve the member's wallet somewhere, and this package does not serve one yet. |
+| Will that stay true? | One host is already decided and not yet reached: a naming service, so a member can type a name instead of an address when they run the verification command. It is optional, it is contacted only when somebody types a name, nothing at startup depends on it, and `Verify` is not the target that will call it. Nothing in this commit reaches it. |
 | Does it sign or send a transaction? | No. Every chain call is a read. Nothing here holds a key. |
 
 ## What is in the package
@@ -45,7 +47,8 @@ outbound connection, and one contains code that accepts an inbound one.
 | `Store` | Foundation, `Reserve`, `Gating`, `Chain` | No |
 | `StoreSQLite` | `Store`, `CSQLite` (the platform's own `libsqlite3`) | No. It opens a file, not a connection |
 | `Runtime` | `Gating`, `Chain`, `Store` | It **accepts** one: the health listener binds a socket on your machine. It originates none |
-| `BotMain` | `Runtime`, `StoreSQLite` | No. It is the arguments, the environment, the signals and the exit |
+| `BotMain` | `Runtime`, `StoreSQLite` | No. It is the arguments, the environment, the signals and the exit || `Chain` | Foundation, `Gating`, `swift-algorand` | Yes, and it is the only one |
+| `Verify` | Foundation, `swift-algorand`, `swift-crypto` | No. It is one import away from a node client, which is the position `Chain` is also in, and `Tests/VerifyTests/TargetShapeTests.swift` reads its sources and proves no client is constructed, no request type is named and nothing is logged. |
 
 It is worth being careful about what that table proves. "It only imports
 Foundation" is **not** a guarantee on its own: Foundation carries URL loading
@@ -290,14 +293,14 @@ is about call sites in `Sources/`. A dependency can open a connection this
 repository never wrote, and no amount of reading these four targets would show
 it.
 
-The package has one direct dependency and two that arrive with it. These are
-the versions in `Package.resolved`, which is committed, so your build uses
-exactly these:
+The package has **two** direct dependencies and one that arrives with them.
+These are the versions in `Package.resolved`, which is committed, so your
+build uses exactly these:
 
 | Package | Version | Why it is here |
 |---------|---------|----------------|
 | `swift-algorand` | 0.4.0 | The node client, and the address and asset types. The only dependency `Chain` calls. |
-| `swift-crypto` | 3.15.1 | Arrives with `swift-algorand`, which uses it for signing primitives. |
+| `swift-crypto` | 3.15.1 | **Declared here**, and also used by `swift-algorand`. `Verify` checks an Ed25519 signature against a public key on its own, and the only signature check `swift-algorand` offers is a method on a type that holds a private key, which is precisely what that target must never hold. It was already resolved at this version before it was declared, so declaring it moved nothing; a dependency a package uses and has not declared is one it cannot pin (TRUST-1.b, TRUST-4). |
 | `swift-asn1` | 1.7.3 | Arrives with `swift-crypto`. |
 
 Three specific things a reader should know rather than assume:
