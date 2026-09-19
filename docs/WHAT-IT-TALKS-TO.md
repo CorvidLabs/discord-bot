@@ -39,7 +39,7 @@ a short true list is worth more than a long plausible one.
 
 ## What is in the package
 
-Thirteen targets. Three of them contain code that opens or accepts a
+Fourteen targets. Three of them contain code that opens or accepts a
 connection, one writes a file, and the executable links four of them.
 
 | Target | Dependencies | Opens or accepts a connection? |
@@ -51,6 +51,7 @@ connection, one writes a file, and the executable links four of them.
 | `Store` | Foundation, `Reserve`, `Gating`, `Chain` | No |
 | `StoreTestKit` | `Store` | No |
 | `StoreSQLite` | `Store`, `CSQLite` (the platform's own `libsqlite3`) | No. It opens a file, not a connection |
+| `Sweep` | Foundation, `Gating`, `Chain`, `Store` | No. It reads the chain **through** `Chain`, so a sweep spends the same budget every other read does, and it declares its own chat seam over `String` rather than linking one. Nothing links it. |
 | `Runtime` | `Gating`, `Chain`, `Store` | It **accepts** one: the health listener binds a socket on your machine. It originates none |
 | `Verify` | Foundation, `swift-algorand`, `swift-crypto` | No. It is one import away from a node client, which is the position `Chain` is also in, and `Tests/VerifyTests/TargetShapeTests.swift` reads its sources and proves no client is constructed, no request type is named and nothing is logged. |
 | `Surface` | Foundation, `Store`, `Gating`, `Chain` | No. It declares no chat client and opens nothing. |
