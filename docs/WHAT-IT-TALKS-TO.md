@@ -11,10 +11,11 @@ Two things are worth knowing before the lists.
 command beside it that checks it, and the commands are meant to be run against
 your own clone rather than believed.
 
-**It describes this commit only.** The package is four offline libraries with
-no bot around them yet, so the honest list is much shorter than the one this
-document will have to carry when there is a Discord gateway and a database. A
-short true list is worth more than a long plausible one.
+**It describes this commit only.** The package is seven libraries and one
+program. The program starts, opens a store on your disk, reads one node and
+listens on one socket of your own machine; it has no Discord gateway, no
+verification flow and nothing that can move value. A short true list is worth
+more than a long plausible one.
 
 ## The short version
 
@@ -24,21 +25,27 @@ short true list is worth more than a long plausible one.
 | Which one? | Whatever you put in `CHAIN_NODE_URL`. There is no default and no fallback. |
 | Is any hostname compiled in? | No. Not one, anywhere in `Sources/`. |
 | Does it report anything to whoever wrote it? | No. No analytics, no telemetry, no crash reporting, no update check, no licence check. |
-| Does it write to disk? | Nothing in `Sources/` opens a file: no database, no log, no cache of its own. Foundation's URL loading keeps an HTTP cache and a cookie store of its own, which belongs to `URLSession` rather than to this code. |
+| Does it write to disk? | Yes, in one place you choose: the store at `STORE_PATH`, and a lock file beside it. Nothing else: no log file, no cache of its own. Foundation's URL loading keeps an HTTP cache and a cookie store of its own, which belongs to `URLSession` rather than to this code. |
+| Does it listen on a socket? | Yes, one: `GET /health`, on `HEALTH_ADDRESS` (the loopback address unless you say otherwise) and `HEALTH_PORT` (required, no default). One route, nothing else, and it accepts no input beyond the request line. |
 | Does it need a secret? | One, optionally: `CHAIN_API_TOKEN`, if your node provider issues tokens. |
 | Does it talk to Discord? | No. There is no Discord code in the package yet. |
 | Does it sign or send a transaction? | No. Every chain call is a read. Nothing here holds a key. |
 
 ## What is in the package
 
-Four libraries. One of them contains code that opens a connection.
+Seven libraries and one executable. One library contains code that opens an
+outbound connection, and one contains code that accepts an inbound one.
 
 | Target | Dependencies | Contains a call that opens a connection? |
 |--------|--------------|------------------------------------------|
 | `Reserve` | Foundation | No |
 | `Gating` | Foundation | No |
 | `Games` | Foundation | No |
-| `Chain` | Foundation, `Gating`, `swift-algorand` | Yes, and it is the only one |
+| `Chain` | Foundation, `Gating`, `swift-algorand` | Yes, and it is the only one that makes one |
+| `Store` | Foundation, `Reserve`, `Gating`, `Chain` | No |
+| `StoreSQLite` | `Store`, `CSQLite` (the platform's own `libsqlite3`) | No. It opens a file, not a connection |
+| `Runtime` | `Gating`, `Chain`, `Store` | It **accepts** one: the health listener binds a socket on your machine. It originates none |
+| `BotMain` | `Runtime`, `StoreSQLite` | No. It is the arguments, the environment, the signals and the exit |
 
 It is worth being careful about what that table proves. "It only imports
 Foundation" is **not** a guarantee on its own: Foundation carries URL loading
@@ -97,11 +104,16 @@ which makes one plain `GET` to a URL its caller hands it and reads the response
 headers off it. It exists so a health answer can carry evidence of which
 provider actually served a request, rather than asserting it.
 
-Two honest qualifications:
+Three honest qualifications:
 
-- The URL and the headers are both parameters. This repository never chooses
-  them, because nothing in this repository constructs one. It is a public type
-  waiting for a host that does not exist yet.
+- **It is off unless you switch it on.** `Sources/BotMain/LiveSeams.swift` is
+  the one place in the repository that constructs one, and it returns nil
+  unless `CHAIN_PROOF_HEADERS` names at least one header. With that variable
+  unset, no probe exists and no second request is ever made.
+- **When it is on, it goes to the node you configured.** The URL is
+  `{CHAIN_NODE_URL}/v2/status`, with your `CHAIN_API_TOKEN` as the
+  `X-Algo-API-Token` header when you set one. No other host, and no fifth
+  variable to point it anywhere else.
 - It is the one place in the package that uses `URLSession.shared` rather than
   a session of its own.
 - It is also the **only** network call anywhere on the health path, and it is
@@ -113,6 +125,14 @@ Two honest qualifications:
   the next check has proof and this one still costs nothing. An instance whose
   operator named no proof headers opens no socket of any kind, and a provider
   that is down is probed once per cache lifetime rather than once per check.
+
+It is refreshed **off** the health request path and never on it, so answering a
+health check makes no request at all. It is also not on a timer: the runtime
+probes once when it finishes starting, and after that only when a health
+request has been answered since the last probe, which
+`CHAIN_HEALTH_PROBE_CACHE_SECONDS` then reduces to at most one probe per that
+many seconds. An instance nobody ever checks makes one probe for its whole
+life.
 
 Two commands, not one, and the reason is worth a sentence: grepping for
 `URLSession` alone would miss the account reads entirely, because those go out
@@ -135,29 +155,48 @@ grep -rn "://" Sources/
 The claim costs nothing to make, so here is how to check it instead.
 
 ```bash
-# No analytics, telemetry, crash reporting or update check.
-grep -rniE "analytic|telemetr|crashlytic|sentry|posthog|mixpanel|amplitude|datadog|segment\.io|phone.?home" Sources/
+# No analytics, telemetry, crash reporting or update check. The alternatives
+# are anchored to whole words, because an unanchored `sentry` matches inside
+# `SettingsEntry` and a disclosure that cries wolf teaches you to stop reading
+# it.
+grep -rniE "analytic|telemetr|crashlytic|\bsentry\b|posthog|mixpanel|amplitude|datadog|segment\.io|phone.?home" Sources/
 
-# No subprocesses, no sockets of its own.
-grep -rnE "Process\(|NWConnection|Socket|CFSocket" Sources/
+# No subprocesses. Anchored for the same reason: `Process\(` on its own
+# matches `alreadyHeldByAnotherProcess(`, which is a store lease.
+grep -rnE "\bProcess\(|NWConnection|CFSocket" Sources/
 
-# No filesystem: it does not even write a log.
-grep -rnE "FileManager|write\(to|Data\(contentsOf|FileHandle" Sources/
+# Every socket call, so the one listener is countable rather than assumed.
+grep -rn "socket(" Sources/
+
+# Every file the package opens, and the paths it opens them at.
+grep -rnE "FileManager|FileHandle|Data\(contentsOf" Sources/
 ```
 
-All three come back empty at this commit.
+The first two come back empty. The third finds one file,
+`Sources/Runtime/HealthListener.swift`, which is the one listener; the client
+that speaks to it over loopback is test code and lives under `Tests/`, which
+these commands do not scan. The fourth finds the store's own file handling and
+the report writing to standard output and standard error.
 
-The package also has nothing that runs at startup, because it has no startup:
-there is no executable target, so there is no moment at which it could fetch
-anything before you called into it. That is half of TRUST-4.a for free, and it
-stops being free the day an executable lands.
+**There is a startup now**, and this is what it does before you have typed
+anything else: it prints a report of what it made of your settings as it makes
+it, opens the store at `STORE_PATH`, takes an exclusive lock on a file beside
+it, binds `HEALTH_PORT` on `HEALTH_ADDRESS`, and makes **one** request to your
+node to check that the asset exists and has the precision you configured.
+`CHAIN_VERIFY_ASSET_DECIMALS=false` turns that one off.
 
-What the package does **not** yet have is the other half of TRUST-1.a: a way to
-ask a running instance what it has actually been reaching. `ChainHealth`
-carries proof of which provider served the last probe, which is the beginning
-of one, but there is no surface that reports it, because there is nothing
-running to report it to. Until there is, the checkable part of the claim is the
-greps above and an egress rule on your own network.
+A start makes at most one other outbound call, and only if you asked for it:
+when `CHAIN_PROOF_HEADERS` names a header, the provider proof probe above makes
+its first `GET {CHAIN_NODE_URL}/v2/status` as the runtime finishes starting.
+With that variable unset, which is the default, the asset check is the only
+outbound call a start makes at all. It fetches nothing else, checks for no
+update and asks no licence server anything, which is TRUST-4.a.
+
+The other half of TRUST-1.a is now answered too: `GET /health` on the address
+above tells a running instance's operator what it has actually reached, and
+copies the provider proof headers onto its answer when you have configured any.
+The checkable part of the claim is still the greps above and an egress rule on
+your own network.
 
 ## Secrets, and everything else it reads
 
@@ -173,6 +212,16 @@ Exactly one of these is a secret.
 | Variable | Read by | What it is |
 |----------|---------|------------|
 | `CHAIN_API_TOKEN` | `Chain` | Your node provider's API token, when the provider needs one. Sent to the node in `CHAIN_NODE_URL` and to nowhere else. Unset is fine for a node that does not ask for one. |
+
+### This process
+
+| Variable | Required | What it is |
+|----------|----------|------------|
+| `STORE_PATH` | yes | Where this instance keeps what it remembers. **Absolute**, because a supervisor restarting the process from another directory would otherwise open a different and empty store. A lock file is created beside it. |
+| `HEALTH_PORT` | yes | The port the health endpoint listens on. No default: several communities on one machine each need their own, and a shared default turns the second one's first start into a clash. Zero lets the operating system choose. |
+| `HEALTH_ADDRESS` | no | The address the health endpoint binds. The loopback address unless you set it, because the answer carries a waiting list and can carry provider proof headers, and a default of every interface would publish both. |
+
+None of these is a secret.
 
 ### The node and the two brakes
 
@@ -287,9 +336,10 @@ rule that permits your node's host and nothing else. If the list above is
 complete, nothing breaks. That test does not require trusting this file, the
 dependency, or the person who wrote either, which is the point.
 
-There is nothing to run yet, so today that goes as far as `swift test`, which
-passes with no network at all. It becomes the real check the day an executable
-target lands, and it should be the first thing anybody does with one.
+`swift test` passes with no network at all, and there is now a binary to point
+an egress rule at. Run `bot check` first, which loads your settings and touches
+nothing, then `bot run` behind the rule. If the list above is complete, the only
+thing that fails is nothing.
 
 ## When this changes
 

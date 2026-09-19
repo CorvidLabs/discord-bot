@@ -71,7 +71,7 @@ blocks every earlier change sharing a delivery input from archiving.
 | Path | What it holds |
 |------|---------------|
 | `hi/` | Criteria, with permanent ids. Read before deciding anything. |
-| `specs/reserve/`, `specs/chain/` | Module contracts, with their requirements, context and testing notes. |
+| `specs/reserve/`, `specs/chain/`, `specs/runtime/` | Module contracts, with their requirements, context and testing notes. |
 | `Sources/Reserve/` | The payout engine. Foundation only. |
 | `Sources/Gating/` | The role rules and the operator's configuration. Foundation only. |
 | `Sources/Games/` | The game engine. Foundation only. |
@@ -79,7 +79,9 @@ blocks every earlier change sharing a delivery input from archiving.
 | `Sources/Store/` | The records, the protocols and the store in memory. Depends on `Reserve`, `Gating` and `Chain`, and on no chat client. |
 | `Sources/StoreTestKit/` | The conformance suite. A plain target no product reaches, so it never ships. |
 | `Sources/StoreSQLite/` | The durable store, over `Sources/CSQLite`, which wraps the platform's own `libsqlite3`. No new pin. |
-| `Tests/` | 694 tests in 48 suites, all offline. Six targets; `swift test` is the only figure worth quoting, because a per-target filter matches suite names across targets and double counts. |
+| `Sources/Runtime/` | The composition root: the boot gates, the settings catalogue, the startup report and the health listener. Depends on `Gating`, `Chain` and `Store`. **It may never link a chat SDK or a database**: the chat seam here is a protocol over Foundation types, and the store arrives as `any BotStore`. |
+| `Sources/BotMain/` | The program. The arguments, the one snapshot of the process environment, the live seams, the signals and the exit. Depends on `Runtime` and `StoreSQLite`. Decides nothing. |
+| `Tests/` | 751 tests in 63 suites, all offline. Seven targets; `swift test` is the only figure worth quoting, because a per-target filter matches suite names across targets and double counts. |
 | `docs/README.md` | Which document owns which fact, and the rules that keep the set from contradicting itself. Read it before putting a fact in a new place. |
 | `docs/CONFIGURATION.md` | Every environment variable an operator sets: what it means, its default, and what goes wrong when it is wrong. A pull request that adds, renames or redefaults a variable edits it in the same pull request. Its worked example is loaded by a test, so it cannot quietly stop being true. |
 | `docs/WHAT-IT-TALKS-TO.md` | Every outside service and every secret, derived from the source. A pull request that adds an outbound call, a host, a dependency or a secret edits it in the same pull request. |
