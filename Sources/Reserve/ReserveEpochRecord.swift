@@ -78,6 +78,17 @@ public struct ReserveEpochRecord: Codable, Sendable, Equatable {
     public var isComplete: Bool { completedAt != nil }
 
     /// Claims one line's slots, to be called **before** the payment is attempted.
+    ///
+    /// **All three lists only ever grow at the end**, and that is a storage
+    /// decision rather than a tidiness one. A runner saves the whole record
+    /// once per line, so a backend that keeps the lists as rows can send only
+    /// what is new when the rows it already wrote are a prefix of the list it
+    /// is being handed. Sorting the holdings here, as this once did, put a new
+    /// id in the middle about half the time, which made every save rewrite
+    /// every row of the epoch: quadratic in the slots paid, and slow enough
+    /// for an operator to kill a payout half way through, which is the
+    /// half-finished payout the whole design exists to prevent. Nothing reads
+    /// these in order, because every reader goes through the sets below.
     public mutating func claim(entry: ReserveEpochEntry, at date: Date) {
         if startedAt == nil {
             startedAt = date
@@ -89,10 +100,9 @@ public struct ReserveEpochRecord: Codable, Sendable, Equatable {
             paidRecipientIds.append(entry.recipientId)
         }
         var claimed = claimedHoldingIdSet
-        for holdingId in entry.claimedHoldingIds {
-            claimed.insert(holdingId)
+        for holdingId in entry.claimedHoldingIds where claimed.insert(holdingId).inserted {
+            claimedHoldingIds.append(holdingId)
         }
-        claimedHoldingIds = claimed.sorted()
         let (sum, overflow) = paidBaseUnits.addingReportingOverflow(entry.baseUnitsAmount)
         paidBaseUnits = overflow ? UInt64.max : sum
     }
@@ -101,7 +111,7 @@ public struct ReserveEpochRecord: Codable, Sendable, Equatable {
     ///
     /// For a rehearsal, which needs the finished shape of the row without
     /// writing any of it. Folded in one pass because ``claim(entry:at:)``
-    /// re-sorts the claimed ids on every call, which is nothing for one payment
+    /// rebuilds the claimed set on every call, which is nothing for one payment
     /// and quadratic across several thousand.
     public func claimingAll(_ entries: [ReserveEpochEntry], at date: Date) -> ReserveEpochRecord {
         guard !entries.isEmpty else { return self }
@@ -116,13 +126,12 @@ public struct ReserveEpochRecord: Codable, Sendable, Equatable {
             if people.insert(entry.recipientId).inserted {
                 copy.paidRecipientIds.append(entry.recipientId)
             }
-            for holdingId in entry.claimedHoldingIds {
-                claimed.insert(holdingId)
+            for holdingId in entry.claimedHoldingIds where claimed.insert(holdingId).inserted {
+                copy.claimedHoldingIds.append(holdingId)
             }
             let (sum, overflow) = copy.paidBaseUnits.addingReportingOverflow(entry.baseUnitsAmount)
             copy.paidBaseUnits = overflow ? UInt64.max : sum
         }
-        copy.claimedHoldingIds = claimed.sorted()
         if copy.startedAt == nil {
             copy.startedAt = date
         }

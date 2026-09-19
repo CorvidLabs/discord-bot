@@ -11,9 +11,9 @@ That is the product this is meant to become. Almost none of it is written.
 
 **Early. Not runnable yet.** This repository is being built in the open, a piece
 at a time, out of a private bot that has been running a live community for
-months. There is no bot here: no gateway, no slash commands, no database, no
-executable target and nothing you can deploy. What exists is four library
-targets, all offline, all covered by tests, and none of them wired to anything.
+months. There is no bot here: no gateway, no slash commands, no executable
+target and nothing you can deploy. What exists is six library targets, all
+offline, all covered by tests, and none of them wired to anything.
 
 | Target | What it is |
 |--------|------------|
@@ -21,10 +21,16 @@ targets, all offline, all covered by tests, and none of them wired to anything.
 | `Gating` | What holding something earns somebody in a server: the tier ladder, the collections, the pools, and the rule that turns what a member holds into the roles they should have. Pure values, no chain, no Discord, no clock. |
 | `Games` | Three games of cards and chance, as reducers. Clock and randomness arrive as parameters, so a table replays from a seed. Nothing here can reach a chain or sign anything. |
 | `Chain` | Reading what an account holds on an Algorand node, and the two brakes that stop it reading too much: a per-second limiter and a per-UTC-day request budget. |
+| `Store` | What one instance remembers between restarts: members, the accounts they proved, the sweep baseline, the payout ledger and the day's request count. Records, protocols, and a store in memory that needs nothing installed. No Discord in its package graph. |
+| `StoreSQLite` | The same store on a file, using the SQLite the operating system already ships. One connection, every durability setting read back at start, an exclusive lease so two instances cannot pay the same week, and no new entry in `Package.resolved`. |
 
 ```
-swift test    # 594 tests in 39 suites: Reserve 110, Gating 133, Games 167, Chain 184
+swift test    # 635 tests in 47 suites
 ```
+
+The store's conformance suite is one test with thirty three behaviours, run
+against three backends, so those three lines are ninety nine checks rather
+than three.
 
 Everything runs offline. No test reaches a network, and none needs a key, a
 funded wallet or a Discord server.
@@ -41,15 +47,19 @@ Most of it, and what is missing is the part a person would actually use:
 - **No Discord surface.** No gateway connection, no slash commands, no embeds,
   no buttons. A role is a plain string in `Gating` and nothing turns it into a
   Discord role.
-- **No wallet verification.** Nothing signs a challenge and nothing records
-  that an account belongs to a member, which is the first thing the product is
-  for.
-- **No persistence.** Every store in the package is a protocol with an
-  in-memory implementation for tests. There is no schema and no file format.
-- **No executable.** `Package.swift` declares four libraries and no binary, so
+- **No wallet verification.** Nothing signs a challenge. There is now a place
+  to record that an account belongs to a member, and nothing that puts one
+  there.
+- **Only the smallest store.** Six tables: members, accounts, the sweep
+  baseline, the payout ledger and the day's request count. No cache of what an
+  account holds, no payments table, no audit log, no claim offers, no scheduled
+  tasks, no game rows and no saved timezone. `specs/store/store.spec.md` lists
+  each absence and what would have to read it.
+- **No executable.** `Package.swift` declares six libraries and no binary, so
   there is nothing to run and nothing to deploy.
-- **No host.** The four targets do not know about each other beyond `Chain`
-  depending on `Gating`. Nothing sweeps, nothing schedules, nothing pays.
+- **No host.** The targets do not know about each other beyond `Chain`
+  depending on `Gating` and `Store` depending on all three. Nothing sweeps,
+  nothing schedules, nothing pays.
 - **No giveaways, no draws, no cards to look at, no announcements.** The
   `hi/` families describing them have nothing behind them.
 
@@ -59,7 +69,7 @@ written down and agreed, not features that work.
 [`INTENT.md`](INTENT.md) indexes them and [`hi/`](hi/) holds them, every line
 with an id that never moves.
 
-The Discord surface, the wallet verification flow and a host that wires the four
+The Discord surface, the wallet verification flow and a host that wires the
 libraries together come next, in that order.
 
 ## Why the engine first

@@ -1,0 +1,6 @@
+#ifndef DISCORD_BOT_CSQLITE_SHIM_H
+#define DISCORD_BOT_CSQLITE_SHIM_H
+
+#include <sqlite3.h>
+
+#endif /* DISCORD_BOT_CSQLITE_SHIM_H */

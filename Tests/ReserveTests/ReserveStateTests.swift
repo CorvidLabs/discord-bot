@@ -136,6 +136,51 @@ struct ReserveStateTests {
         #expect(record.startedAt == Date(timeIntervalSince1970: 1))
     }
 
+    @Test("Every claim only ever adds to the end of the three lists")
+    func claimsOnlyGrowAtTheEnd() {
+        // The property a store keeping these as rows relies on. When what it
+        // has already written is a prefix of what it is being handed, it can
+        // write the difference; when it is not, it has to delete the epoch's
+        // rows and write every one of them again, once per payment, which is
+        // quadratic in the slots paid and slow enough for an operator to kill
+        // a payout half way through.
+        var record = Fixture.epoch(Fixture.members, 1)
+        var previous = record
+        for index in [7, 3, 9, 1, 5] {
+            record.claim(
+                entry: ReserveEpochEntry(
+                    recipientId: "R\(index)",
+                    account: Fixture.account(index),
+                    units: 1,
+                    baseUnitsAmount: 11,
+                    claimedHoldingIds: ["H-\(index)", "H-\(index + 100)"]
+                ),
+                at: Date(timeIntervalSince1970: 1)
+            )
+            #expect(Array(record.paidAccounts.prefix(previous.paidAccounts.count))
+                == previous.paidAccounts)
+            #expect(Array(record.paidRecipientIds.prefix(previous.paidRecipientIds.count))
+                == previous.paidRecipientIds)
+            #expect(Array(record.claimedHoldingIds.prefix(previous.claimedHoldingIds.count))
+                == previous.claimedHoldingIds)
+            previous = record
+        }
+        #expect(record.claimedHoldingIds == [
+            "H-7", "H-107", "H-3", "H-103", "H-9", "H-109", "H-1", "H-101", "H-5", "H-105"
+        ])
+        // Claiming the same holding again adds nothing, so the lists stay a
+        // record of what was claimed rather than of how often it was saved.
+        let repeatEntry = ReserveEpochEntry(
+            recipientId: "R7",
+            account: Fixture.account(7),
+            units: 1,
+            baseUnitsAmount: 11,
+            claimedHoldingIds: ["H-7"]
+        )
+        record.claim(entry: repeatEntry, at: Date(timeIntervalSince1970: 2))
+        #expect(record.claimedHoldingIds.count == 10)
+    }
+
     @Test("Folding a whole plan in one pass matches claiming one at a time")
     func claimingAllMatchesClaimingEach() {
         let entries = (1...20).map { index in
@@ -200,7 +245,10 @@ struct ReserveStateTests {
             from: try ReserveCoding.encode(record)
         )
         #expect(decodedRecord == record)
-        #expect(decodedRecord.claimedHoldingIds == ["H7", "H9"])
+        // Arrival order, not sorted order. The lists only ever grow at the end
+        // so that a store keeping them as rows can write what is new instead
+        // of rewriting the epoch.
+        #expect(decodedRecord.claimedHoldingIds == ["H9", "H7"])
         #expect(decodedRecord.paidBaseUnits == 100)
     }
 

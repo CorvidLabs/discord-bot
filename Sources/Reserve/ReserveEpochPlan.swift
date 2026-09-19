@@ -38,10 +38,16 @@ public struct ReserveEpochEntry: Sendable, Equatable, Hashable, Codable {
 
     /// The holding ids this line consumes for the epoch.
     ///
-    /// Always *all* of the account's unclaimed qualifying holdings, even on a
+    /// Always *all* of the unclaimed qualifying holdings, even on a
     /// once-per-recipient stream that only paid for one slot. Claiming only the
     /// one that was paid for would leave the rest free to buy a second payment
     /// after a transfer.
+    ///
+    /// On a once-per-recipient stream that is every holding the **person** has,
+    /// on every account of theirs, not only on the account being paid. Their
+    /// other accounts are skipped and claim nothing of their own, so this is
+    /// the only handle the ledger keeps on the rest of them once the recipient
+    /// id stops naming anybody.
     public let claimedHoldingIds: [String]
 
     // MARK: - Initializers

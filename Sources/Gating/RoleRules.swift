@@ -204,8 +204,11 @@ public enum RoleRules: Sendable {
     /// Zero is not enough of a floor on its own, because a wrong path that
     /// still has one leftover row passes it. So when a baseline of at least
     /// ``RoleRules/orphanSweepBaselineMinimum`` was recorded, a count that has
-    /// fallen to under half of it is refused as well. No baseline, for a first
-    /// run or an unreadable record, falls back to the zero floor alone.
+    /// fallen to under half of it is refused as well. No baseline falls back to
+    /// the zero floor alone, which is what a first run has. An unreadable
+    /// record is **not** a missing one: a store refuses it rather than
+    /// answering with nothing, because a corrupt baseline read as nothing
+    /// disarms this check in silence.
     ///
     /// **The baseline travels with the decision, and only with a ``run``.**
     /// That is the whole reason this is not a `Bool`. A refusal must leave the

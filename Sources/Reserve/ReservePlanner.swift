@@ -62,6 +62,13 @@ public struct ReservePlanner: Sendable {
     /// safe. A holding already paid is skipped too, which is what stops a thing
     /// moving between two known accounts and being paid twice in the same epoch.
     ///
+    /// On a once-per-recipient stream the line that pays somebody claims every
+    /// holding of theirs on every account, not only the account being paid.
+    /// Their other accounts are skipped and claim nothing of their own, so
+    /// without that the ledger's only surviving handle on them would be the
+    /// recipient id, and a person who is forgotten mid-epoch is minted a new
+    /// one when they come back.
+    ///
     /// - Parameters:
     ///   - streamId: The stream to plan.
     ///   - schedule: The chosen duration.
@@ -100,6 +107,24 @@ public struct ReservePlanner: Sendable {
         let ordered = recipients.sorted {
             if $0.account != $1.account { return $0.account < $1.account }
             return $0.id < $1.id
+        }
+
+        // Everything one person holds, across every account of theirs, for a
+        // stream that pays the person rather than the account. The line that
+        // pays them claims the lot, because their other accounts are skipped
+        // without claiming anything and the claim is the only handle that
+        // survives being forgotten: the recipient id is minted fresh when
+        // somebody is forgotten and comes back, and inside an unfinished epoch
+        // that would otherwise buy a second full share.
+        var holdingsOfPerson: [String: [String]] = [:]
+        if stream.rule == .oncePerRecipient {
+            for recipient in ordered where !recipient.holdsNothing {
+                var held = holdingsOfPerson[recipient.id] ?? []
+                for holdingId in recipient.holdingIds where !held.contains(holdingId) {
+                    held.append(holdingId)
+                }
+                holdingsOfPerson[recipient.id] = held
+            }
         }
 
         for recipient in ordered {
@@ -147,10 +172,13 @@ public struct ReservePlanner: Sendable {
                 )
                 continue
             }
-            // A once-per-recipient stream collapses an account's holdings into
-            // one slot; a per-unit stream pays each. Either way *all* of them are
-            // claimed, so a transfer later in the epoch cannot buy a second
-            // payment.
+            // A once-per-recipient stream collapses a *person's* holdings into
+            // one slot; a per-unit stream pays each of an account's. Either way
+            // all of them are claimed, so neither a transfer later in the epoch
+            // nor a second account of the same person can buy a second payment.
+            let claiming = stream.rule == .oncePerRecipient
+                ? (holdingsOfPerson[recipient.id] ?? unclaimed).filter { !claimed.contains($0) }
+                : unclaimed
             let units: UInt64 = stream.rule == .oncePerRecipient ? 1 : UInt64(unclaimed.count)
             let (amount, overflow) = perUnit.multipliedReportingOverflow(by: units)
             guard !overflow else {
@@ -160,7 +188,7 @@ public struct ReservePlanner: Sendable {
                     allocation: try configuration.allocationBaseUnits(streamId)
                 )
             }
-            for holdingId in unclaimed {
+            for holdingId in claiming {
                 claimed.insert(holdingId)
             }
             paidAccounts.insert(recipient.account)
@@ -171,7 +199,7 @@ public struct ReservePlanner: Sendable {
                     account: recipient.account,
                     units: units,
                     baseUnitsAmount: amount,
-                    claimedHoldingIds: unclaimed
+                    claimedHoldingIds: claiming
                 )
             )
         }

@@ -224,6 +224,73 @@ struct ReservePlanningTests {
         #expect(second.totalBaseUnits == 0)
     }
 
+    @Test("The line that pays a person claims every wallet's holdings, not just the one paid")
+    func onePersonsWholeHoldingIsClaimed() throws {
+        let planner = try Fixture.planner()
+        var record = Fixture.epoch(Fixture.members, 3)
+        // One person, two wallets, one thing on each. A once-per-recipient
+        // stream pays the first wallet and skips the second as the same
+        // person, so the second wallet's holding is never claimed by a line of
+        // its own. It has to be claimed by the line that did pay, or the
+        // ledger's only handle on that half of the person is the recipient id.
+        let wallets = [
+            ReserveRecipient(id: "R1", account: "ACCOUNT-A", holdingIds: ["H1"]),
+            ReserveRecipient(id: "R1", account: "ACCOUNT-B", holdingIds: ["H2"])
+        ]
+        let plan = try planner.planEpoch(
+            streamId: Fixture.members,
+            schedule: Fixture.sixMonths(),
+            epoch: 3,
+            recipients: wallets,
+            record: record
+        )
+        #expect(plan.entries.count == 1)
+        #expect(plan.entries.first?.account == "ACCOUNT-A")
+        #expect(plan.entries.first?.units == 1)
+        #expect(plan.entries.first?.baseUnitsAmount == 269_230_769_230)
+        #expect(plan.entries.first?.claimedHoldingIds == ["H1", "H2"])
+        #expect(plan.skipped.map(\.reason) == [.recipientAlreadyPaid])
+
+        for entry in plan.entries {
+            record.claim(entry: entry, at: Self.epochStart)
+        }
+
+        // The half of it that is member-triggerable. Somebody forgotten in the
+        // middle of an unfinished epoch is minted a new recipient id when they
+        // come back, so the id in the ledger no longer names them. The holding
+        // does, and it is what refuses the second full share.
+        let returned = try planner.planEpoch(
+            streamId: Fixture.members,
+            schedule: Fixture.sixMonths(),
+            epoch: 3,
+            recipients: [ReserveRecipient(id: "R-NEW", account: "ACCOUNT-B", holdingIds: ["H2"])],
+            record: record
+        )
+        #expect(returned.entries.isEmpty)
+        #expect(returned.skipped.map(\.reason) == [.holdingsAlreadyClaimed])
+        #expect(returned.totalBaseUnits == 0)
+    }
+
+    @Test("A per-unit stream still claims only the account in front of it")
+    func aPerUnitLineClaimsItsOwnAccount() throws {
+        let planner = try Fixture.planner()
+        // Two wallets of one person on a per-unit stream are two lines and two
+        // payments, so neither may reach across and claim the other's, which
+        // would leave the second line paying for nothing.
+        let plan = try planner.planEpoch(
+            streamId: Fixture.passes,
+            schedule: Fixture.sixMonths(),
+            epoch: 1,
+            recipients: [
+                ReserveRecipient(id: "R1", account: "ACCOUNT-A", holdingIds: ["H1"]),
+                ReserveRecipient(id: "R1", account: "ACCOUNT-B", holdingIds: ["H2"])
+            ],
+            record: Fixture.epoch(Fixture.passes, 1)
+        )
+        #expect(plan.entries.map(\.claimedHoldingIds) == [["H1"], ["H2"]])
+        #expect(plan.entries.map(\.units) == [1, 1])
+    }
+
     @Test("Re-running a half-finished epoch skips what it already paid (RESERVE-6.c)")
     func rerunSkipsPaid() throws {
         let planner = try Fixture.planner()

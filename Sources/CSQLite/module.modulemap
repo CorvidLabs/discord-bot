@@ -1,0 +1,15 @@
+// The platform's own SQLite, wrapped so Swift can see it. Nothing is vendored
+// and nothing is pinned: the library being linked is the one the operating
+// system already ships and already patches, which is why adding durable
+// storage to this package adds no entry to `Package.resolved`.
+//
+// A missing header is a build failure naming `sqlite3.h`, which on Debian and
+// Ubuntu is `apt-get install libsqlite3-dev` and on a Mac arrives with the
+// command line tools. That refusal is deliberate: a dependency this package
+// needs is one the build states rather than one an operator discovers at run
+// time.
+module CSQLite [system] {
+    header "shim.h"
+    link "sqlite3"
+    export *
+}
