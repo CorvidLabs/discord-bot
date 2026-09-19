@@ -29,6 +29,11 @@ swift test    # 571 tests in 39 suites: Reserve 105, Gating 133, Games 158, Chai
 Everything runs offline. No test reaches a network, and none needs a key, a
 funded wallet or a Discord server.
 
+[`docs/WHAT-IT-TALKS-TO.md`](docs/WHAT-IT-TALKS-TO.md) is the disclosure:
+every outside service this contacts, every secret it asks for, the commands
+that check each claim, and a plain account of what a reader cannot check by
+grepping this repository. Read it before installing anything.
+
 ### What is missing
 
 Most of it, and what is missing is the part a person would actually use:
@@ -323,6 +328,17 @@ swift build
 swift test
 specsync check --strict
 ```
+
+Both gates run on every pull request, on macOS and on Linux. Linux is not
+decoration: the deployment target is a container, and the first layer where
+the two platforms genuinely differ is the persistence being written now.
+
+`Package.resolved` is committed, and the one dependency is pinned to a single
+minor, so two clones of one commit build the same code.
+[`CHANGELOG.md`](CHANGELOG.md) is what changed between two versions, and
+[`CONTRIBUTING.md`](CONTRIBUTING.md#releases) says how a release is cut and
+how its number is chosen. Nothing has been released yet, and there are no
+tags.
 
 ## Licence
 

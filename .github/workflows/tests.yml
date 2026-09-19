@@ -7,6 +7,10 @@ on:
       - "Sources/**"
       - "Tests/**"
       - "Package.swift"
+      # The lock is part of what gets built. A change to it changes the code
+      # that compiles even when nothing in Sources moved, so it has to be able
+      # to turn the gate red on its own.
+      - "Package.resolved"
       - ".github/workflows/tests.yml"
   # Every pull request, not only those targeting main: work on this repository
   # arrives as a stack of branches, and a stacked pull request needs the same
@@ -16,6 +20,7 @@ on:
       - "Sources/**"
       - "Tests/**"
       - "Package.swift"
+      - "Package.resolved"
       - ".github/workflows/tests.yml"
 
 concurrency:
@@ -35,6 +40,38 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
+      - name: Build
+        run: swift build
+
+      - name: Run Tests
+        run: swift test
+
+  linux:
+    # Everything merged so far is arithmetic that behaves identically on either
+    # platform, which is exactly why nobody noticed there was no Linux gate.
+    # Persistence is the first layer where Foundation genuinely differs, and it
+    # is being written now, so the gate has to exist before the code that needs
+    # it rather than after the first Linux-only bug.
+    #
+    # GitHub-hosted for the same reason the macOS job is: a fork's pull request
+    # must never run on a maintainer's machine.
+    runs-on: ubuntu-latest
+    # The official image, at the version the package declares in
+    # `swift-tools-version`. Pinning the minor rather than tracking `latest`
+    # means the gate tests the floor an operator is promised, instead of
+    # whatever toolchain happened to ship the week the job ran.
+    container: swift:6.1-noble
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Swift version
+        # Printed rather than assumed: when this job fails on a toolchain
+        # difference, the first thing anybody reading the log wants is which
+        # toolchain it was.
+        run: swift --version
 
       - name: Build
         run: swift build
