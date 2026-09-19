@@ -315,12 +315,6 @@ So under `swift run bot` today:
   is refused by name instead. That refusal is why only `/ping` and `/help` are
   registered today, and not `/verify` and `/unlink`.
 
-**No boot you can run today reads any of it.** The `bot` executable links
-`Runtime` and `StoreSQLite`; `SurfaceConfiguration` lives in `Surface`, which
-nothing links. This section describes the loader as it is written and tested,
-so that wiring it in is a change to the manifest rather than to the contract
-below.
-
 | Variable | Required | Default | What it is | What goes wrong if it is wrong |
 |----------|----------|---------|------------|-------------------------------|
 | `DISCORD_BOT_TOKEN` | yes | none | Your bot's token. **A secret.** | A missing one is refused by name. A value still holding an example placeholder is refused separately, with the value quoted, because starting on one points your bot at nothing at all. The token is never printed back out; the application id is read out of it so the boot report can print an invite. |

@@ -11,14 +11,15 @@ Two things are worth knowing before the lists.
 command beside it that checks it, and the commands are meant to be run against
 your own clone rather than believed.
 
-**It describes this commit only, and it describes two things.** The
-**program** you can run today opens a store on your disk, reads one Algorand
-node and listens on one socket of your own machine. The **package** also
-contains a Discord adapter, built and tested, that would open a gateway, call
-a chat API and call a verification portal you run — and the `bot` executable
-does not link it, so none of that happens when you start the program. Where
-the two differ below, the difference is said rather than smoothed over: a
-short true list is worth more than a long plausible one.
+**It describes this commit only, and what it contacts depends on what you
+configure.** With no chat variables set, the program opens a store on your
+disk, reads one Algorand node and listens on one socket of your own machine —
+and identifies to nothing. Set `DISCORD_BOT_TOKEN` and `DISCORD_GUILD_ID` and
+it also opens a gateway to Discord and registers two commands over their HTTP
+API. It contacts a verification portal in neither case, because that half is
+not assembled here and every `VERIFY_` variable is refused rather than
+half-honoured. Where a claim below depends on your configuration, it says so:
+a short true list is worth more than a long plausible one.
 
 ## The short version
 
@@ -29,9 +30,9 @@ short true list is worth more than a long plausible one.
 | Is any hostname compiled in? | One, in one place: the `discord.com` invite URL the boot report prints. It is printed, never fetched. The chat library holds Discord's own API and gateway hosts, which is what a chat library is. |
 | Does it report anything to whoever wrote it? | No. No analytics, no telemetry, no crash reporting, no update check, no licence check. |
 | Does it write to disk? | Yes, in one place you choose: the store at `STORE_PATH`, and a lock file beside it. There is no default, because a database somewhere this package chose is a database you do not know to back up. Nothing else: no log file, no cache of its own. Foundation's URL loading keeps an HTTP cache and a cookie store of its own, which belongs to `URLSession` rather than to this code. |
-| Does it listen on a socket? | The program: one, `GET /health`, on `HEALTH_ADDRESS` (the loopback address unless you say otherwise) and `HEALTH_PORT` (required, no default). One route, and it accepts no input beyond the request line. The package holds a second listener, the portal callback in `SurfaceDiscord`, which nothing in this build starts. |
-| Does it need a secret? | The program: one, optionally, `CHAIN_API_TOKEN`, if your node provider issues tokens. The unwired surface would ask for two more, `DISCORD_BOT_TOKEN` and `VERIFY_SHARED_SECRET`. |
-| Does it talk to Discord? | Not when you run it. `SurfaceDiscord` is the only target that can, the manifest is what makes that true, and no executable links it. |
+| Does it listen on a socket? | One, whatever you configure: `GET /health`, on `HEALTH_ADDRESS` (the loopback address unless you say otherwise) and `HEALTH_PORT` (required, no default). One route, and it accepts no input beyond the request line. A second listener exists in the tree, the portal callback used by `DiscordSurface`, and nothing reaches `DiscordSurface` from the executable, so the program never binds it. |
+| Does it need a secret? | One if you run it without a chat surface: `CHAIN_API_TOKEN`, and only if your node provider issues tokens. Two with one: `DISCORD_BOT_TOKEN` as well. `VERIFY_SHARED_SECRET` is not read by anything the executable assembles. |
+| Does it talk to Discord? | Only when you give it a token. `SurfaceDiscord` is the only target that can, and the manifest is what makes that true; `BotMain` links it and builds a gateway only when a `DISCORD_` variable is set. With none set the program identifies to nothing. |
 | Does proving a wallet contact anything? | No. `Verify` checks the signature in this process and opens no connection. A page has to serve the member's wallet somewhere, and this package does not serve one. |
 | Will that stay true? | One host is already decided and not yet reached: a naming service, so a member can type a name instead of an address when they run the verification command. It is optional, it is contacted only when somebody types a name, nothing at startup depends on it, and `Verify` is not the target that will call it. Nothing in this commit reaches it. |
 | Does it sign or send a transaction? | No. Every chain call is a read. Nothing here holds a chain key. |
@@ -287,8 +288,9 @@ grep -rnE "FileManager|FileHandle|Data\(contentsOf" Sources/
 
 The first comes back empty. The second finds **two** files:
 `Sources/Runtime/HealthListener.swift`, which the program binds, and
-`Sources/SurfaceDiscord/SocketHTTPListener.swift`, which nothing links and so
-nothing starts. The client that speaks to the health listener over loopback
+`Sources/SurfaceDiscord/SocketHTTPListener.swift`, which only `DiscordSurface`
+uses and which nothing reaches from the executable, so the program never binds
+it. The client that speaks to the health listener over loopback
 is test code under `Tests/`, which these commands do not scan. The third
 finds the store's own file handling and the report writing to standard output
 and standard error.
@@ -302,9 +304,10 @@ anything else: it prints a report of what it made of your settings as it
 makes it, opens the store at `STORE_PATH`, takes an exclusive lock on a file
 beside it, binds `HEALTH_PORT` on `HEALTH_ADDRESS`, and makes **one** request
 to your node to check that the asset exists and has the precision you
-configured. `CHAIN_VERIFY_ASSET_DECIMALS=false` turns that one off. It
-contacts nothing else, and it does not reach Discord or a portal, because it
-links neither target that could.
+configured. `CHAIN_VERIFY_ASSET_DECIMALS=false` turns that one off. If you
+have set a token and a server it then identifies to Discord and registers its
+two commands, after the bind and never before it. It reaches no portal, in
+any configuration.
 
 A start makes at most one other outbound call, and only if you asked for it:
 when `CHAIN_PROOF_HEADERS` names a header, the provider proof probe above makes
@@ -441,7 +444,7 @@ rather than estimated, and the command below regenerates it.
 |---------|---------|----------------|
 | `async-http-client` | 1.36.1 | With `DiscordBM`. What it makes its HTTP calls through. |
 | `compress-nio` | 1.4.2 | With `DiscordBM`. Gateway compression. |
-| `discordbm` | 1.16.2 | **Direct.** The chat client: the gateway, the HTTP API and the payload types. Reached only from `SurfaceDiscord`, which nothing links. |
+| `discordbm` | 1.16.2 | **Direct.** The chat client: the gateway, the HTTP API and the payload types. Reached only from `SurfaceDiscord`, which only the executable links. |
 | `multipart-kit` | 4.7.1 | With `DiscordBM`. File uploads on a message. |
 | `swift-algorand` | 0.4.0 | **Direct.** The node client, and the address and asset types. The only dependency `Chain` calls. |
 | `swift-algorithms` | 1.2.1 | With `DiscordBM`. |
