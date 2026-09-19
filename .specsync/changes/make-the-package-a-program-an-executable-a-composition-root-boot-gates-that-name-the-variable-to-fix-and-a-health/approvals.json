@@ -1,0 +1,51 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1789832154,
+      "digest": "cece40d617fd8cc542ec2f7c44acfeed4a4779f3bafb0a6c00557bc97ebdaac8",
+      "note": "Approved in session after an interview covering the open trades. Scope unchanged from the definition the owner approved; this records the same approval after the declaration was corrected from no-spec-change to declaring the new runtime module, and after the branch was rebased onto main.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "make-the-package-a-program-an-executable-a-composition-root-boot-gates-that-name-the-variable-to-fix-and-a-health",
+        "title": "Make the package a program: an executable, a composition root, boot gates that name the variable to fix, and a health listener bound before anything identifies to Discord",
+        "description": "Make the package a program: an executable, a composition root, boot gates that name the variable to fix, and a health listener bound before anything identifies to Discord",
+        "kind": "feature",
+        "affected_specs": [
+          "runtime"
+        ],
+        "affected_paths": [
+          ".github",
+          ".specsync/config.toml",
+          "AGENTS.md",
+          "CHANGELOG.md",
+          "CONTRIBUTING.md",
+          "INTENT.md",
+          "Package.swift",
+          "README.md",
+          "SECURITY.md",
+          "Sources",
+          "Tests",
+          "docs",
+          "specs"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "swift run on a clean machine with no configuration exits non-zero and names the first variable to set, rather than starting and failing later. With a valid configuration it starts, prints a startup report saying what it made of the settings and never a secret, binds its listener, and answers a health request. The health body says starting until the parts that must be up are up, so a bound socket alone never reads as ready. A build that cannot sign says so at every start, structurally rather than by reading a flag. Every one of these is exercised by a test with no Discord, no chain, no wallet and no database anybody installed."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "runtime": "c29437d56af2b991c9df6ce87e19ff4224289650298c945b50779d6f8f8986da"
+      }
+    }
+  ],
+  "reopenings": []
+}
