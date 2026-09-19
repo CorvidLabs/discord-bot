@@ -21,9 +21,13 @@ chance as replayable reducers, `Chain` reads an Algorand node behind two
 brakes, and `Store` with `StoreSQLite` is what one instance remembers between
 restarts.
 
-**There is no gateway, no slash command and no executable**, so
-nothing here can be run or deployed. `README.md` says what exists and what is
-missing; `INTENT.md` says why the engine came first.
+**There is an executable, and it is not yet a bot.** `bot` reads your
+settings, opens its store, checks your asset against your node and answers a
+health endpoint. The chat surface is written and tested beside it, in
+`Surface` and `SurfaceDiscord`, and `BotMain` links neither — so no gateway
+is opened and no slash command is registered by anything you can run.
+`README.md` says what exists and what is missing; `INTENT.md` says why the
+engine came first.
 
 ## The order of work
 

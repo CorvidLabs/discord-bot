@@ -15,10 +15,11 @@ can reach.** The `Verify` library target now decides whether an account is
 controlled by whoever presented a proof of it, in this process, with no second
 service: it mints the challenge, keeps the session, reads the signed
 transaction a wallet sends back and applies fifteen ordered refusals to it.
-`specs/verify/verify.spec.md` is its contract. What is still missing is
-everything a member would touch: there is no gateway, no slash command and no
-HTTP listener at this commit, so nothing below can be run and nobody can
-verify anybody from a clone of this repository. `Store` has a place to record
+`specs/verify/verify.spec.md` is its contract. What is still missing is the
+path from a member to it: the `/verify` command, the callback listener and
+the adapter that would carry them are written, in `Surface` and
+`SurfaceDiscord`, and the executable links neither — so nothing below runs
+today, and nobody can verify anybody from a clone of this repository. `Store` has a place to record
 that an account belongs to a member (`AccountStore.prove`) and nothing that
 puts one there.
 
