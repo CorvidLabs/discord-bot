@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "adopt-the-verified-specsync-change-lifecycle-so-every-meaningful-change-carries-a-defined-approved-reviewed-and",
+  "implementation_commit": "3a8d46214e3517f61d7b729c27de51161684df62",
+  "implementation_tree": "48a22f1f1b8e8dadc70e799600abef55f14f67d0",
+  "contract_digest": "0938d4f1c7ba53effdf879eaa455142c73eef21167c4b0bfb6ccffb61554d6f2",
+  "workspace_digest": "a56149be2ff4c9c811e9541ef3ce11d934f4cb0d0713c427575b000f06a5e686",
+  "closing_digest": "c8aafa18b0fe2e2b98a79bf6e667cfd3a2574bd6a531b22a2b70ba7315465360",
+  "review_digest": "91f0d80f4977d3606f51f4dcf57a42d7141c2043bdbe6b674fae24197ba968fb",
+  "finalization_digest": "22e57513438b4c48b7dc1d377ec02a45cc26a797525d80fbc9889e0256f00dda",
+  "timestamp": 1789826436
+}

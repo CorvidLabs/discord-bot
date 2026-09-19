@@ -1,6 +1,6 @@
 ---
 id: adopt-the-verified-specsync-change-lifecycle-so-every-meaningful-change-carries-a-defined-approved-reviewed-and
-state: verifying
+state: archived
 type: operations
 base_commit: c381eaed999fb232bafcc920f61dd82717309e18
 ---
