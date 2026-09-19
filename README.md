@@ -25,7 +25,7 @@ offline, all covered by tests, and none of them wired to anything.
 | `StoreSQLite` | The same store on a file, using the SQLite the operating system already ships. One connection, every durability setting read back at start, an exclusive lease so two instances cannot pay the same week, and no new entry in `Package.resolved`. |
 
 ```
-swift test    # 635 tests in 47 suites
+swift test    # 645 tests in 48 suites
 ```
 
 The store's conformance suite is one test with thirty three behaviours, run
@@ -39,6 +39,11 @@ funded wallet or a Discord server.
 every outside service this contacts, every secret it asks for, the commands
 that check each claim, and a plain account of what a reader cannot check by
 grepping this repository. Read it before installing anything.
+
+[`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) is what an operator sets:
+every environment variable, its default, and what goes wrong when it is wrong,
+ending in a worked example that a test loads through the real loaders.
+[`docs/README.md`](docs/README.md) maps which document owns which fact.
 
 ### What is missing
 
