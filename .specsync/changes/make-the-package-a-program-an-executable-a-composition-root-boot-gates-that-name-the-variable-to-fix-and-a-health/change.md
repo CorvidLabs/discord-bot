@@ -1,6 +1,6 @@
 ---
 id: make-the-package-a-program-an-executable-a-composition-root-boot-gates-that-name-the-variable-to-fix-and-a-health
-state: draft
+state: approved
 type: feature
 base_commit: b848c0ea12f88511c6da86562bf793b407526d35
 ---
@@ -13,7 +13,7 @@ Make the package a program: an executable, a composition root, boot gates that n
 
 ## Affected Canonical Specs
 
-- None
+- `runtime`
 
 ## Acceptance Criteria
 
@@ -21,4 +21,4 @@ Make the package a program: an executable, a composition root, boot gates that n
 
 ## No-spec Rationale
 
-A new Runtime target arrives with its own contract under specs/runtime/, which is an addition rather than a change to any existing canonical spec. No merged module's contract text changes.
+Not applicable
