@@ -62,7 +62,20 @@ jobs:
     # `swift-tools-version`. Pinning the minor rather than tracking `latest`
     # means the gate tests the floor an operator is promised, instead of
     # whatever toolchain happened to ship the week the job ran.
-    container: swift:6.1-noble
+    container:
+      image: swift:6.1-noble
+      # Not as root. The image's default user is root, and root ignores the
+      # permission bits a filesystem sets, so a test that makes a directory
+      # unwritable to prove a backup cannot be taken proves nothing there and
+      # fails on the assertion that an error was thrown. Production does not
+      # run as root either: the container this ships in runs unprivileged, so
+      # the lane that is supposed to be the closest thing to production should
+      # not be the one place the process can do anything it likes.
+      options: --user 1000:1000
+    env:
+      # `useradd` is not run, so uid 1000 has no home in /etc/passwd and the
+      # toolchain needs somewhere writable for its caches.
+      HOME: /tmp
     timeout-minutes: 30
     steps:
       - name: Checkout

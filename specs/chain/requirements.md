@@ -22,6 +22,15 @@ spec: chain.spec.md
 - As an operator, I want a health check that means the instance is working
   rather than that a process is listening, and one that tells me whose outage
   it is (SEE-1, SEE-1.a, SEE-10.a).
+- As an operator, I want checking on the bot never to cost me the thing I am
+  checking on, and to still get an answer once the day's budget for reading
+  the chain is gone, because that is exactly when I am looking (SEE-1.b).
+- As an operator, I want no one member, however fast they type, to be able to
+  spend the day's budget for reading the chain on their own, and I want to see
+  from the usual place that throttling is happening (RUN-11, SEE-9).
+- As an operator, I want to start the bot reading the chain again by hand
+  after a wrong refusal, without that handing it a second day's budget for
+  anybody who works out how to ask (RUN-10.a).
 - As a contributor, I want every failure path exercised without a network, a
   key or an account, so my first contribution does not begin with somebody
   trusting me with a secret (BUILD-2, BUILD-2.a).
@@ -113,7 +122,7 @@ as causes, and SHALL be liftable by hand without granting a budget that is
 really spent.
 
 - Covered by `RequestGovernorTests.swift` and `RequestBudgetTests.swift`
-  (SEE-9, SEE-11).
+  (SEE-9, SEE-11, RUN-10.a).
 
 ### REQ-chain-009
 
@@ -141,9 +150,12 @@ A health report SHALL be `ok` only when every declared component has been
 reached, SHALL name what it is waiting on otherwise, and SHALL carry provider
 proof only from configured headers that were really present, dropping a stale
 answer rather than serving it. Provider values SHALL be escaped in the JSON
-body.
+body. The report SHALL carry what is left of the day's requests as a field,
+taken from the same `RequestBudgetSnapshot` every other surface reports, and a
+spent budget or a tripped breaker SHALL NOT change the status.
 
-- Covered by `ChainHealthTests.swift` (SEE-1, SEE-1.a, SEE-10.a, HOST-5.a).
+- Covered by `ChainHealthTests.swift` (SEE-1, SEE-1.a, SEE-10.a, SEE-9,
+  HOST-5.a).
 
 ### REQ-chain-012
 
@@ -226,6 +238,147 @@ as a single request would. There SHALL be no way to hand a reservation back, and
 
 - Covered by `RequestGovernorTests.swift` and `RequestBudgetTests.swift`
   (SEE-9, RESERVE-7.d, RUN-8.a).
+
+### REQ-chain-020
+
+Every reservation of a request SHALL name the caller it is made for, with no
+default value, and that caller SHALL be a closed set of cases separating work
+done on behalf of a member from the instance's own work. A member caller
+SHALL be held to a share of the day's request budget, configured as a
+percentage of that budget together with a maximum burst, and that share
+SHALL refill as the day passes rather than being withheld until the next day.
+A member caller who has drawn their share SHALL be refused at once with a
+typed error carrying the instant at which their next request would be allowed,
+and SHALL NOT be queued. A refusal at the share SHALL spend nothing of the
+day's budget, SHALL NOT pause the instance, SHALL NOT appear in the notice
+buffer an operator drains, and SHALL leave every other caller unaffected. The
+instance's own work SHALL carry no share, because a sweep, a scheduled payout
+and anything an operator ordered are already bounded by their own batch and
+interval and are not one person typing. Where no daily request budget is set
+there SHALL be no share at all, since there is no day's budget to take a part
+of, and this SHALL be stated where an operator reads the defaults rather than
+left to be discovered. A configured share above one hundred percent SHALL be
+refused at boot, naming the variable to correct. A pause SHALL be checked
+before a share, so an instance that is refusing everybody tells every caller
+the same reason. The caller identifier SHALL be opaque to this module,
+SHALL NOT be logged, persisted or repeated in an error or a notice, and this
+module SHALL bound one caller only, never a crowd.
+
+The tracking itself SHALL be bounded in memory. A caller whose share has
+refilled completely carries no information and SHALL be forgotten, so that the
+table holds only callers currently drawing on the day. Forgetting a caller
+SHALL NOT hand them a fresh share beyond what refilling had already restored.
+Where the number of tracked callers reaches a bound, a caller not already
+tracked SHALL be refused rather than admitted untracked, and a caller already
+tracked SHALL NOT be evicted to make room. Throttling SHALL be visible to an
+operator in the same snapshot every other budget figure comes from, naming how
+many callers are currently held and how much of the day their shares have
+taken.
+
+- Covered by `CallerShareTests.swift`: one member caller exhausts their own
+  share and is then refused while the day's counter shows only what they took;
+  a refused caller leaves a second caller and the instance's own work
+  succeeding at the same instant; reaching a share is not a pause and records
+  no notice however many times it happens; a share refills during the day,
+  refills only to its burst however long a caller has been idle, and an
+  all-or-nothing reservation larger than what a caller has left takes nothing
+  from the caller and nothing from the day; the tracking is bounded, with a
+  refilled caller forgotten, a newcomer at the bound refused and a caller
+  already drawing never evicted; the snapshot names the callers currently held
+  and what their shares have taken; with no daily budget nobody is refused;
+  and a restart hands a caller at most one fresh burst while the day's own
+  count is restored from the store (RUN-11, SEE-9, SEE-5, SEE-11, RUN-8.b,
+  HOST-2).
+- Covered by `CallerShareTests.swift`: a reservation larger than the burst is
+  refused with `callerShareCannotCover` and carries no instant, because an
+  allowance never holds more than its burst and any date given would be a
+  fixed point rather than a waiting time; a clock stepped backwards grants a
+  spent caller nothing back, then or once it is corrected; and the health body
+  carries the refusals as well as the callers currently held, since a caller
+  appears in that count for one request inside a refill interval (RUN-11,
+  SEE-9).
+- Covered by `ChainConfigurationTests.swift`: the share and the burst take
+  their documented defaults as literals, a share above one hundred percent
+  refuses the boot naming the variable, and limits built in Swift rather than
+  read from the environment keep the range the initialiser documents, because
+  a percentage above a hundred can overflow the share's arithmetic and a burst
+  of zero switches the guard off in silence (ADOPT-1, ADOPT-2).
+
+### REQ-chain-021
+
+This module SHALL offer a health answer that can be assembled without
+reserving a request from the day's budget and without touching any
+`AccountDataSource`, and that answer SHALL still be produced once the day's
+budget is spent or the provider has refused. A spent budget or a tripped
+breaker SHALL be reported as a field of the answer, naming which of the two it
+is and when reading resumes, and SHALL NOT change the health status, which
+stays a statement about whether every declared component has been reached. The
+budget figures on the answer SHALL come from the same `RequestBudgetSnapshot`
+every other surface reports, so a health answer and a status reply cannot
+disagree about what is left. An instance for which no provider proof is
+configured SHALL produce an answer that opens no socket of any kind, and a
+proof that could not be taken SHALL leave the answer without proof rather than
+failing it.
+
+- Covered by `ChainHealthTests.swift`: the governor's snapshot is identical in
+  every field before and after an answer is assembled and a recording data
+  source double is never called; an answer still comes back with the day's
+  budget spent and with the breaker tripped by a provider refusal, naming
+  which it is and when it ends, with the status still reporting reachability;
+  an instance with no budget configured reads as having no budget rather than
+  as having none left; and an answer assembled for an instance with no proof
+  configured makes no call at all, while a proof which failed leaves the
+  answer without a provider section and invents nothing (SEE-1.b, SEE-1.a,
+  SEE-9, SEE-10.a, RUN-3).
+- Covered by `RequestGovernorTests.swift`: the snapshot the answer carries
+  reports the day the answer was asked about, so a check run after midnight
+  and before the day's first reservation reads a whole fresh budget rather
+  than yesterday's spent one, and agrees with `remainingRequests(now:)` on the
+  same actor (SEE-1.b, SEE-9).
+
+### REQ-chain-022
+
+Lifting a pause by hand SHALL return no part of the day's spent request
+budget. The day's count, what is left of it, the configured limit and the
+start of the day SHALL each be unchanged across an unpause, whichever cause
+tripped the pause and however many times the pause is lifted, including when
+there was no pause to lift. An unpause SHALL NOT write to
+`RequestBudgetStore`, so that a restart cannot read back a count an unpause
+lowered, and SHALL return no part of any caller's share. The tests holding
+this SHALL name the criterion they protect, so that a later author can see
+they are looking at a promise rather than at behaviour that holds by accident.
+
+- Covered by `RequestGovernorTests.swift`: the whole budget snapshot is equal
+  either side of an unpause that follows a provider quota refusal, with the
+  day's counter part way through rather than at its ceiling; lifting the same
+  pause many times in a row at one pinned instant moves nothing, and lifting a
+  pause that was never set is not a refund either; and an unpause writes
+  nothing to the budget store, with a second governor restoring from that
+  store starting with the same count already spent (RUN-10.a, RUN-8.b).
+- Covered by `CallerShareTests.swift`: a caller who has drawn their share is
+  still at their share after an unpause (RUN-10.a, RUN-11).
+
+### REQ-chain-023
+
+`ProviderProofProbe` SHALL offer a read that answers from the proof it already
+holds, making no request and leaving its cache exactly as it was, and the
+assembly that promises to spend nothing SHALL take its proof from that read
+rather than from the one that refreshes a stale value. A held proof that has
+passed its configured lifetime SHALL be reported as absent by that read rather
+than refreshed by it, which is the rule this module already follows for a
+stale proof.
+
+- Covered by `ChainHealthTests.swift`: the held read makes no probe call and
+  leaves the cached proof unchanged; a proof past its lifetime reads as absent
+  through that read rather than being refreshed by it; and the assembled
+  answer takes its proof from that read (SEE-1.b, SEE-10.a).
+- Covered by `ChainHealthTests.swift`: an answer holding no proof starts one
+  probe beside itself and the next answer carries it, a stale one is refreshed
+  the same way rather than in front of the answer, and a provider that is down
+  is probed once rather than once per check. A read that never probes with
+  nothing driving it is an answer that can never carry proof at all, which is
+  the half of the ported health path that was left behind (SEE-1.b,
+  SEE-10.a).
 
 ## Constraints
 

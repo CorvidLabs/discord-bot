@@ -23,7 +23,7 @@ internal struct BatchedChainReaderTests {
             )
         }
         let batched = try Self.batched(accounts: accounts, batchSize: 4)
-        let results = await batched.check(wallets: wallets, pools: [], now: Self.noon)
+        let results = await batched.check(wallets: wallets, pools: [], for: Fixture.sweep, now: Self.noon)
         #expect(results.map(\.address) == wallets)
         #expect(results.compactMap { $0.directBalance.completeValue } == (1...25).map(UInt64.init))
     }
@@ -32,7 +32,7 @@ internal struct BatchedChainReaderTests {
     internal func emptyListReadsNothing() async throws {
         let log = CallLog()
         let batched = try Self.batched(accounts: [:], log: log)
-        #expect(await batched.check(wallets: [], pools: [], now: Self.noon).isEmpty)
+        #expect(await batched.check(wallets: [], pools: [], for: Fixture.sweep, now: Self.noon).isEmpty)
         #expect(await log.count == 0)
     }
 
@@ -52,6 +52,7 @@ internal struct BatchedChainReaderTests {
         let results = await batched.check(
             wallets: [Fixture.wallet(1), Fixture.wallet(2)],
             pools: [],
+            for: Fixture.sweep,
             now: Self.noon
         )
         #expect(results[0].directBalance.completeValue == 10)
@@ -70,6 +71,7 @@ internal struct BatchedChainReaderTests {
         let results = await batched.check(
             wallets: (0..<3).map { Fixture.wallet($0) },
             pools: [],
+            for: Fixture.sweep,
             now: Self.noon
         )
         #expect(results[0].combinedBalance.isComplete)
@@ -112,6 +114,7 @@ internal struct BatchedChainReaderTests {
         let results = await batched.check(
             wallets: (0..<10).map { Fixture.wallet($0) },
             pools: [pool],
+            for: Fixture.sweep,
             now: Self.noon
         )
         #expect(results.allSatisfy { $0.liquidityAmount.completeValue == 100_000 })
@@ -132,7 +135,12 @@ internal struct BatchedChainReaderTests {
             assets: [:],
             assetFailures: [Fixture.lpAssetId: ChainError.network("connection reset")]
         )
-        let results = await batched.check(wallets: [Fixture.wallet(1)], pools: [pool], now: Self.noon)
+        let results = await batched.check(
+            wallets: [Fixture.wallet(1)],
+            pools: [pool],
+            for: Fixture.sweep,
+            now: Self.noon
+        )
         #expect(results[0].liquidityAmount.gaps == [.poolReservesUnavailable(poolId: pool.id)])
         #expect(results[0].canDecideEntitlements == false)
     }
@@ -159,7 +167,12 @@ internal struct BatchedChainReaderTests {
                 )
             ]
         )
-        let results = await batched.check(wallets: [Fixture.wallet(1)], pools: [pool], now: Self.noon)
+        let results = await batched.check(
+            wallets: [Fixture.wallet(1)],
+            pools: [pool],
+            for: Fixture.sweep,
+            now: Self.noon
+        )
         #expect(results[0].liquidityAmount.gaps == [.poolReservesUnavailable(poolId: pool.id)])
         #expect(results[0].liquidityAmount.completeValue == nil)
         #expect(results[0].canDecideEntitlements == false)
@@ -180,10 +193,10 @@ internal struct BatchedChainReaderTests {
             cacheLifetimes: ChainCacheLifetimes(poolReserves: 60),
             log: log
         )
-        _ = try await batched.poolReserves(pool: pool, now: Self.noon)
-        _ = try await batched.poolReserves(pool: pool, now: Self.noon.addingTimeInterval(59))
+        _ = try await batched.poolReserves(pool: pool, for: Fixture.sweep, now: Self.noon)
+        _ = try await batched.poolReserves(pool: pool, for: Fixture.sweep, now: Self.noon.addingTimeInterval(59))
         #expect(await log.count == 2)
-        _ = try await batched.poolReserves(pool: pool, now: Self.noon.addingTimeInterval(61))
+        _ = try await batched.poolReserves(pool: pool, for: Fixture.sweep, now: Self.noon.addingTimeInterval(61))
         #expect(await log.count == 4)
         #expect(await batched.cachedReservesCount == 1)
     }
@@ -200,7 +213,7 @@ internal struct BatchedChainReaderTests {
                 )
             ]
         )
-        _ = try await batched.poolReserves(pool: pool, now: Self.noon)
+        _ = try await batched.poolReserves(pool: pool, for: Fixture.sweep, now: Self.noon)
         #expect(await batched.cachedReservesCount == 1)
         await batched.clearReservesCache()
         #expect(await batched.cachedReservesCount == 0)
@@ -217,7 +230,7 @@ internal struct BatchedChainReaderTests {
             ],
             log: log
         )
-        let found = await batched.reserves(for: pools, now: Self.noon)
+        let found = await batched.reserves(pools: pools, for: Fixture.sweep, now: Self.noon)
         #expect(found.isEmpty)
         // One attempt, not one per pool: every further attempt costs a request
         // this process has already been told it may not make.

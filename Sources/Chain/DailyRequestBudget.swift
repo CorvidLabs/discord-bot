@@ -45,6 +45,23 @@ public struct DailyRequestBudget: Sendable, Equatable {
         return reservedToday >= limit ? 0 : limit - reservedToday
     }
 
+    /// Requests reserved on the day `now` falls in.
+    ///
+    /// Zero once the day has turned, rather than yesterday's count, for the
+    /// same reason ``remaining(at:)`` answers for the day it is asked about:
+    /// nothing rolls the counter until the day's first reservation, and a
+    /// surface asked at one minute past midnight would otherwise report
+    /// yesterday's spending as today's.
+    public func used(at now: Date) -> UInt64 {
+        UTCDay.start(of: now) == currentDayStart ? reservedToday : 0
+    }
+
+    /// Midnight UTC at the start of the day `now` falls in, which is the day
+    /// the figures asked about `now` belong to.
+    public func dayStart(at now: Date) -> Date {
+        UTCDay.start(of: now)
+    }
+
     /// Requests left on the day `now` falls in, or nil when there is no budget.
     ///
     /// Nil rather than zero, unlike ``remaining``. A consumer that has to take

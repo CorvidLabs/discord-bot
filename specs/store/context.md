@@ -4,6 +4,14 @@ spec: store.spec.md
 
 ## Key Decisions
 
+- **A new table for the charges, rather than a column or a fourth claim kind.**
+  A column cannot hold the two-period case without inventing a delimiter and a
+  parser, needs two columns because a whole-unit figure is an amount and cannot
+  share a text column, and its reverse needs either a column drop the oldest
+  SQLite this package admits at open does not have or a rebuild of the money
+  table. A fourth kind in the claims table would mean rebuilding the table that
+  holds the no-double-pay record, for bookkeeping that stops nothing. A create
+  and a drop is the cheapest exactly reversible migration there is.
 - **The platform's SQLite over the C interface, rather than an ORM.** The list
   of outside code somebody reads before installing this stays at three entries
   (TRUST-1), and the part that must not lose a payment record is a

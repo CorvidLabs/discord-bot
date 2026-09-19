@@ -1,7 +1,7 @@
 import Foundation
 import Store
-import StoreSQLite
 import Testing
+@testable import StoreSQLite
 
 /// Properties of the source itself, asserted by reading it.
 ///
@@ -78,6 +78,30 @@ struct TargetShapeTests {
             #expect(
                 !file.text.contains("base_units INTEGER"),
                 "an amount column was declared as a signed integer in \(file.path)"
+            )
+        }
+    }
+
+    @Test("No shipped migration reverses itself by dropping a column (RUN-9)")
+    func noReverseDropsAColumn() throws {
+        // The reverse of every migration has to run on the oldest SQLite this
+        // package admits at open, and that floor is older than the release
+        // which learned to drop a column. A reverse that reaches for one is a
+        // reverse that works on the machine it was written on and refuses on
+        // somebody's long term distribution, which is the worst moment to find
+        // out: the reverse is what an operator runs when an upgrade went wrong.
+        // Asserted against the statements themselves rather than the text of
+        // the file, so a comment explaining the rule cannot be what fails it.
+        for migration in Schema.migrations {
+            for statement in migration.down {
+                #expect(
+                    !statement.text.uppercased().contains("DROP COLUMN"),
+                    "migration \(migration.version) reverses itself with a column drop"
+                )
+            }
+            #expect(
+                !migration.down.isEmpty,
+                "migration \(migration.version) has no reverse at all"
             )
         }
     }

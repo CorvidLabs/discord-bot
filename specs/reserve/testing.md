@@ -12,9 +12,9 @@ spec: reserve.spec.md
 | `ReserveConfigurationTests.swift` | Unit | Every configuration refusal: shares that do not sum, indivisible splits, duplicate ids, zero denominators and zero-epoch schedules. |
 | `ReservePeriodTests.swift` | Unit | ISO week, month and day keys, the Monday to Monday boundary, and independence from the host's timezone. |
 | `ReservePlanningTests.swift` | Unit | Slot counting under both payout rules, skips, incomplete lists, and plans that stay inside the allocation. |
-| `ReserveRunnerTests.swift` | Unit | The four guards end to end: the gate, the period key, claim before pay, and limits checked before the first payment, for being current as well as for being big enough. |
+| `ReserveRunnerTests.swift` | Unit | The four guards end to end: the gate, the cadence period key, claim before pay, and limits checked before the first payment, for being current as well as for being big enough. Also which ceiling each run was charged against: one charge for a clean run, two in order for an epoch cut short and resumed, none for a host that states no limits, and the charge on disk before the first payment is attempted. |
 | `ReserveStateTests.swift` | Unit | Duration locking, epoch completion that cannot skip, spend recorded and released, and the three claim lists only ever growing at the end. |
-| `ReserveStoreTests.swift` | Unit | Round-tripping state and epoch rows, and a row that will not decode throwing rather than reading as unpaid. |
+| `ReserveStoreTests.swift` | Unit | Round-tripping state and epoch rows, the charges among them, a record written before the charges existed reading as charged to nothing rather than throwing, and a row that will not decode throwing rather than reading as unpaid. |
 | `ReserveFixtures.swift` | Fixture | The worked example reserve the other suites plan against. |
 
 ## Manual Testing
@@ -41,3 +41,8 @@ spec: reserve.spec.md
 | A stored row that will not decode | The store throws; it never reads as an unpaid epoch. |
 | Limits from a period that ended before the run starts | Refused with `spendLimitsExpired` before anything is claimed, and the period is left unclaimed so the epoch is postponed rather than lost. |
 | Limits with no stated `periodEnd` | Checked for size only; an undated boundary is not an expired one. |
+| An epoch cut short under one ceiling and resumed under the next | Both periods on the record, in the order they were charged, each with the figure that run was measured for. |
+| A host that states no spending limits | No charge at all, and none invented from the cadence key or from a timestamp. |
+| A rehearsal | No charge, because it writes nothing. |
+| A run measured for three payments that paid two | The charge keeps the figure it was measured for; the paid total is the other number, and the record says which is which. |
+| An epoch record encoded before the charges existed | Decodes as charged to nothing. Only that key is forgiving; a record missing `paidAccounts` still throws. |

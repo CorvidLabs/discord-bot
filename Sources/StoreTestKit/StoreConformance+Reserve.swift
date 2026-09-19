@@ -149,11 +149,32 @@ extension StoreConformance {
             claimedHoldingIds: [1, 2, 3].map { ConformanceFixture.holding($0) },
             paidBaseUnits: UInt64.max,
             startedAt: ConformanceFixture.instant(100),
-            completedAt: ConformanceFixture.instant(200)
+            completedAt: ConformanceFixture.instant(200),
+            charges: [
+                ReserveEpochCharge(
+                    periodKey: "2026-W38",
+                    checkedWholeUnits: 7_000,
+                    recordedAt: ConformanceFixture.instant(110)
+                ),
+                ReserveEpochCharge(
+                    periodKey: "2026-W39",
+                    checkedWholeUnits: UInt64.max,
+                    recordedAt: ConformanceFixture.instant(190)
+                )
+            ]
         )
         try await store.save(epoch: record)
         let read = try await store.loadEpoch(streamId: record.streamId, epoch: record.epoch)
         try expectEqual(read, record, .anEpochRoundTrips, "an epoch's record read back")
+        // The order is the answer. An epoch cut off in one period and resumed
+        // in the next was charged to both, and which came first is the whole
+        // question somebody opens this row to settle (SPEND-9.c).
+        try expectEqual(
+            read.chargedPeriodKeys,
+            ["2026-W38", "2026-W39"],
+            .anEpochRoundTrips,
+            "the order the ceilings were charged in"
+        )
         // The order is part of the value. All three lists are append ordered,
         // and a store that returns one in the order its rows happened to come
         // out changes a record's equality.
@@ -202,6 +223,59 @@ extension StoreConformance {
             repeated,
             .anEpochRoundTrips,
             "a claim list holding the same value twice"
+        )
+    }
+
+    /// An epoch saved again with a further charge keeps both, in order.
+    ///
+    /// The case this exists for is a run cut off under one ceiling and resumed
+    /// under the next: a backend that overwrote, sorted or deduplicated would
+    /// answer the boundary question with the period the run did not finish in.
+    internal func anEpochGainsACharge(_ subject: StoreUnderTest) async throws {
+        let store = subject.store
+        var record = ReserveEpochRecord(streamId: ConformanceFixture.streamId, epoch: 7)
+        record.recordCharge(
+            periodKey: "2026-W38",
+            checkedWholeUnits: 4_000,
+            at: ConformanceFixture.instant(10)
+        )
+        try await store.save(epoch: record)
+        try expectEqual(
+            try await store.loadEpoch(streamId: record.streamId, epoch: 7).charges,
+            record.charges,
+            .anEpochGainsACharge,
+            "the charge a first run recorded"
+        )
+
+        record.recordCharge(
+            periodKey: "2026-W39",
+            checkedWholeUnits: 1_500,
+            at: ConformanceFixture.instant(700_000)
+        )
+        try await store.save(epoch: record)
+        let resumed = try await store.loadEpoch(streamId: record.streamId, epoch: 7)
+        try expectEqual(resumed, record, .anEpochGainsACharge, "the record after a resumed run")
+        try expectEqual(
+            resumed.chargedPeriodKeys,
+            ["2026-W38", "2026-W39"],
+            .anEpochGainsACharge,
+            "both periods, in the order they were charged"
+        )
+        try expectEqual(
+            resumed.charges.map(\.checkedWholeUnits),
+            [4_000, 1_500],
+            .anEpochGainsACharge,
+            "what each run was measured for"
+        )
+
+        // An epoch nobody charged reads as charged to nothing, which is a
+        // different fact from a period nobody recorded and is never filled in
+        // from a timestamp.
+        try expectEqual(
+            try await store.loadEpoch(streamId: ConformanceFixture.streamId, epoch: 8).charges,
+            [],
+            .anEpochGainsACharge,
+            "the charges of an epoch nobody has run"
         )
     }
 

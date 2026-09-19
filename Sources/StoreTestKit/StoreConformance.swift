@@ -71,6 +71,10 @@ public struct StoreConformance: Sendable {
         /// A released claim really leaves the row.
         case aReleasedClaimIsGone
 
+        /// An epoch saved again with a further ceiling recorded against it
+        /// reads back naming both, in the order they were charged.
+        case anEpochGainsACharge
+
         /// No count reads as nil, and nil means never written.
         case anAbsentBudgetIsNil
 
@@ -221,6 +225,7 @@ public struct StoreConformance: Sendable {
         case .anAbsentEpochIsUnpaid: try await anAbsentEpochIsUnpaid(subject)
         case .anEpochRoundTrips: try await anEpochRoundTrips(subject)
         case .aReleasedClaimIsGone: try await aReleasedClaimIsGone(subject)
+        case .anEpochGainsACharge: try await anEpochGainsACharge(subject)
         case .anAbsentBudgetIsNil: try await anAbsentBudgetIsNil(subject)
         case .theBudgetRoundTrips: try await theBudgetRoundTrips(subject)
         case .instantsAreRecordedToTheSecond: try await instantsAreRecordedToTheSecond(subject)

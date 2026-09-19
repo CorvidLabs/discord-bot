@@ -20,17 +20,17 @@ offline, all covered by tests, and none of them wired to anything.
 | `Reserve` | The payout engine. A finite pot, split into named streams, paid over epochs, with fixed shares and four guards against paying a period twice. Foundation only. |
 | `Gating` | What holding something earns somebody in a server: the tier ladder, the collections, the pools, and the rule that turns what a member holds into the roles they should have. Pure values, no chain, no Discord, no clock. |
 | `Games` | Three games of cards and chance, as reducers. Clock and randomness arrive as parameters, so a table replays from a seed. Nothing here can reach a chain or sign anything. |
-| `Chain` | Reading what an account holds on an Algorand node, and the two brakes that stop it reading too much: a per-second limiter and a per-UTC-day request budget. |
+| `Chain` | Reading what an account holds on an Algorand node, and the three brakes that stop it reading too much: a per-second limiter, a per-UTC-day request budget, and one member's share of that budget. |
 | `Store` | What one instance remembers between restarts: members, the accounts they proved, the sweep baseline, the payout ledger and the day's request count. Records, protocols, and a store in memory that needs nothing installed. No Discord in its package graph. |
 | `StoreSQLite` | The same store on a file, using the SQLite the operating system already ships. One connection, every durability setting read back at start, an exclusive lease so two instances cannot pay the same week, and no new entry in `Package.resolved`. |
 
 ```
-swift test    # 635 tests in 47 suites
+swift test    # 694 tests in 48 suites
 ```
 
-The store's conformance suite is one test with thirty three behaviours, run
-against three backends, so those three lines are ninety nine checks rather
-than three.
+The store's conformance suite is one test with thirty four behaviours, run
+against three backends, so those three lines are a hundred and two checks
+rather than three.
 
 Everything runs offline. No test reaches a network, and none needs a key, a
 funded wallet or a Discord server.
@@ -66,6 +66,10 @@ Most of it, and what is missing is the part a person would actually use:
   each absence and what would have to read it.
 - **No executable.** `Package.swift` declares six libraries and no binary, so
   there is nothing to run and nothing to deploy.
+- **No health surface, and this is now half true.** The answer can be
+  assembled, with the budget and the pause on it, and nothing serves it:
+  there is no listener, no route and no status code here, because there is no
+  executable. Whoever builds the executable owns that half.
 - **No host.** The targets do not know about each other beyond `Chain`
   depending on `Gating` and `Store` depending on all three. Nothing sweeps,
   nothing schedules, nothing pays.
@@ -318,10 +322,29 @@ through which it could acquire one.
 
 ## `Chain`
 
-Reading an account, a pool and an asset from an Algorand node, behind two
-brakes: a per-second rate limiter on a monotonic clock, and a per-UTC-day
-request budget that counts reads and signing together and is written down so a
-restart does not hand the process a fresh one.
+Reading an account, a pool and an asset from an Algorand node, behind three
+brakes: a per-second rate limiter on a monotonic clock, a per-UTC-day request
+budget that counts reads and signing together and is written down so a restart
+does not hand the process a fresh one, and one member's share of that budget.
+
+The third one is a different kind from the first two. They bound how hard the
+instance reads; it bounds how much of that any one person can cause. Every
+read says whose it is, with no default, and only work done on behalf of a
+member is rationed: a share of the day's budget with a burst on top, refilling
+as the day passes, so a member who spends it in a minute waits minutes rather
+than until tomorrow. The instance's own work, the sweep and a scheduled payout,
+carries no share at all, because a sweep is not a person and is already bounded
+by its batch and its interval. With no day budget set there is no share either,
+because there is nothing to take a part of. It bounds one member and not a
+crowd; the day's budget is the backstop for that.
+
+It can also say whether it is working without spending any of the budget it is
+reporting on, and it still answers once that budget is gone, which is exactly
+when somebody is looking. Assembling the answer reserves nothing, touches no
+data source, and takes provider proof from what the probe already holds rather
+than going to fetch some. When it holds none it starts one probe beside the
+answer instead of in front of it, so the check never waits on a provider and
+the next one carries the proof.
 
 The other half of its job is refusing to invent an answer. A request that did
 not come back is not an account holding nothing, and a pool whose reserves could
