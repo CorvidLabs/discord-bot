@@ -758,8 +758,8 @@ bound alone is defeated by session churn: REQ-verify-019 has a new session
 displace the subject's previous one, so a member who has spent their
 allowance runs the command again and gets a fresh one. The session store
 SHALL therefore keep, per subject, the total submissions made and the total
-authorising key retries offered within a window the caller supplies, SHALL NOT
-reset either when a session is displaced, consumed, expired or pruned, and
+authorising key retries offered within a window the caller supplies,
+SHALL NOT reset either when a session is displaced, consumed, expired or pruned, and
 SHALL refuse a submission that would exceed the per-subject maximum at the
 session state step with the same reason. The window SHALL be evaluated against
 the same `now` the caller supplies everywhere else, so REQ-verify-006 still

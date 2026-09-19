@@ -37,8 +37,9 @@ Acceptance Criteria
 A challenge SHALL be five lines of UTF-8, in this order: an operator supplied
 label, an identity for this instance, the subject this session was minted
 for, a six character code, and a nonce of at least one hundred and twenty
-eight bits drawn from the system random number generator. The nonce SHALL NOT
-be derived from the subject, the address, the clock or any argument, and two
+eight bits drawn from the system random number generator. The nonce
+SHALL NOT be derived from the subject, the address, the clock or an argument,
+and two
 challenges minted in the same process SHALL differ. The instance identity
 inside the signed bytes is what makes a proof worthless in another community.
 The subject line inside the signed bytes is what stops one member's signature
@@ -246,8 +247,9 @@ claimed address and an authorising key the caller supplied in the proof
 expectation; no value read out of a submitted blob SHALL be usable as one,
 and the target SHALL NOT derive a key from anything else.
 
-A proved account SHALL be produced only by consuming a signature, SHALL NOT
-be constructible from outside the module, and SHALL NOT be returned by any
+A proved account SHALL be produced only by consuming a signature. It
+SHALL NOT be constructible from outside the module, and SHALL NOT be returned
+by any
 public interface that does not take a submitted proof and a session. The
 value an asserted route produces SHALL be a distinct public type named for
 what it is, and converting it into the one downstream value both routes meet
