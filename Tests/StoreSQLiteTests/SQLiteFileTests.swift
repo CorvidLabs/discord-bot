@@ -2,7 +2,7 @@ import CSQLite
 import Foundation
 import Reserve
 import Store
-import StoreSQLite
+@testable import StoreSQLite
 import Testing
 
 @Suite("A store on a file")
@@ -87,6 +87,37 @@ struct SQLiteFileTests {
         }
     }
 
+    @Test("Reverting the schema forgets every memo of what was written (RUN-9)")
+    func revertingForgetsEveryMemoOfWhatWasWritten() async throws {
+        try await withTemporaryDirectory { directory in
+            let store = try await SQLiteStore.open(at: directory + "/bot.sqlite3")
+            var record = ReserveEpochRecord(streamId: "s", epoch: 1)
+            record.recordCharge(periodKey: "2026-W38", checkedWholeUnits: 7, at: Date(timeIntervalSince1970: 10))
+            record.claim(
+                entry: ReserveEpochEntry(
+                    recipientId: "RECIPIENT-1",
+                    account: "ACCOUNT-0001",
+                    units: 1,
+                    baseUnitsAmount: 7_000,
+                    claimedHoldingIds: ["HOLDING-0001"]
+                ),
+                at: Date(timeIntervalSince1970: 10)
+            )
+            try await store.save(epoch: record)
+            #expect(!(await store.lastWrittenClaims.isEmpty))
+            #expect(!(await store.lastWrittenCharges.isEmpty))
+
+            try await store.revertEverySchemaStep()
+            // Both memos, because there are two. A memo naming rows that have
+            // been dropped is worse than none: the next save takes the prefix
+            // it names as already on disk and appends after it, so the file
+            // ends up without rows the record in memory has.
+            #expect(await store.lastWrittenClaims.isEmpty)
+            #expect(await store.lastWrittenCharges.isEmpty)
+            await store.close()
+        }
+    }
+
     @Test("Every table carrying a member key deletes its rows with the member")
     func everyMemberOwnedTableCascades() async throws {
         try await withTemporaryDirectory { directory in
@@ -161,7 +192,7 @@ struct SQLiteFileTests {
             let invented = try await SQLiteStore.open(at: path)
             let report = await invented.migrationReport
             #expect(report.createdFile)
-            #expect(report.applied.count == 2)
+            #expect(report.applied.count == 3)
             #expect(try await invented.loadState().nextEpoch("s") == 1)
             await invented.close()
         }
@@ -265,7 +296,7 @@ struct SQLiteFileTests {
             // A first run has nothing to copy, because there is nothing to
             // lose yet.
             #expect(await store.migrationReport.backupPath == nil)
-            #expect(await store.migrationReport.applied.count == 2)
+            #expect(await store.migrationReport.applied.count == 3)
             await store.close()
 
             // Put the file back to where it was one version ago, which is what
@@ -273,12 +304,8 @@ struct SQLiteFileTests {
             let schema = try RawSchema(path: path)
             try schema.execute(
                 """
-                DROP TABLE request_budget;
-                DROP TABLE reserve_epoch_claims;
-                DROP TABLE reserve_epochs;
-                DROP TABLE reserve_streams;
-                DROP TABLE reserve_state;
-                DELETE FROM schema_migrations WHERE version = 2;
+                DROP TABLE reserve_epoch_charges;
+                DELETE FROM schema_migrations WHERE version = 3;
                 """
             )
             schema.close()
@@ -292,6 +319,105 @@ struct SQLiteFileTests {
             // A schema change on SQLite rewrites tables and there is no undo
             // but the copy, so the copy is the rollback and it has to exist.
             #expect(FileManager.default.fileExists(atPath: backup))
+            await upgraded.close()
+        }
+    }
+
+    @Test("A copy that cannot be taken stops the migration rather than being skipped (RUN-9)")
+    func aCopyThatCannotBeTakenStopsTheMigration() async throws {
+        try await withTemporaryDirectory { directory in
+            let path = directory + "/bot.sqlite3"
+            let store = try await SQLiteStore.open(at: path)
+            await store.close()
+
+            // The file an operator taking a new build actually has.
+            let schema = try RawSchema(path: path)
+            try schema.execute(
+                """
+                DROP TABLE reserve_epoch_charges;
+                DELETE FROM schema_migrations WHERE version = 3;
+                """
+            )
+            schema.close()
+
+            // Somewhere the copy cannot be written: a directory standing
+            // where the copy goes, which cannot be removed or opened either.
+            // How it fails does not matter; that it stops everything does.
+            let destination = path + ".pre-2.bak"
+            try FileManager.default.createDirectory(atPath: destination, withIntermediateDirectories: true)
+            #expect(FileManager.default.createFile(atPath: destination + "/occupied", contents: Data()))
+            try FileManager.default.setAttributes([.posixPermissions: 0o555], ofItemAtPath: destination)
+            defer {
+                try? FileManager.default.setAttributes(
+                    [.posixPermissions: 0o755],
+                    ofItemAtPath: destination
+                )
+            }
+
+            // A schema change on SQLite rewrites tables and there is no undo
+            // but the copy, so a migration that ran without one would leave an
+            // operator with nothing to go back to.
+            await #expect(throws: (any Error).self) {
+                _ = try await SQLiteStore.open(at: path)
+            }
+
+            // And nothing ran: the file is exactly as it was, so the same
+            // upgrade can be tried again once there is somewhere to put the
+            // copy.
+            let after = try RawSchema(path: path)
+            defer { after.close() }
+            #expect(!after.tables().contains("reserve_epoch_charges"))
+            #expect(try await SQLiteStore.pendingMigrations(at: path).count == 1)
+        }
+    }
+
+    @Test("A file from the build before this one keeps its epochs, charged to no period (ADOPT-5, RUN-9)")
+    func anOlderFileKeepsItsEpochs() async throws {
+        try await withTemporaryDirectory { directory in
+            let path = directory + "/bot.sqlite3"
+            let store = try await SQLiteStore.open(at: path)
+            var record = ReserveEpochRecord(streamId: "s", epoch: 1)
+            record.claim(
+                entry: ReserveEpochEntry(
+                    recipientId: "RECIPIENT-1",
+                    account: "ACCOUNT-0001",
+                    units: 1,
+                    baseUnitsAmount: 7_000,
+                    claimedHoldingIds: ["HOLDING-0001"]
+                ),
+                at: Date(timeIntervalSince1970: 10)
+            )
+            try await store.save(epoch: record)
+            await store.close()
+
+            // The file an operator taking this build actually has: everything
+            // the previous version wrote, and no charges table.
+            let schema = try RawSchema(path: path)
+            try schema.execute(
+                """
+                DROP TABLE reserve_epoch_charges;
+                DELETE FROM schema_migrations WHERE version = 3;
+                """
+            )
+            schema.close()
+
+            let upgraded = try await SQLiteStore.open(at: path)
+            let report = await upgraded.migrationReport
+            #expect(report.applied.count == 1)
+            // A schema change rewrites tables and there is no undo but the
+            // copy, so the copy is the rollback and it has to exist.
+            let backup = try #require(report.backupPath)
+            #expect(FileManager.default.fileExists(atPath: backup))
+
+            // The epoch is still there, whole, and it reads as charged to no
+            // period rather than failing to load or having one invented for it
+            // out of `started_at`.
+            let read = try await upgraded.loadEpoch(streamId: "s", epoch: 1)
+            #expect(read.paidAccounts == ["ACCOUNT-0001"])
+            #expect(read.claimedHoldingIds == ["HOLDING-0001"])
+            #expect(read.paidBaseUnits == 7_000)
+            #expect(read.charges.isEmpty)
+            #expect(read.chargedPeriodKeys.isEmpty)
             await upgraded.close()
         }
     }
@@ -327,7 +453,7 @@ struct SQLiteFileTests {
             let path = directory + "/empty.sqlite3"
             #expect(FileManager.default.createFile(atPath: path, contents: Data()))
             let pending = try await SQLiteStore.pendingMigrations(at: path)
-            #expect(pending.count == 2)
+            #expect(pending.count == 3)
         }
     }
 

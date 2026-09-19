@@ -40,14 +40,24 @@ public actor WalletCheckCache {
 
     /// Readings for these wallets, in the order asked for.
     ///
+    /// **The cooldown bounds one wallet and the share bounds one member**, and
+    /// the two are not the same thing. A member with ten proved accounts can
+    /// draw ten reads per cooldown window all day, which is why the caller is
+    /// named here and charged by the governor rather than left to the
+    /// cooldown to contain.
+    ///
     /// - Parameters:
     ///   - wallets: The wallets wanted.
+    ///   - caller: Whose work this is. There is no default: a batch this cache
+    ///     reads for a sweep and a batch it reads for a member's command are
+    ///     the same call, and only the call site knows which it is.
     ///   - forceFresh: Reads again even when a cached answer is still usable.
     ///     The cooldown is not overridden: it exists precisely to bound how
     ///     often this can be forced.
     ///   - now: Injected so a test pins the lifetimes.
     public func check(
         wallets: [String],
+        for caller: RequestCaller,
         forceFresh: Bool = false,
         now: Date = Date()
     ) async -> [WalletCheck] {
@@ -68,7 +78,7 @@ public actor WalletCheckCache {
         }
 
         if !toRead.isEmpty {
-            let fresh = await reader.check(wallets: toRead, pools: pools, now: now)
+            let fresh = await reader.check(wallets: toRead, pools: pools, for: caller, now: now)
             for reading in fresh {
                 answers[reading.address] = reading
                 cooldown.set(true, for: reading.address, now: now)

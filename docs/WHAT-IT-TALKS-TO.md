@@ -104,6 +104,15 @@ Two honest qualifications:
   waiting for a host that does not exist yet.
 - It is the one place in the package that uses `URLSession.shared` rather than
   a session of its own.
+- It is also the **only** network call anywhere on the health path, and it is
+  outside the day's request budget on purpose: a check that spent the thing it
+  is checking on is a check nobody can run at the moment it matters. Assembling
+  a health answer waits on no request. The answer takes proof from what the
+  probe already holds through `heldProof`, which never goes and gets some, and
+  where nothing usable is held one probe is started **beside** the answer, so
+  the next check has proof and this one still costs nothing. An instance whose
+  operator named no proof headers opens no socket of any kind, and a provider
+  that is down is probed once per cache lifetime rather than once per check.
 
 Two commands, not one, and the reason is worth a sentence: grepping for
 `URLSession` alone would miss the account reads entirely, because those go out
@@ -175,6 +184,8 @@ Exactly one of these is a secret.
 | `CHAIN_DAILY_REQUEST_BUDGET` | no | Requests permitted per UTC day. Zero means no budget. |
 | `CHAIN_BUDGET_PERSIST_EVERY` | no | How many requests pass between writes of the day's counter. |
 | `CHAIN_BATCH_SIZE` | no | How many accounts are read in parallel. |
+| `CHAIN_CALLER_SHARE_PERCENT` | no | The share of the day's requests any one member may draw, as a percentage. Defaults to 5, and does nothing unless a day budget is set. |
+| `CHAIN_CALLER_BURST_REQUESTS` | no | The most one member may take before their allowance refills. Defaults to 10, and does nothing unless a day budget is set. |
 | `CHAIN_POOL_CACHE_SECONDS` | no | How long a pool's reserves stay usable. |
 | `CHAIN_WALLET_CACHE_SECONDS` | no | How long a completed account reading stays usable. |
 | `CHAIN_WALLET_COOLDOWN_SECONDS` | no | How soon the same account may be read again on demand. |

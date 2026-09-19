@@ -25,6 +25,12 @@ private actor RecordingPayer: ReservePayer {
         let claimAlreadyOnDisk: Bool
         /// Whether the spend was already recorded when pay was called.
         let spendAlreadyOnDisk: Bool
+        /// Which ceilings the ledger already named when pay was called.
+        ///
+        /// Read at the moment of payment for the same reason the claim is: it
+        /// is the only honest way to show the charge was written *first*
+        /// rather than merely written.
+        let chargedPeriodsOnDisk: [String]
     }
 
     private let store: InMemoryReserveStore
@@ -52,7 +58,8 @@ private actor RecordingPayer: ReservePayer {
             Attempt(
                 account: entry.account,
                 claimAlreadyOnDisk: record.paidAccountSet.contains(entry.account),
-                spendAlreadyOnDisk: state.spent(streamId) >= entry.baseUnitsAmount
+                spendAlreadyOnDisk: state.spent(streamId) >= entry.baseUnitsAmount,
+                chargedPeriodsOnDisk: record.chargedPeriodKeys
             )
         )
         switch behaviours[entry.account] ?? .succeed {
@@ -71,6 +78,39 @@ private actor RecordingPayer: ReservePayer {
 
     var paidAccounts: [String] { attempts.map(\.account) }
 }
+
+/// A store that stops working part way through, the way a killed process does.
+///
+/// Cutting at a save rather than at a payment is deliberate: the interesting
+/// crash is the one between two writes, which is where a record either already
+/// names what it was measured against or does not.
+private actor CuttingStore: ReserveStore {
+
+    private let inner: InMemoryReserveStore
+    private var epochSavesLeft: Int
+
+    init(inner: InMemoryReserveStore, cutAfterEpochSaves: Int) {
+        self.inner = inner
+        self.epochSavesLeft = cutAfterEpochSaves
+    }
+
+    func loadState() async throws -> ReserveState { try await inner.loadState() }
+
+    func save(state: ReserveState) async throws { try await inner.save(state: state) }
+
+    func loadEpoch(streamId: String, epoch: UInt64) async throws -> ReserveEpochRecord {
+        try await inner.loadEpoch(streamId: streamId, epoch: epoch)
+    }
+
+    func save(epoch record: ReserveEpochRecord) async throws {
+        guard epochSavesLeft > 0 else { throw CutShort() }
+        epochSavesLeft -= 1
+        try await inner.save(epoch: record)
+    }
+}
+
+/// The process going away.
+private struct CutShort: Error {}
 
 /// A failure that might have moved value, so the claim must be kept.
 private struct PayerFailure: Error, LocalizedError {
@@ -134,7 +174,7 @@ struct ReserveRunnerTests {
             _ = try await runner.run(
                 streamId: Fixture.members,
                 recipients: holders(2),
-                periodKey: Self.week,
+                cadencePeriodKey: Self.week,
                 now: Self.now
             )
         }
@@ -146,7 +186,7 @@ struct ReserveRunnerTests {
         let outcome = try await runner.run(
             streamId: Fixture.members,
             recipients: holders(2),
-            periodKey: Self.week,
+            cadencePeriodKey: Self.week,
             now: Self.now
         )
         #expect(outcome.paidCount == 2)
@@ -170,7 +210,7 @@ struct ReserveRunnerTests {
             _ = try await runner.run(
                 streamId: Fixture.members,
                 recipients: holders(1),
-                periodKey: Self.week,
+                cadencePeriodKey: Self.week,
                 now: Self.now
             )
         }
@@ -194,19 +234,19 @@ struct ReserveRunnerTests {
         let first = try await runner.run(
             streamId: Fixture.members,
             recipients: holders(2),
-            periodKey: Self.week,
+            cadencePeriodKey: Self.week,
             now: Self.now
         )
         #expect(first.epoch == 1)
         #expect(first.isComplete)
 
         await #expect(
-            throws: ReserveError.periodAlreadyPaid(streamId: Fixture.members, periodKey: Self.week)
+            throws: ReserveError.periodAlreadyPaid(streamId: Fixture.members, cadencePeriodKey: Self.week)
         ) {
             _ = try await runner.run(
                 streamId: Fixture.members,
                 recipients: holders(2),
-                periodKey: Self.week,
+                cadencePeriodKey: Self.week,
                 now: Self.now
             )
         }
@@ -217,7 +257,7 @@ struct ReserveRunnerTests {
         let second = try await runner.run(
             streamId: Fixture.members,
             recipients: holders(2),
-            periodKey: "2026-W99",
+            cadencePeriodKey: "2026-W99",
             now: Self.now
         )
         #expect(second.epoch == 2)
@@ -238,7 +278,7 @@ struct ReserveRunnerTests {
         _ = try await runner.run(
             streamId: Fixture.members,
             recipients: holders(1),
-            periodKey: Self.week,
+            cadencePeriodKey: Self.week,
             now: Self.now
         )
         let passes = ReserveRecipientList(
@@ -248,7 +288,7 @@ struct ReserveRunnerTests {
         let outcome = try await runner.run(
             streamId: Fixture.passes,
             recipients: passes,
-            periodKey: Self.week,
+            cadencePeriodKey: Self.week,
             now: Self.now
         )
         #expect(outcome.epoch == 1)
@@ -272,7 +312,7 @@ struct ReserveRunnerTests {
         let outcome = try await runner.run(
             streamId: Fixture.members,
             recipients: holders(3),
-            periodKey: Self.week,
+            cadencePeriodKey: Self.week,
             now: Self.now
         )
         #expect(outcome.paidCount == 3)
@@ -306,7 +346,7 @@ struct ReserveRunnerTests {
         let outcome = try await runner.run(
             streamId: Fixture.members,
             recipients: holders(3),
-            periodKey: Self.week,
+            cadencePeriodKey: Self.week,
             now: Self.now
         )
         #expect(outcome.paidCount == 1)
@@ -347,7 +387,7 @@ struct ReserveRunnerTests {
         let outcome = try await runner.run(
             streamId: Fixture.members,
             recipients: holders(2),
-            periodKey: Self.week,
+            cadencePeriodKey: Self.week,
             now: Self.now
         )
         #expect(outcome.isComplete)
@@ -381,7 +421,7 @@ struct ReserveRunnerTests {
             _ = try await runner.run(
                 streamId: Fixture.members,
                 recipients: holders(5),
-                periodKey: Self.week,
+                cadencePeriodKey: Self.week,
                 now: Self.now
             )
         }
@@ -416,7 +456,7 @@ struct ReserveRunnerTests {
             _ = try await runner.run(
                 streamId: Fixture.members,
                 recipients: holders(2),
-                periodKey: Self.week,
+                cadencePeriodKey: Self.week,
                 now: Self.now
             )
         }
@@ -445,7 +485,7 @@ struct ReserveRunnerTests {
             _ = try await runner.run(
                 streamId: Fixture.members,
                 recipients: holey,
-                periodKey: Self.week,
+                cadencePeriodKey: Self.week,
                 now: Self.now
             )
         }
@@ -482,7 +522,7 @@ struct ReserveRunnerTests {
         _ = try await runner.run(
             streamId: Fixture.members,
             recipients: holders(1),
-            periodKey: Self.week,
+            cadencePeriodKey: Self.week,
             now: Self.now
         )
         await #expect(throws: ReserveError.scheduleLocked(scheduleId: "6m", paidEpochs: 1)) {
@@ -504,7 +544,7 @@ struct ReserveRunnerTests {
         _ = try await runner.run(
             streamId: Fixture.members,
             recipients: holders(1),
-            periodKey: Self.week,
+            cadencePeriodKey: Self.week,
             now: Self.now
         )
 
@@ -551,7 +591,7 @@ struct ReserveRunnerTests {
         let outcome = try await runner.run(
             streamId: Fixture.members,
             recipients: holders(4),
-            periodKey: Self.week,
+            cadencePeriodKey: Self.week,
             now: Self.now
         )
         #expect(outcome.paidCount == 4)
@@ -623,7 +663,7 @@ struct ReserveRunnerTests {
             _ = try await runner.run(
                 streamId: Fixture.members,
                 recipients: holders(3),
-                periodKey: Self.week,
+                cadencePeriodKey: Self.week,
                 now: Self.now
             )
         }
@@ -656,7 +696,7 @@ struct ReserveRunnerTests {
         let outcome = try await runner.run(
             streamId: Fixture.members,
             recipients: holders(2),
-            periodKey: Self.week,
+            cadencePeriodKey: Self.week,
             now: Self.now
         )
         #expect(outcome.paidCount == 2)
@@ -727,7 +767,7 @@ struct ReserveRunnerTests {
         let first = try await runner.run(
             streamId: "only",
             recipients: list,
-            periodKey: "P1",
+            cadencePeriodKey: "P1",
             now: Self.now
         )
         #expect(first.epoch == 1)
@@ -737,7 +777,7 @@ struct ReserveRunnerTests {
             _ = try await runner.run(
                 streamId: "only",
                 recipients: list,
-                periodKey: "P2",
+                cadencePeriodKey: "P2",
                 now: Self.now
             )
         }
@@ -758,10 +798,214 @@ struct ReserveRunnerTests {
             _ = try await runner.run(
                 streamId: "nope",
                 recipients: ReserveRecipientList(streamId: "nope", recipients: []),
-                periodKey: Self.week,
+                cadencePeriodKey: Self.week,
                 now: Self.now
             )
         }
+    }
+
+    // MARK: - Which ceiling the run was counted against
+
+    /// A ceiling whose period is written in a calendar of the host's own,
+    /// nothing like the ISO week the cadence uses, so an implementation that
+    /// reached for the cadence parameter already in scope fails here.
+    private static func ceiling(
+        _ periodKey: String,
+        remaining: UInt64 = 30_000_000
+    ) -> ReserveSpendLimits {
+        ReserveSpendLimits(
+            maxPerPaymentWholeUnits: 1_000_000,
+            maxPerPeriodWholeUnits: remaining,
+            spentThisPeriodWholeUnits: 0,
+            periodKey: periodKey
+        )
+    }
+
+    @Test("A clean run names the ceiling it was measured against, and what for (SPEND-9.c)")
+    func aCleanRunRecordsOneCharge() async throws {
+        let store = InMemoryReserveStore()
+        try await activated(store: store)
+        let payer = RecordingPayer(store: store, limits: Self.ceiling("CEILING-2026-SEP"))
+        let runner = ReserveRunner(
+            configuration: try Fixture.reserve(),
+            store: store,
+            payer: payer,
+            gate: ReserveGate()
+        )
+
+        let outcome = try await runner.run(
+            streamId: Fixture.members,
+            recipients: holders(3),
+            cadencePeriodKey: Self.week,
+            now: Self.now
+        )
+        // The ceiling's own period, never the cadence key that happens to be
+        // in scope, and never anything worked out from a timestamp.
+        #expect(outcome.chargedPeriodKeys == ["CEILING-2026-SEP"])
+        #expect(outcome.cadencePeriodKey == Self.week)
+        #expect(outcome.chargedPeriodKeys != [outcome.cadencePeriodKey])
+
+        let record = try await store.loadEpoch(streamId: Fixture.members, epoch: 1)
+        #expect(record.charges.count == 1)
+        #expect(record.chargedPeriodKeys == ["CEILING-2026-SEP"])
+        #expect(record.charges.first?.recordedAt == Self.now)
+        // The figure the planner computed for the limits check, charged per
+        // payment and rounded up, which is 269,230.769230 whole units each.
+        #expect(record.charges.first?.checkedWholeUnits == 269_231 * 3)
+        #expect(outcome.charges == record.charges)
+    }
+
+    @Test("The charge is on disk before the first payment is attempted (SPEND-9.c, RESERVE-6.a)")
+    func theChargeIsWrittenBeforePaying() async throws {
+        let store = InMemoryReserveStore()
+        try await activated(store: store)
+        let payer = RecordingPayer(store: store, limits: Self.ceiling("CEILING-2026-SEP"))
+        let runner = ReserveRunner(
+            configuration: try Fixture.reserve(),
+            store: store,
+            payer: payer,
+            gate: ReserveGate()
+        )
+        _ = try await runner.run(
+            streamId: Fixture.members,
+            recipients: holders(3),
+            cadencePeriodKey: Self.week,
+            now: Self.now
+        )
+        let attempts = await payer.attempts
+        // Every payment, including the first, saw the ceiling already named.
+        // A charge written after the loop is a charge the crash loses, and the
+        // crash is when somebody goes looking for it.
+        #expect(attempts.allSatisfy { $0.chargedPeriodsOnDisk == ["CEILING-2026-SEP"] })
+    }
+
+    @Test("An epoch cut short and resumed names both ceilings, in order (SPEND-9.c, SPEND-9.a)")
+    func aResumedEpochNamesBothCeilings() async throws {
+        let inner = InMemoryReserveStore()
+        try await activated(store: inner)
+        let firstPayer = RecordingPayer(store: inner, limits: Self.ceiling("CEILING-2026-SEP"))
+        // Two epoch saves survive: the charge, and the first entry's claim. The
+        // third throws, which is the second entry's claim.
+        let cut = CuttingStore(inner: inner, cutAfterEpochSaves: 2)
+
+        await #expect(throws: (any Error).self) {
+            _ = try await ReserveRunner(
+                configuration: try Fixture.reserve(),
+                store: cut,
+                payer: firstPayer,
+                gate: ReserveGate()
+            ).run(
+                streamId: Fixture.members,
+                recipients: holders(3),
+                cadencePeriodKey: Self.week,
+                now: Self.now
+            )
+        }
+        let afterCut = try await inner.loadEpoch(streamId: Fixture.members, epoch: 1)
+        #expect(afterCut.isComplete == false)
+        #expect(afterCut.chargedPeriodKeys == ["CEILING-2026-SEP"])
+
+        // The month rolled over under the run, so the host states a different
+        // ceiling and the resumed run is measured against that one.
+        let later = Self.now.addingTimeInterval(60 * 60 * 24 * 14)
+        let secondPayer = RecordingPayer(store: inner, limits: Self.ceiling("CEILING-2026-OCT"))
+        let outcome = try await ReserveRunner(
+            configuration: try Fixture.reserve(),
+            store: inner,
+            payer: secondPayer,
+            gate: ReserveGate()
+        ).run(
+            streamId: Fixture.members,
+            recipients: holders(3),
+            cadencePeriodKey: ReservePeriod.isoWeek(later),
+            now: later
+        )
+
+        // Both, in the order they were charged. One value would be a lie in
+        // exactly the case an operator opens the row to settle.
+        #expect(outcome.chargedPeriodKeys == ["CEILING-2026-SEP", "CEILING-2026-OCT"])
+        let record = try await inner.loadEpoch(streamId: Fixture.members, epoch: 1)
+        #expect(record.chargedPeriodKeys == ["CEILING-2026-SEP", "CEILING-2026-OCT"])
+        // The first run was measured for three payments and the resumed one for
+        // the two nobody had been paid for.
+        #expect(record.charges.map(\.checkedWholeUnits) == [269_231 * 3, 269_231 * 2])
+        #expect(record.charges.map(\.recordedAt) == [Self.now, later])
+        #expect(record.isComplete)
+    }
+
+    @Test("A host that states no ceiling produces no charge, and none is invented (SPEND-9.c)")
+    func noLimitsMeansNoCharge() async throws {
+        let store = InMemoryReserveStore()
+        try await activated(store: store)
+        let payer = RecordingPayer(store: store)
+        let runner = ReserveRunner(
+            configuration: try Fixture.reserve(),
+            store: store,
+            payer: payer,
+            gate: ReserveGate()
+        )
+        let outcome = try await runner.run(
+            streamId: Fixture.members,
+            recipients: holders(2),
+            cadencePeriodKey: Self.week,
+            now: Self.now
+        )
+        #expect(outcome.charges.isEmpty)
+        // Not the cadence key, not the timestamp, nothing.
+        let record = try await store.loadEpoch(streamId: Fixture.members, epoch: 1)
+        #expect(record.charges.isEmpty)
+        #expect(record.chargedPeriodKeys.isEmpty)
+    }
+
+    @Test("A rehearsal records no charge, because it writes nothing (SPEND-9.c, RESERVE-7.a)")
+    func aRehearsalRecordsNoCharge() async throws {
+        let store = InMemoryReserveStore()
+        try await activated(store: store)
+        let payer = RecordingPayer(store: store, limits: Self.ceiling("CEILING-2026-SEP"))
+        let runner = ReserveRunner(
+            configuration: try Fixture.reserve(),
+            store: store,
+            payer: payer,
+            gate: ReserveGate()
+        )
+        _ = try await runner.rehearse(
+            streamId: Fixture.members,
+            recipients: holders(3),
+            now: Self.now
+        )
+        let record = try await store.loadEpoch(streamId: Fixture.members, epoch: 1)
+        #expect(record.charges.isEmpty)
+        #expect(record.startedAt == nil)
+    }
+
+    @Test("The charge keeps what the run was measured for, not what went out (SPEND-9.c)")
+    func theChargeIsWhatWasMeasuredNotWhatWasPaid() async throws {
+        let store = InMemoryReserveStore()
+        try await activated(store: store)
+        let payer = RecordingPayer(
+            store: store,
+            behaviours: [Fixture.account(2): .refuse("not set up to receive")],
+            limits: Self.ceiling("CEILING-2026-SEP")
+        )
+        let runner = ReserveRunner(
+            configuration: try Fixture.reserve(),
+            store: store,
+            payer: payer,
+            gate: ReserveGate()
+        )
+        let outcome = try await runner.run(
+            streamId: Fixture.members,
+            recipients: holders(3),
+            cadencePeriodKey: Self.week,
+            now: Self.now
+        )
+        // Two of three were paid, and the ceiling was still measured for three:
+        // the headroom really was taken at the moment the run was allowed to
+        // start. The two figures are allowed to disagree and the record says
+        // which is which.
+        #expect(outcome.paidCount == 2)
+        #expect(outcome.charges.first?.checkedWholeUnits == 269_231 * 3)
+        #expect(outcome.paidBaseUnits == 269_230_769_230 * 2)
     }
 
     // MARK: - The whole way through
@@ -781,12 +1025,12 @@ struct ReserveRunnerTests {
         let outcome = try await runner.run(
             streamId: Fixture.members,
             recipients: holders(3),
-            periodKey: Self.week,
+            cadencePeriodKey: Self.week,
             now: Self.now
         )
         #expect(outcome.streamId == Fixture.members)
         #expect(outcome.epoch == 1)
-        #expect(outcome.periodKey == Self.week)
+        #expect(outcome.cadencePeriodKey == Self.week)
         #expect(outcome.isClean)
         #expect(outcome.paidUnits == 3)
         #expect(outcome.paidBaseUnits == 269_230_769_230 * 3)

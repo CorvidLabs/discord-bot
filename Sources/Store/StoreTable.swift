@@ -22,6 +22,9 @@ public enum StoreTable: Sendable {
     /// One row per epoch of per stream.
     public static let reserveEpochs = "reserve_epochs"
 
+    /// The ceilings each epoch was measured against, one row per charge.
+    public static let reserveEpochCharges = "reserve_epoch_charges"
+
     /// The day's request count.
     public static let requestBudget = "request_budget"
 }

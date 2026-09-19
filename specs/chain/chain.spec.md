@@ -6,12 +6,14 @@ files:
   - Sources/Chain/AccountDataSource.swift
   - Sources/Chain/BalanceCombiner.swift
   - Sources/Chain/BatchedChainReader.swift
+  - Sources/Chain/CallerShare.swift
   - Sources/Chain/ChainConfiguration.swift
   - Sources/Chain/ChainConfigurationError.swift
   - Sources/Chain/ChainEnvironment.swift
   - Sources/Chain/ChainError.swift
   - Sources/Chain/ChainFormatting.swift
   - Sources/Chain/ChainHealth.swift
+  - Sources/Chain/ChainHealthAssembly.swift
   - Sources/Chain/ChainNotice.swift
   - Sources/Chain/ChainReader.swift
   - Sources/Chain/ChainReading.swift
@@ -24,6 +26,7 @@ files:
   - Sources/Chain/ProviderProofProbe.swift
   - Sources/Chain/RequestBudgetSnapshot.swift
   - Sources/Chain/RequestBudgetStore.swift
+  - Sources/Chain/RequestCaller.swift
   - Sources/Chain/RequestGovernor.swift
   - Sources/Chain/RequestRateLimiter.swift
   - Sources/Chain/TokenBucket.swift
@@ -117,6 +120,9 @@ type each sense belongs to: `assetId`, `amount`, `name`, `decimals`, `id`,
 | `batchSize` | How many wallets are read in parallel per batch, and `CHAIN_BATCH_SIZE`, the variable that sets it. |
 | `dailyRequestBudget` | Requests permitted per UTC day, counting reads and signing together, and `CHAIN_DAILY_REQUEST_BUDGET`, the variable that sets it. Zero means no budget. A budget counts requests and is never a spending cap. |
 | `budgetPersistEvery` | How many requests pass between writes of the day's counter, and `CHAIN_BUDGET_PERSIST_EVERY`, the variable that sets it. A crash loses at most this many requests of the day's count. |
+| `callerSharePercent` | The share of the day's budget one member's caller may draw, as a percentage: the configured value, and `CHAIN_CALLER_SHARE_PERCENT`, the variable that sets it. Five by default, zero turns shares off, above a hundred is refused at boot. A percentage rather than a count, because budgets differ by orders of magnitude between a free tier and a paid one. |
+| `callerBurstRequests` | The most one member's caller may take before their allowance has to refill: the configured value, and `CHAIN_CALLER_BURST_REQUESTS`, the variable that sets it. Ten by default, clamped to the day's share when it is larger. A burst as well as a rate, because however fast somebody types is a rate problem. |
+| `callerShare` | The `CallerShareRule` those two settings and the day's budget work out to, or nil when there is no share at all. Derived rather than configured, so the three cannot drift into a share nobody wrote down. |
 | `ChainCacheLifetimes` | How long each cached answer stays usable. Every one of these was a literal in the bot this came from. |
 | `walletCheck` | Seconds a completed wallet reading stays usable. |
 | `walletCheckCooldown` | Seconds before the same wallet may be read again on demand. Separate from `walletCheck` on purpose: the cache answers cheaply, the cooldown refuses to ask the chain the same question over and over. |
@@ -143,6 +149,8 @@ type each sense belongs to: `assetId`, `amount`, `name`, `decimals`, `id`,
 | `requestBudgetSpent` | Today's request budget is spent. Reads and signing are paused until the UTC day rolls over. |
 | `providerRefusedQuota` | The provider refused with its own quota error: as a `ChainError`, as a `ChainNotice.Kind` and as a pause reason. The same pause a spent budget causes, deliberately kept a separate fact, because an operator does something different about it. |
 | `requestBudgetCannotCover` | Today's budget cannot cover a reservation that had to be taken whole. Deliberately neither a pause nor a spent budget: the day still has requests in it, and they belong to every caller that can use them one at a time. |
+| `callerShareSpent` | One caller has taken their share of today's requests, carrying what they asked for, what is left of their share and the instant their next request would be allowed. Deliberately not `requestBudgetSpent`: the day is not spent, nothing is paused, and every other caller carries on. It names nobody. |
+| `callerShareCannotCover` | One caller asked for more requests at once than any allowance can hold, carrying what was asked for and the burst. Deliberately carrying no instant: an allowance never holds more than its burst, so no waiting makes it fit and a date here would send a host away to retry into the same refusal forever. The share's version of `requestBudgetCannotCover`. It names nobody. |
 | `incompleteRead` | Something a caller needed could not be read, so there is no complete answer to give it. |
 | `poolAddressNotFound` | A pool's reserve account could not be found, so its reserves cannot be read. |
 | `isProviderQuotaRefusal` | Whether an error is a provider refusing because its own quota is spent, recognised on both the raw refusal and this layer's own pauses. |
@@ -164,10 +172,13 @@ type each sense belongs to: `assetId`, `amount`, `name`, `decimals`, `id`,
 | `reached` | Whether this instance has actually reached it. |
 | `ChainHealthReport` | What a health check answers. A health answer is not "the process is alive": it states what this instance has actually reached. |
 | `components` | The things this instance has to reach, and whether it has. |
+| `budget` | What is left of today's requests on a health answer, as the same `RequestBudgetSnapshot` every other surface reports. Optional, because a host with no chain configured has no budget to report, which is a different fact from a budget with nothing left. |
 | `proof` | Proof of which provider served the last probe: the field on a health report, and the probe method that refreshes it when stale and never invents a success. |
 | `status` | `ok` only when every component has been reached. |
 | `waitingOn` | What is not there yet, in the order it was declared. |
-| `jsonBody` | The answer as JSON, hand built so the shape a monitoring check greps for cannot be reordered by an encoder, and with every provider value escaped. |
+| `jsonBody` | The answer as JSON, hand built so the shape a monitoring check greps for cannot be reordered by an encoder, and with every provider value escaped. The budget section is appended after the existing keys, says whether a budget is configured at all, and carries the pause, the number of callers currently held and the number of reservations refused at a share only when there are any. The refusals are there because the callers held are not evidence of throttling: one request inside a refill interval puts a caller in that count. |
+| `ChainHealthAssembler` | Puts a health answer together without spending a request: it asks the governor for a snapshot and the proof probe for what it already holds, and touches no reader and no data source. It owns no listener and no route. |
+| `report` | The assembled answer, for components only the host knows, having spent nothing and still answering once the day's budget is gone. Where no usable proof is held it starts one probe beside the answer rather than in front of it, so the answering path never waits on a provider and the next answer carries proof. |
 | `ChainNotice` | Something that happened to the request budget which somebody should read. A value rather than a log line, because a library that logs decides for its host where the words go. |
 | `kind` | What happened. |
 | `at` | When it happened. |
@@ -177,6 +188,7 @@ type each sense belongs to: `assetId`, `amount`, `name`, `decimals`, `id`,
 | `budgetSpent` | Today's request budget is spent: as a `ChainNotice.Kind` announcing the pause, as a `ChainReadGap` on a reading that stopped part way, and as a pause reason on the snapshot. |
 | `pauseLiftedByHand` | An operator lifted a pause by hand. |
 | `budgetNotPersisted` | The day's count could not be written down. |
+| `callerTrackingFull` | As many callers are being tracked for their share as this process will track, so a caller nobody is tracking yet is being refused. Recorded once a day, never once per refusal. |
 | `ChainReader` | Reading the chain, one account at a time, behind the day's budget. Nothing here retries. |
 | `configuration` | What this reads, and how hard. |
 | `balance` | How much of the configured token an account holds. |
@@ -201,8 +213,8 @@ type each sense belongs to: `assetId`, `amount`, `name`, `decimals`, `id`,
 | `DailyRequestBudget` | The per day brake: how many requests this process may make in a UTC day, counting reads and signing together. Pure and synchronous, so all of its arithmetic is exercised with no clock and no network. |
 | `warningThresholds` | Percentages worth warning about the first time they are reached in a day: 50, 75 and 90. |
 | `limit` | Requests permitted per UTC day, on the budget and on the snapshot of it. Zero means no budget is set. |
-| `used` | Requests reserved so far in the current UTC day. |
-| `dayStart` | Midnight UTC at the start of the day a count belongs to: on the budget, on the snapshot, and stored with the written count rather than inferred on read, so yesterday's number is recognised as yesterday's. |
+| `used` | Requests reserved so far in the current UTC day: the property, and `used(at:)`, which answers for the day the given instant falls in and is zero once the day has turned, because nothing rolls the counter until the day's first reservation and a surface read at one minute past midnight would otherwise report yesterday's spending as today's. |
+| `dayStart` | Midnight UTC at the start of the day a count belongs to: on the budget, on the snapshot, and stored with the written count rather than inferred on read, so yesterday's number is recognised as yesterday's. `dayStart(at:)` is the day the figures asked about an instant belong to, which is the day that instant falls in. |
 | `remaining` | Requests left today: the property, always zero when there is no budget, so a caller sizing a batch has to look at `limit` as well; and `remaining(at:)`, which answers for the day the given instant falls in and is nil when there is no budget, because a consumer that has to take its whole allowance at once cannot read a zero as either answer. |
 | `Decision` | What happened when a request was reserved. |
 | `allowed` | The request may proceed. The crossed threshold is set only on the first reservation to reach that percentage today. |
@@ -234,8 +246,25 @@ type each sense belongs to: `assetId`, `amount`, `name`, `decimals`, `id`,
 | `HTTPHeaderProbe` | One cheap request whose response headers are what is wanted. A seam, so the caching and the never invent a success rule are testable without a network. |
 | `probeHeaders` | Makes the request and returns its response headers. The URL session implementation refuses an answer that is not an HTTP response. |
 | `ProviderProofProbe` | The last thing a provider said about itself, kept for a little while. Deliberately outside the request governor, because a health check must keep working when the budget is spent and must not spend the last of it either. |
+| `heldProof` | The proof already held, making no request and leaving the cache exactly as it was. A held answer past its lifetime reads as absent rather than being refreshed, and this is the read a health answer takes its proof from, because `proof(now:)` would put a network call on the one path that must never make one. |
+| `refreshInBackground` | Starts one probe in the background when nothing usable is held, and returns at once. The third part of the health path, and the one without which the other two answer nothing: the held read never goes and gets proof, so something has to, and it must not be the call that is answering. One at a time, never while what is held is still within its lifetime, and never at all for an operator who named no headers. |
+| `flushRefresh` | Waits for a background probe already started to finish. Tests wait on this, and so should a host shutting down deliberately. |
 | `invalidate` | Forgets something cached so the next call is fresh: the probe's proof, or one wallet's answer and its cooldown. |
 | `URLSessionHeaderProbe` | A probe that makes a plain HTTP request and reads the response headers, because a typed client hands back a decoded body with the headers thrown away. |
+| `RequestCaller` | Who a request is being made for, as a closed set of two cases so that which side of the rule a call sits on is visible in review. |
+| `member` | Work done on behalf of one member, rationed to a share of the day. The key is one this instance minted: nothing that came from a chat account may be passed, and the value is never logged, persisted or repeated in an error. |
+| `system` | The instance's own work, which carries no share. A sweep is not a person, cannot type fast, and is already bounded by its batch size and its interval. |
+| `shareKey` | The key a share is counted against, or nil for work that carries none. |
+| `isRationed` | Whether this caller is held to a share of the day. |
+| `CallerShareRule` | How big one caller's share is and how fast it comes back, derived from a percentage of the day's budget and a burst. Pure, with no clock in it. |
+| `dailyShareRequests` | Requests one caller may take across a whole UTC day. Held at one rather than zero when a percentage of a small budget rounds away, because a share of nothing refuses every member every time. |
+| `burstRequests` | The most one caller may take before their allowance has to refill, clamped to the day's share rather than refused, so the clamp is visible in what a status surface reports. |
+| `refillPerSecond` | Requests that come back per second, being the day's share spread over a UTC day. |
+| `freshAllowance` | A caller nobody is tracking yet, with their whole burst in hand. Full rather than empty, so a caller the table has forgotten is indistinguishable from one it has never heard of. |
+| `CallerShare` | One caller's allowance, refilling as the day passes. Held in memory and never written down: a restart hands a caller at most one fresh burst, and the day's own count is persisted, so no restart trick creates requests out of nothing. |
+| `rule` | How big the share is and how fast it comes back. |
+| `isFull` | Whether the allowance has come all the way back, which is what makes forgetting a caller safe. |
+| `nextAllowed` | When a count of requests would next be allowed. Never the next UTC midnight: an allowance that only came back at midnight would lock a member out for fifteen hours after a busy morning. |
 | `RequestBudgetSnapshot` | What has been spent of today's request budget, and whether work is paused. One value, so the health page, the status command and the logs cannot disagree. |
 | `usedRequests` | Requests reserved so far in the day, on the snapshot and on the count as it is written down. |
 | `remainingRequests` | Requests left today: on the snapshot, zero when no budget is set, so read `hasBudget` before drawing a conclusion from it; on the governor, nil when no budget is set, and reporting the counter rather than the breaker, so a caller that means "may I read?" asks `pausedUntil` too. |
@@ -243,6 +272,11 @@ type each sense belongs to: `assetId`, `amount`, `name`, `decimals`, `id`,
 | `hasBudget` | Whether a budget is set at all. |
 | `isPaused` | Whether reads and signing are refused right now. |
 | `percentUsed` | Percentage of the budget consumed, or nil when no budget is set. |
+| `callerShareBurst` | The most one member's caller may take before their allowance has to refill, as it is in force. Zero when shares are off, or when no budget is set and so there is no day to take a share of. |
+| `throttledCallers` | How many callers are holding an allowance that has not refilled. A count, never a list of who: nothing that names a caller leaves this layer. It does not mean anybody was refused, because a caller appears in it for making a single request inside a refill interval, which is ordinary use. |
+| `callerRequestsToday` | Requests taken on behalf of members today, out of `usedRequests`, so an operator can see whether members or the instance's own work is spending the day. |
+| `callerRefusalsToday` | How many reservations were refused at a share today. The one figure that says a member was actually turned away, since a share refusal deliberately writes no notice, and the reason the health body carries it beside the callers held. |
+| `hasCallerShare` | Whether one member's caller is bounded at all. |
 | `PauseReason` | Why work is paused. Two different facts, deliberately not merged. |
 | `RequestBudgetUsage` | The day's request count as it is written down. |
 | `RequestBudgetStore` | Where the day's request count is kept between restarts. This layer has no idea what a database is and must not acquire one. |
@@ -253,11 +287,12 @@ type each sense belongs to: `assetId`, `amount`, `name`, `decimals`, `id`,
 | `storedUsage` | The count as it stands, without going through the protocol. |
 | `RequestGovernor` | The single daily ceiling on requests, shared by every caller. One counter and one breaker for reading and signing both. It refuses rather than queues. |
 | `maxRetainedNotices` | How many notices are kept for a host that has not drained them: enough that an overnight incident is still readable, bounded so a process that never drains cannot grow without limit. |
+| `maxTrackedCallers` | The most callers whose shares are tracked at once. A constant rather than a setting, because it bounds this process's memory rather than stating a policy. At the bound a caller nobody is tracking yet is refused rather than admitted untracked, and a caller part way through their allowance is never evicted, because an evicted caller returns with a full one. |
 | `restoreFromStore` | Applies a counter written earlier in the same UTC day. Called once at boot; an unreadable row throws rather than granting a budget nobody gave. |
-| `reserveRequest` | Spends one request from today's budget, throwing before the request leaves rather than finding out about the ceiling by being cut off mid sweep. |
-| `reserveRequests` | Spends a count of requests, all of them or none, for a consumer whose work cannot be half done. A reservation that does not fit takes nothing and pauses nothing; a day with nothing left pauses exactly as one request would. There is no way to hand a reservation back. |
+| `reserveRequest` | Spends one request from today's budget on behalf of a named caller, throwing before the request leaves rather than finding out about the ceiling by being cut off mid sweep. The caller has no default value. |
+| `reserveRequests` | Spends a count of requests for a named caller, all of them or none, for a consumer whose work cannot be half done. A reservation that does not fit takes nothing and pauses nothing; a day with nothing left pauses exactly as one request would. A member's caller is held to the same rule against their own share. There is no way to hand a reservation back. |
 | `recordRequestFailure` | Trips the breaker when the error is the provider's own quota refusal, and returns the error the caller should throw. |
-| `unpause` | Lifts a pause by hand, for a refusal that turned out to be a revoked token or a misread. The budget itself is untouched. |
+| `unpause` | Lifts a pause by hand, for a refusal that turned out to be a revoked token or a misread. The budget itself is untouched, nothing is written to the store, and no caller is handed back any part of their share. |
 | `snapshot` | Everything a status surface needs, in one value. |
 | `notices` | The notices kept so far, oldest first, leaving them in place. |
 | `drainNotices` | The notices kept so far, oldest first, and forgets them. |
@@ -392,6 +427,37 @@ checked by a test that finishes instantly.
 11. A health answer never means only that a process is listening.
     `ChainHealthReport.status` is `ok` only when every declared component has
     been reached, and `waitingOn` names the rest (SEE-1, SEE-1.a).
+11a. **A spent budget is a field of the answer and never a status.** An
+    instance that has reached everything and is refusing chain work, because
+    the day's budget is gone or the breaker is tripped, answers `ok` and says
+    which of the two it is in the budget section. The readiness rule that
+    follows is part of this contract rather than a host's choice: an unreached
+    component is not ready, and a reached instance whose budget is gone is
+    ready. A gate that failed on the second would replace a working version
+    because a provider quota ran out at four in the afternoon, which is RUN-3's
+    failure by the other door; monitoring alerts on the field instead
+    (SEE-1.a, RUN-3).
+11b. **Assembling a health answer spends nothing.** `ChainHealthAssembler`
+    asks the governor for a snapshot, which costs nothing and works while
+    paused, and asks `ProviderProofProbe.heldProof` for proof already held,
+    which makes no request and leaves the cache as it was. It touches no
+    reader and no `AccountDataSource`, and it still answers once the day's
+    budget is gone. An instance for which no proof headers are configured
+    produces an answer that opens no socket of any kind, which is what makes
+    that promise honest rather than a statement about a cache (SEE-1.b).
+11d. **A read that never probes needs something that does.** Where no usable
+    proof is held, the assembly starts one probe beside the answer through
+    `refreshInBackground` and answers without waiting for it, so the next
+    answer carries proof and this one still costs nothing. A synchronous
+    probe on this path stalled the accepts of the listener this was ported
+    from for up to four seconds on a cold miss, and a held read with nothing
+    driving it is an answer that can never carry proof at all. One probe at a
+    time, none while what is held is within its lifetime, and a probe that
+    failed is kept for that same lifetime, or a check on a timer becomes the
+    load on a node that is already down (SEE-1.b, SEE-10.a).
+11c. This module owns **no listener, no route and no HTTP status code**. What
+    an instance has to have reached is a list only a composition root knows,
+    and it arrives as a parameter.
 12. Provider proof is never invented. `ProviderProofProbe` drops a stale answer
     on a failed probe rather than serving it on, and `ProviderProof.parse`
     contributes nothing for a header that was absent or blank (SEE-10.a,
@@ -422,6 +488,41 @@ checked by a test that finishes instantly.
     fine here and a refusal there, and `CHAIN_NODE_URL=http://` booted clean
     and then failed every read as a network error. An operator has one
     environment, not one per module (ADOPT-2).
+19. **Every reservation names who it is for, with no default**, and the
+    caller is one of two cases: work on behalf of a member, or the instance's
+    own. Only the first is rationed. A default would mean a host that forgot
+    got the unrationed path in silence, which is the guard bypassed by an
+    omission, and the caller reaches the governor from the call that started
+    the work because the one place that spends a request can only charge
+    somebody it was told about (RUN-11).
+19a. A member's caller is held to a share of the day: a percentage of the
+    budget with a burst on top, refilling as the day passes rather than being
+    withheld until midnight. A caller who has drawn their share is refused at
+    once with `callerShareSpent`, never queued, and that refusal spends
+    nothing of the day, trips no breaker, pauses nothing and writes no notice.
+    The pause is checked **before** the share, so an instance refusing
+    everybody tells everybody the same story (RUN-11, SEE-11). A reservation
+    larger than the burst is refused with `callerShareCannotCover` and **no
+    instant at all**, because no allowance ever holds more than its burst and
+    a date there would be a fixed point rather than a waiting time (RUN-11).
+19b. The tracking is bounded. A caller whose allowance has refilled completely
+    is forgotten, because a full allowance is indistinguishable from a caller
+    nobody has heard of; at `maxTrackedCallers` a caller not already tracked
+    is refused rather than admitted untracked, and one already drawing is
+    never evicted, because an evicted caller returns with a full allowance.
+    The allowances are not persisted, so a restart hands a caller at most one
+    fresh burst while the day's own count is restored from the store
+    (RUN-11, RUN-8.b).
+19c. **This bounds one caller and not a crowd.** Twenty members each inside
+    their share can still finish a small day's budget between them, and the
+    day's budget is the backstop for that. Nothing in the documentation may
+    imply otherwise (RUN-11).
+20. Lifting a pause by hand returns no part of the day and no part of any
+    caller's share. The count, what is left of it, the limit, the day's start
+    and every allowance are unchanged across an unpause, whatever tripped the
+    pause and however many times it is lifted, and nothing is written to
+    `RequestBudgetStore`, so a repeated unpause cannot walk the persisted
+    figure downward (RUN-10.a, RUN-8.b).
 
 ## Behavioral Examples
 
@@ -502,6 +603,48 @@ checked by a test that finishes instantly.
   announced again, and a count from an earlier day is ignored rather than
   spent against today (RUN-8.a)
 
+### Scenario: One member typing fast cannot spend the day
+
+- **Given** a daily budget of 1,000 requests, a share of five percent and a
+  burst of ten, and a member whose commands have taken ten requests in a few
+  seconds
+- **When** that member's caller reserves an eleventh
+- **Then** it is refused with `callerShareSpent`, naming when their next
+  request would be allowed as their allowance refills; the day's counter still
+  reads ten, nothing is paused, no notice is recorded, and a second member and
+  the role sweep are both served at the same instant (RUN-11)
+
+### Scenario: A member orders a job no allowance could ever hold
+
+- **Given** the same budget, share and burst of ten
+- **When** a member's caller reserves twenty requests together
+- **Then** it is refused with `callerShareCannotCover(requested: 20, burst:
+  10)`, which carries no instant, because there is none: an allowance never
+  holds more than its burst, so a host retrying at a promised time would be
+  refused identically forever. Nothing is taken from the caller or from the
+  day (RUN-11)
+
+### Scenario: A health answer on a cold start
+
+- **Given** an instance whose operator named proof headers, and a probe that
+  has never run
+- **When** a monitoring check asks for a health answer, and asks again a
+  moment later
+- **Then** the first answer comes back at once with no provider section, one
+  probe having been started beside it, and the second carries the headers the
+  provider stamped. The answering path waits on no provider either time
+  (SEE-1.b, SEE-10.a)
+
+### Scenario: A health answer during an outage
+
+- **Given** an instance that has reached everything it declared, whose day's
+  budget is spent
+- **When** a monitoring check asks for a health answer
+- **Then** the answer is assembled without reserving a request and without the
+  data source being called at all; the status is `ok`, because reachability is
+  what the status is about, and the body's budget section says the budget is
+  spent and when reading resumes (SEE-1.b, SEE-1.a, RUN-3)
+
 ## Error Cases
 
 | Condition | Behavior |
@@ -533,11 +676,19 @@ checked by a test that finishes instantly.
 | A bulk reservation larger than what is left of the day | `ChainError.requestBudgetCannotCover(requested:remaining:)`. Nothing reserved, nothing paused, no notice recorded: the refusal is answered to its caller, and a scheduled run that repeats it must not be able to push the pause announcement out of a bounded buffer |
 | A bulk reservation on a day with nothing left | `ChainError.requestBudgetSpent(until:)` and the ordinary pause, because at that point every size is refused |
 | A bulk reservation of zero | Allowed, spending nothing and recording nothing, so sizing an empty job cannot be what pauses a process |
+| A member's caller reserving more than their share has left | `ChainError.callerShareSpent(requested:shareRemaining:nextAllowedAt:)`. Nothing is taken from the day or from the caller, nothing is paused, and no notice is recorded: one member refused thousands of times must not push a pause announcement out of a bounded buffer |
+| A member's caller reserving more at once than the burst | `ChainError.callerShareCannotCover(requested:burst:)`, carrying no instant, because no allowance ever holds more than its burst and a date there would be a fixed point rather than a waiting time |
+| A member's caller arriving when `maxTrackedCallers` are already drawing | The same refusal as a spent share, because admitting a caller untracked is the hole the share exists to close, and the instant it names is the next sweep rather than midnight: a slot comes free as soon as any tracked caller refills. One notice a day records that the bound was reached, and the day's budget is the backstop underneath it |
+| A share above one hundred percent, or a burst of zero | `ChainConfigurationError.invalidValue` naming the variable. Refused rather than clamped: an operator who wrote 500 meant something. Built in Swift rather than read from the environment, the same two are held inside the range the initialiser documents, because a percentage above a hundred can overflow the share's arithmetic and a burst of zero switches the guard off in silence |
+| A share configured with no daily budget | No share at all, and nobody is ever refused by one. There is no day's budget to take a part of |
 | A caller asking a short reading for a number | `ChainError.incompleteRead(gaps:)` from `requireComplete()` |
 | A pool token naming no reserve account | `ChainError.poolAddressNotFound`, rather than reporting an empty pool |
 | A budget row that cannot be read at boot | `restoreFromStore` rethrows the store's error; refusing to start beats starting with a budget nobody granted |
 | A budget row that cannot be written | A `ChainNotice.Kind.budgetNotPersisted`, and the process carries on reading |
-| A proof probe that failed | No provider section in the health body, and `lastFailure` says why. A stale answer is dropped, never served as current |
+| A proof probe that failed | No provider section in the health body, and `lastFailure` says why. A stale answer is dropped, never served as current, and the failure is kept for the probe's lifetime so a check on a timer does not probe a node that is down once per check |
+| A health answer wanted while the budget is spent or the breaker is tripped | Still answered, with the status unchanged and the budget section naming which of the two it is and when reading resumes |
+| A health answer wanted with no proof held yet | Answered at once without one, and a single probe is started beside it so the next answer carries proof. The answering path never waits on a provider |
+| A snapshot taken after midnight and before the day's first reservation | Answers for the day it was asked about: nothing used, the whole budget left, no caller figures. Nothing rolls a counter but a reservation, and the case is widest when yesterday's budget was spent and so nothing is reserving |
 
 ## Dependencies
 
@@ -562,3 +713,5 @@ checked by a test that finishes instantly.
 | 2026-09-18 | maintainers | Spec written for the `Chain` library target, after `ChainAsset` was removed and the module took `Gating.TokenProfile` as its one token. |
 | 2026-09-18 | maintainers | `RequestGovernor.reserveRequests` takes a whole job's requests at once for a consumer that cannot be half done, refusing without spending or pausing when they do not fit; `remainingRequests` answers nil when there is no budget. |
 | 2026-09-18 | maintainers | One `LiquidityPool` and one `CombinedBalance`, both `Gating`'s; `PoolReserves` and `PoolShare` renamed their sides counted and other; `GatingBridge` added, so a `ChainReading` reaches the rules as a `Reading` and a `[WalletCheck]` reaches them as a `MemberHoldings`; the environment read through `Gating.NumberedEnvironment`. |
+| 2026-09-19 | maintainers | Every reservation names a `RequestCaller`, with no default, and a member's caller is held to a refilling share of the day; the snapshot carries what throttling is happening; `ChainHealthAssembler` and `ProviderProofProbe.heldProof` assemble a health answer that spends nothing and still answers once the budget is gone, with the budget as a field of the report and never a status; the unpause guarantee is stated normatively. |
+| 2026-09-19 | maintainers | The health answer starts a probe in the background when it holds no proof, so the read that never probes has something filling it, and a failed probe is cached for its lifetime; `callerShareCannotCover` refuses a count no burst can hold rather than naming an instant that will never come; a caller refused at the tracking bound is told the next sweep rather than midnight; the snapshot answers for the day it is asked about; the health body carries the refusals as well as the callers held; `ChainLimits` built in Swift holds the share range its own documentation states. |

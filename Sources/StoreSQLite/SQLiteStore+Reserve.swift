@@ -149,7 +149,8 @@ extension SQLiteStore {
             claimedHoldingIds: claims[.holding] ?? [],
             paidBaseUnits: paidBaseUnits,
             startedAt: startedAt,
-            completedAt: completedAt
+            completedAt: completedAt,
+            charges: try loadCharges(streamId: streamId, epoch: epoch)
         )
     }
 
@@ -161,6 +162,7 @@ extension SQLiteStore {
         // that first save the memo is what the rows are, and only the
         // difference goes to disk.
         let previous = lastWrittenClaims[memoKey]
+        let previousCharges = lastWrittenCharges[memoKey]
         let current: [Int64: [String]] = [
             Schema.ClaimKind.account.rawValue: recorded.paidAccounts,
             Schema.ClaimKind.recipient.rawValue: recorded.paidRecipientIds,
@@ -197,12 +199,20 @@ extension SQLiteStore {
                     stored: previous?[kind.rawValue]
                 )
             }
+            try Self.syncCharges(
+                connection: connection,
+                streamId: recorded.streamId,
+                epoch: recorded.epoch,
+                charges: recorded.charges,
+                stored: previousCharges
+            )
         }
 
         // Only after the commit. A transaction that rolled back would leave a
         // memo describing rows that are not there, and the next save would
         // append to a prefix that never landed.
         lastWrittenClaims[memoKey] = current
+        lastWrittenCharges[memoKey] = recorded.charges
     }
 
     // MARK: - Public Methods, the request budget seam
@@ -245,6 +255,89 @@ extension SQLiteStore {
     /// The key an epoch's claim rows are remembered under.
     internal static func memoKey(streamId: String, epoch: UInt64) -> String {
         "\(streamId)#\(epoch)"
+    }
+
+    /// The ceilings one epoch was measured against, in the order they were
+    /// charged.
+    ///
+    /// An epoch written by a build from before this table existed simply has
+    /// no rows here, and that reads as no charge rather than as an unreadable
+    /// row. It is not an exception to the rule that a row which exists and
+    /// cannot be read throws: there is no row, and the period is left unknown
+    /// rather than invented from `started_at`, which is the timestamp
+    /// arithmetic SPEND-9.c exists to abolish and is wrong precisely for the
+    /// boundary-crossing epoch.
+    private func loadCharges(streamId: String, epoch: UInt64) throws -> [ReserveEpochCharge] {
+        let row = "\(StoreTable.reserveEpochCharges)/\(streamId)/\(epoch)"
+        let rows = try handle.prepare(
+            """
+            SELECT period_key, checked_whole_units, recorded_at
+            FROM reserve_epoch_charges
+            WHERE stream_id = ? AND epoch = ?
+            ORDER BY ordinal ASC
+            """,
+            [.text(streamId), BaseUnits.value(epoch)]
+        )
+        var charges: [ReserveEpochCharge] = []
+        while try rows.step() {
+            charges.append(
+                ReserveEpochCharge(
+                    periodKey: try rows.requiredText(0, row: row),
+                    checkedWholeUnits: try rows.amount(1, row: row),
+                    recordedAt: try rows.requiredInstant(2, row: row)
+                )
+            )
+        }
+        return charges
+    }
+
+    /// Brings an epoch's charge rows in line with the list the record carries.
+    ///
+    /// Written as an append wherever it can be, like the claims, because the
+    /// runner saves the whole record once per recipient and the charges are
+    /// the same on every one of those saves. The append is only sound when the
+    /// rows already there really are a prefix of what is being saved, so the
+    /// whole prefix is compared: a resumed run that appends a second charge is
+    /// an append, and anything else is a rewrite.
+    ///
+    /// - Parameter stored: What the rows are, or nil when that is not known,
+    ///   which means writing them all out.
+    private static func syncCharges(
+        connection: Connection,
+        streamId: String,
+        epoch: UInt64,
+        charges: [ReserveEpochCharge],
+        stored: [ReserveEpochCharge]?
+    ) throws {
+        let keys: [SQLValue] = [.text(streamId), BaseUnits.value(epoch)]
+        var appendFrom = 0
+        if let stored, stored.count <= charges.count, Array(charges.prefix(stored.count)) == stored {
+            appendFrom = stored.count
+        } else if stored?.isEmpty != true {
+            try connection.execute(
+                "DELETE FROM reserve_epoch_charges WHERE stream_id = ? AND epoch = ?",
+                keys
+            )
+        }
+
+        guard appendFrom < charges.count else { return }
+        for index in appendFrom..<charges.count {
+            let charge = charges[index]
+            try connection.execute(
+                """
+                INSERT OR REPLACE INTO reserve_epoch_charges (
+                    stream_id, epoch, ordinal, period_key, checked_whole_units, recorded_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                keys + [
+                    .integer(Int64(index)),
+                    .text(charge.periodKey),
+                    BaseUnits.value(charge.checkedWholeUnits),
+                    .integer(StoreDate.seconds(charge.recordedAt))
+                ]
+            )
+        }
     }
 
     /// Brings one kind of claim row in line with the list the record carries.

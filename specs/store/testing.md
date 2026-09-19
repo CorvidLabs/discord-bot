@@ -14,9 +14,9 @@ against SQLite in memory.
 | `Tests/StoreTests/InMemoryConformanceTests.swift` | Conformance | Every behaviour against the store a contributor needs nothing to run, plus an assertion that the only behaviours it skips are the durable ones. |
 | `Tests/StoreTests/StoreRecordTests.swift` | Unit | The key's shape and its refusals, two thousand keys not colliding, rounding on both sides of 1970, a saturated amount surviving a round trip, a refusal that names what to change without printing a whole identifier, and the sentence about the payment record naming the wallet and the holdings it keeps. |
 | `Tests/StoreSQLiteTests/SQLiteConformanceTests.swift` | Conformance | The same behaviours against a file and against a database in memory. The file lane asserts nothing was skipped, so a probe going missing is a failure rather than a quieter pass. |
-| `Tests/StoreSQLiteTests/SQLiteFileTests.swift` | Integration | The settings in force on the connection that commits, a second store refused, a read-only view taking no lease, every migration having a reverse, the cascade read back off the schema, a schema from the future and an edited migration refused by both the open and the report of what is pending, a file with no schema reported as every migration pending, the copy taken before an upgrade, a store the open invented saying so, a member key the file itself refuses, and amounts sorting by value. |
+| `Tests/StoreSQLiteTests/SQLiteFileTests.swift` | Integration | The settings in force on the connection that commits, a second store refused, a read-only view taking no lease, every migration having a reverse, the cascade read back off the schema, a schema from the future and an edited migration refused by both the open and the report of what is pending, a file with no schema reported as every migration pending, the copy taken before an upgrade, a store the open invented saying so, a file from the previous build keeping its epochs and reading as charged to no period, a member key the file itself refuses, and amounts sorting by value. |
 | `Tests/StoreSQLiteTests/DurableVolumeTests.swift` | Unit | The local volume recognised and allowed, every network filesystem refused, an unidentifiable one allowed rather than refused, and the mount table matched at a path boundary. |
-| `Tests/StoreSQLiteTests/TargetShapeTests.swift` | Source | No chat client named anywhere, no route into a statement that is not a literal, no amount in a signed column, and no forced unwrap, try or cast. |
+| `Tests/StoreSQLiteTests/TargetShapeTests.swift` | Source | No chat client named anywhere, no route into a statement that is not a literal, no amount in a signed column, no reverse that drops a column, and no forced unwrap, try or cast. |
 | `Tests/StoreSQLiteTests/SQLiteProbes.swift` | Fixture | A temporary directory removed whether the body passes or throws, a probe that writes rows the store's own writer refuses, and a probe that lets a handle go and opens the storage again. |
 | `Tests/StoreSQLiteTests/RawSchema.swift` | Fixture | Reading and editing the file from outside the store, the way an operator with a command line would, which is also the claim about the file being readable by something that is not this project. |
 
@@ -100,6 +100,42 @@ against SQLite in memory.
 - `reserveStateRoundTrips`, including a state whose three maps name different
   streams and one naming a stream that has done nothing.
 
+### REQ-store-016, the charges an epoch was measured against
+
+- `anEpochRoundTrips`, extended with two charges, proves every backend returns
+  them whole and in the order they were written.
+- `anEpochGainsACharge` proves an epoch saved a second time with a further
+  charge reads back with both, in order, which is what a run cut off under one
+  ceiling and resumed under the next produces, and that an epoch nobody
+  charged reads as charged to nothing.
+- Both run against all three backends, through `InMemoryConformanceTests.swift`
+  and `SQLiteConformanceTests.swift`, rather than being proved once.
+- `SQLiteFileTests.swift`: "A file from the build before this one keeps its
+  epochs, charged to no period", which puts a file back to the previous schema
+  version and opens it with this build.
+- `ReserveStoreTests.swift`: "A record written before charges existed loads as
+  charged to nothing", and "A key that is genuinely missing still refuses, so
+  only charges are forgiving".
+- `SQLiteFileTests.swift`: "Reverting the schema forgets every memo of what was
+  written", which holds the charge memo to the rule the claim memo already
+  followed. A memo naming rows that have been dropped is worse than none: the
+  next save takes the prefix it names as written and appends after it.
+
+### REQ-store-017, a new migration with a real reverse
+
+- `SQLiteFileTests.swift`: "Every migration has a reverse, and reversing them
+  all leaves nothing behind", which now covers the third one too.
+- `SQLiteFileTests.swift`: "A pending migration copies the file first, and says
+  what it applied", run against a file one version behind this build.
+- `SQLiteFileTests.swift`: "A copy that cannot be taken stops the migration
+  rather than being skipped", which puts something unwritable where the copy
+  goes and proves the open refuses and the schema is untouched, so the same
+  upgrade can be tried again. The behaviour was correct by construction, with
+  the copy unguarded and ahead of the loop, and nothing held it.
+- `TargetShapeTests.swift`: "No shipped migration reverses itself by dropping a
+  column", asserted against the statements themselves rather than the text of
+  the file, so a comment explaining the rule cannot be what fails it.
+
 ### REQ-store-012, the suite runs anywhere
 
 - `InMemoryConformanceTests.swift` asserts the skipped set is exactly the
@@ -132,4 +168,7 @@ against SQLite in memory.
 | A member forgotten mid-epoch, who returns | A new key, and the account and the holding still stop a second payment |
 | A store opened twice in one process | Refused, because the lease is per open file description |
 | A migration list with a gap | Applied in order; an unknown applied version stops the start |
+| An epoch saved again with a further charge | Both charges come back, in the order they were written, because the rows are keyed by position |
+| An epoch row from the build before the charges | Reads as charged to no period, across the pending migration and with the copy taken first |
+| A reverse that would need to drop a column | Fails the source test, because the oldest SQLite this package admits at open cannot drop one |
 | A database in memory | Takes no lease, copies nothing, and offers neither probe |

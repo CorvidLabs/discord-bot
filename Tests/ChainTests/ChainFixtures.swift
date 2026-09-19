@@ -166,6 +166,20 @@ internal enum Fixture {
     internal static func openGovernor() -> RequestGovernor {
         RequestGovernor(limit: 0)
     }
+
+    // MARK: - Who a request is for
+
+    /// A member's caller, named by a key this instance drew.
+    ///
+    /// Obviously not a chat account id, because nothing that came from a chat
+    /// account may reach this layer and a fixture that looked like one is a
+    /// fixture somebody copies.
+    internal static func member(_ index: Int = 1) -> RequestCaller {
+        .member(key: String(format: "MEMBER-KEY-%04d", index))
+    }
+
+    /// The instance's own work, which carries no share.
+    internal static let sweep = RequestCaller.system(job: "role sweep")
 }
 
 /// What a data source was asked for, in order.

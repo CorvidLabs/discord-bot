@@ -173,6 +173,58 @@ internal enum Schema {
                 "DROP TABLE reserve_streams",
                 "DROP TABLE reserve_state"
             ]
+        ),
+        SchemaMigration(
+            version: 3,
+            name: "which period each run of an epoch was charged against",
+            up: [
+                // A table of its own, and the alternatives were both worse.
+                //
+                // A column on the epoch row cannot hold the two-period case
+                // without inventing a delimiter and a parser, needs two columns
+                // rather than one because a whole-unit figure is an amount and
+                // cannot share the text column, and its reverse needs either a
+                // `DROP COLUMN`, which the oldest SQLite this package admits at
+                // open does not have, or a rebuild of the money table.
+                //
+                // A fourth kind in `reserve_epoch_claims` would need no new
+                // table, but the kind column carries a check constraining it to
+                // three values, so adding one means rebuilding the table that
+                // holds the no-double-pay record. A charge is also not a claim:
+                // it stops nothing, and overloading the table that stops double
+                // payment with bookkeeping makes the next reader work harder.
+                //
+                // The key is the position, as it is for the claims, so the
+                // order the charges are read back in is the order they were
+                // charged in. An epoch cut off on Sunday and resumed on Monday
+                // has two rows and they are not interchangeable.
+                """
+                CREATE TABLE reserve_epoch_charges (
+                    stream_id TEXT NOT NULL,
+                    epoch BLOB NOT NULL
+                        CHECK (typeof(epoch) = 'blob' AND length(epoch) = 8),
+                    ordinal INTEGER NOT NULL
+                        CHECK (typeof(ordinal) = 'integer' AND ordinal >= 0),
+                    period_key TEXT NOT NULL
+                        CHECK (typeof(period_key) = 'text'),
+                    checked_whole_units BLOB NOT NULL
+                        CHECK (typeof(checked_whole_units) = 'blob'
+                            AND length(checked_whole_units) = 8),
+                    recorded_at INTEGER NOT NULL
+                        CHECK (typeof(recorded_at) = 'integer'),
+                    PRIMARY KEY (stream_id, epoch, ordinal),
+                    FOREIGN KEY (stream_id, epoch)
+                        REFERENCES reserve_epochs (stream_id, epoch) ON DELETE CASCADE
+                )
+                """
+            ],
+            // A whole object, dropped whole. The reverse of every shipped
+            // migration has to run on the oldest SQLite this package admits at
+            // open, and that floor is older than the release which learned to
+            // drop a column, so no reverse here may reach for one.
+            down: [
+                "DROP TABLE reserve_epoch_charges"
+            ]
         )
     ]
 
