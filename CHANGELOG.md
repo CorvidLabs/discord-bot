@@ -19,6 +19,60 @@ compare against.
 
 ### Added
 
+- **The package is a program.** A `Runtime` target holding the composition
+  root and a `BotMain` executable published as `bot`, so `swift run` does
+  something. Four verbs: `run`, `check`, `rehearse` and `help`.
+
+  - **Eight boot gates in a fixed order** that no setting can change: the
+    spending banner, the configuration, the store, the day's request count,
+    the bind, the node, the chat service and the loops. Each either passes or
+    stops the process with a code a supervisor can act on: 64 usage, 69
+    something already here or unusable, 70 internal, 78 the configuration is
+    wrong.
+  - **Nothing can identify to a chat service before the listener has bound**,
+    and that is enforced by a type rather than by the order of two statements:
+    a completed bind returns a value whose initialiser is internal, and the
+    chat seam's connect call requires one.
+  - **The store's exclusive lease is taken before the socket**, because it
+    asks the real question, which is whether another instance is using *this
+    data*. A second instance pointed at the same store on a different port is
+    refused with 69 and told the other copy keeps serving.
+  - **One description of every variable this build reads**, with each name
+    taken from the constant that owns it. A variable read but not described
+    stops the boot; a variable in a prefix this build owns that nothing read
+    is reported with the entry it is one edit from; a variable in a prefix
+    reserved for a part this build has not got, such as `DISCORD_` or
+    `VERIFY_`, stops the boot naming it.
+  - **A startup report at every start**, including one that then refuses, that
+    no setting can suppress, written section by section as the start makes it
+    rather than in one go at the end: a start killed by a supervisor's
+    timeout while the node is not answering has still printed the banner, the
+    catalogue, what it made of your settings, whether it created the store
+    and the address it bound. It says what the build made of the settings:
+    every rung in whole tokens and in smallest units, every collection, every
+    pool, the admin list in full, the node's host, which parts are off and
+    why, and the variable each numbered list stopped at. It never prints a
+    secret's value, length, prefix or hash, and never a URL's path or query.
+  - **`GET /health`** on `HEALTH_ADDRESS` and `HEALTH_PORT`, answering 200 when
+    every enabled part has been reached and 503 with `starting` until then. It
+    costs no chain request and still answers when the day's budget is spent. A
+    part you switched off contributes no part to wait for rather than one
+    reported as reached by a gate that asked nothing. The provider proof it
+    can carry is probed once at the start and after that only when somebody
+    has asked for an answer, so an instance nobody checks costs your provider
+    one request for its whole life. One slow client costs one connection: the
+    request is read on a thread of its own, never on the accept loop. A
+    listener that dies stops the instance with 70 and gives the store's lease
+    back, rather than leaving a process up that nothing can check and no
+    replacement can take over from.
+  - **Whether a build can spend is a parameter of the composition**, never a
+    reading of the settings. No payer is compiled in, so every build says so
+    in its first line, and there is no `TEST_MODE`, `DRY_RUN` or `SAFE_MODE`.
+  - Three new variables and no more: `STORE_PATH` (required, absolute),
+    `HEALTH_PORT` (required) and `HEALTH_ADDRESS` (loopback by default).
+  - No new package dependency. The chat seam is a protocol over Foundation
+    types with a role and a member both `String`.
+
 - **`Reserve`**: a finite pot, split into named streams, paid to recipients
   over epochs at a fixed share per slot, with four independent guards against
   paying one period twice. It plans and it records. It never sends anything,
@@ -47,6 +101,7 @@ compare against.
 - `specs/`, a contract per module, checked against the exported API by
   `specsync check --strict` in CI.
 - 694 tests in 48 suites, all offline. No test reaches a network, and none
+- 765 tests in 63 suites, all offline. No test reaches a network, and none
   needs a key, a funded wallet or a Discord server.
 - `docs/CONFIGURATION.md`: every environment variable an operator sets,
   grouped by what they are deciding rather than alphabetically, each with its
