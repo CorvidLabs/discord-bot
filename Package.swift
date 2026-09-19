@@ -53,7 +53,8 @@ let package = Package(
         // The durable store, on the SQLite the operating system already
         // ships. Separate from `Store` so a host that wants the records and
         // the in-memory backend never links a database at all.
-        .library(name: "StoreSQLite", targets: ["StoreSQLite"])
+        .library(name: "StoreSQLite", targets: ["StoreSQLite"]),
+        .library(name: "Verify", targets: ["Verify"])
     ],
     // Up to the next *minor*, not the next major. Semantic versioning gives a
     // 0.x release no compatibility promise at all across a minor bump, so
@@ -66,7 +67,18 @@ let package = Package(
     // says. Raising the floor is a pull request somebody reads, which is also
     // what TRUST-1.b asks of a new thing to reach.
     dependencies: [
-        .package(url: "https://github.com/CorvidLabs/swift-algorand.git", .upToNextMinor(from: "0.4.0"))
+        .package(url: "https://github.com/CorvidLabs/swift-algorand.git", .upToNextMinor(from: "0.4.0")),
+
+        // Declared here rather than reached through `swift-algorand`, which
+        // links `Crypto` without re-exporting it. `Verify` checks an Ed25519
+        // signature against a public key on its own, and the only verify the
+        // Algorand package offers is a method on a type that holds a private
+        // key, which is precisely what that target must never hold. A
+        // dependency a package uses and has not declared is one it cannot
+        // pin, and TRUST-1.b is that something new to reach is a diff
+        // somebody reads. Already resolved at 3.15.1 through the line above,
+        // so this moves no version.
+        .package(url: "https://github.com/apple/swift-crypto.git", .upToNextMajor(from: "3.15.1"))
     ],
     targets: [
         .target(
@@ -220,6 +232,24 @@ let package = Package(
         // own temporary directory. Everything else they need is a stub, a spy
         // or a loopback bind on port zero, so the whole suite still reaches
         // no chain, no server and no account.
+        // Proving a member owns an account. It reads nothing and holds
+        // nothing that could: no store, so it cannot write a record; no chain
+        // reader, so it cannot spend a request; no chat package, so a member
+        // is an opaque string it never interprets.
+        .target(
+            name: "Verify",
+            dependencies: [
+                .product(name: "Algorand", package: "swift-algorand"),
+                .product(name: "Crypto", package: "swift-crypto")
+            ],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+        .testTarget(
+            name: "VerifyTests",
+            dependencies: ["Verify"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+
         .testTarget(
             name: "RuntimeTests",
             dependencies: ["Runtime", "Store", "StoreSQLite", "Gating", "Chain"],

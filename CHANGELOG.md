@@ -93,6 +93,24 @@ compare against.
   request budget that survives a restart through the `RequestBudgetStore`
   protocol. Every figure it hands out says whether it is the whole answer, and
   a short answer becomes unknown rather than a smaller number.
+- **`Verify`**: deciding whether an Algorand account is controlled by whoever
+  presented a proof of it, in this process, with no second service. It mints
+  the five lines a member's wallet asks them to sign, keeps the session those
+  lines belong to, reads the signed transaction that comes back as a slice of
+  the bytes that arrived rather than a re-encoding, and applies fifteen
+  ordered refusals to it. Exactly one proof shape is accepted, a zero amount
+  self payment whose fee is bounded at the network minimum, and `rekey`,
+  `close`, `aclose`, `lx` and `grp` are each refused whether or not the
+  signature is good, so nothing this bot blesses could empty or reassign an
+  account if it leaked. There is no setting, flag or build configuration that
+  skips the signature check. It opens no connection, reads no clock, reads
+  nothing from outside the process and holds no key, and a suite reads its own
+  sources to prove each of those. A member is an opaque string it never
+  interprets.
+- **A new direct dependency**: `apple/swift-crypto`, at the 3.15.1 the lock
+  file already pinned, so no resolved version moved. It was arriving with
+  `swift-algorand` and being used without being declared, which is a
+  dependency this package could not pin (TRUST-1.b, TRUST-4).
 - Every target's configuration is read from numbered environment variables,
   with no default that somebody else chose: a missing required variable is a
   refusal that names it.
@@ -103,6 +121,10 @@ compare against.
 - 694 tests in 48 suites, all offline. No test reaches a network, and none
 - 765 tests in 63 suites, all offline. No test reaches a network, and none
   needs a key, a funded wallet or a Discord server.
+- 763 tests in 55 suites, all offline. No test reaches a network, and none
+  needs a key, a funded wallet or a Discord server. Every signature in the
+  verification suite is produced by a real signer over a real challenge with a
+  key generated inside the test, so the production path runs unchanged.
 - `docs/CONFIGURATION.md`: every environment variable an operator sets,
   grouped by what they are deciding rather than alphabetically, each with its
   default and one sentence on what goes wrong when it is wrong. It states
