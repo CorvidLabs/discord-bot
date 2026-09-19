@@ -19,6 +19,7 @@ compare against.
 
 ### Added
 
+<<<<<<< HEAD
 - **The package is a program.** A `Runtime` target holding the composition
   root and a `BotMain` executable published as `bot`, so `swift run` does
   something. Four verbs: `run`, `check`, `rehearse` and `help`.
@@ -73,6 +74,69 @@ compare against.
   - No new package dependency. The chat seam is a protocol over Foundation
     types with a role and a member both `String`.
 
+=======
+- **`Surface` and `SurfaceDiscord`, and an executable called `discord-bot`.**
+  The first version of this that can be run. It connects to a gateway,
+  registers four slash commands in one server, and answers them: `/ping`,
+  `/help`, `/verify` and `/unlink`. Four things in it are worth reading about
+  before trusting it with a server.
+  - **A command list Discord would reject fails a test, not a deploy.**
+    `CommandValidator` refuses offline everything Discord refuses at
+    registration, including a required option placed after an optional one,
+    and the boot runs it before the registration call. A rejected registration
+    fails a boot, and under a supervisor that restarts the process it fails
+    again, for ever.
+  - **The ports are bound before the gateway is identified.** Binding is how a
+    process discovers that another copy is already running. A second copy that
+    identified first would take the live copy's session away, because Discord
+    invalidates the session a duplicate identify collides with, and would then
+    exit anyway. Health therefore answers `503 starting` until the gateway is
+    ready: a bound socket is not health. Ready means the gateway's own ready
+    event, because asking a chat library to connect returns before the
+    websocket is open; nothing else raises health, and the event stream
+    ending lowers it again.
+  - **Nothing that blocks runs on the cooperative pool.** `accept`, `recv`
+    and `send` each run on a thread of their own and every accepted socket
+    carries a timeout, so peers that connect and say nothing cost short-lived
+    threads instead of stopping the gateway, every command and the health
+    answer. A failed `accept` is retried with a doubling wait rather than
+    ending the listener, and fifty failures in a row exit the process so a
+    supervisor starts a working one: a bound port nothing serves goes on
+    passing a health check while every callback is lost.
+  - **Every payload is bounded in UTF-16 code units**, which is the unit
+    Discord counts in. `String.count` counts grapheme clusters, so a card of
+    emoji passes a `count` check and is refused by the API, and because the
+    handler deferred first the member sees a thinking indicator that never
+    resolves. An over-long payload is clamped, or refused with a sentence when
+    truncating it would change what it says, and refusing covers the counted
+    bounds too: a card over twenty-five fields, over twenty-five buttons or
+    over the six thousand characters Discord adds an embed up to is refused
+    rather than sent with the end of it missing.
+  - **Every message edit carries an `attachments` array**, empty rather than
+    absent, because an edit replaces the list and omitting it makes a card
+    appear to freeze.
+- **The chat client is confined to one target.** `Surface` holds the rules and
+  the handlers and declares no chat client, so the whole of it is tested with
+  no token, no network and no guild. `SurfaceDiscord` is the only target that
+  imports it, which the manifest and a test both enforce. A member is a
+  `String` below that boundary.
+- **A verification callback that applies roles.** The listener validates the
+  payload before it answers `200`, so a portal never records a verification
+  this bot discarded. Then: admit the member, prove the account, read every
+  account they have, build holdings with unknown rather than zero where a read
+  failed, decide with `RoleRules`, and apply only the managed set in one call.
+  A balance nobody could read holds the roles it decides rather than taking
+  them away, and that rule holds on `/unlink` as well: an account that was
+  proved and never read makes the total unknown rather than adding a zero to
+  it. The rate limit counts the callback route and nothing else, because
+  behind a reverse proxy every request shares one address and a scanner would
+  otherwise lock the portal out. With no shared secret configured the route
+  does not exist at all and answers `404`, and a callback that arrives before
+  the store is open is answered `503` so the portal retries rather than
+  recording a verification that was thrown away. Every role write is read
+  back, because the chat client answers `200` and silently drops a role id it
+  does not recognise.
+>>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
 - **`Reserve`**: a finite pot, split into named streams, paid to recipients
   over epochs at a fixed share per slot, with four independent guards against
   paying one period twice. It plans and it records. It never sends anything,
@@ -118,6 +182,7 @@ compare against.
   ids, written before the code and cited by the tests.
 - `specs/`, a contract per module, checked against the exported API by
   `specsync check --strict` in CI.
+<<<<<<< HEAD
 - 694 tests in 48 suites, all offline. No test reaches a network, and none
 - 765 tests in 63 suites, all offline. No test reaches a network, and none
   needs a key, a funded wallet or a Discord server.
@@ -125,6 +190,13 @@ compare against.
   needs a key, a funded wallet or a Discord server. Every signature in the
   verification suite is produced by a real signer over a real challenge with a
   key generated inside the test, so the production path runs unchanged.
+=======
+- 787 tests in 63 suites, all offline. No test reaches a network, and none
+  needs a key, a funded wallet or a Discord server. The chat surface's own
+  share is 152 of them, and the test target that holds most of them cannot
+  reach a live host at all: it does not depend on the target that can build
+  an HTTP client.
+>>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
 - `docs/CONFIGURATION.md`: every environment variable an operator sets,
   grouped by what they are deciding rather than alphabetically, each with its
   default and one sentence on what goes wrong when it is wrong. It states
@@ -187,6 +259,7 @@ this file is that somebody can tell.
 - **`Reserve`** and **`Chain`**: `ReserveError` gains `spendLimitsExpired` and
   `ChainError` gains `requestBudgetCannotCover`. Both break an exhaustive
   switch.
+<<<<<<< HEAD
 - **`Reserve`**: `ReserveEpochRecord` gains `charges` and
   `ReserveEpochOutcome.periodKey` is renamed `cadencePeriodKey`, so a
   memberwise initialiser call and any reader of that property written against
@@ -232,6 +305,20 @@ this file is that somebody can tell.
   loader still refuses both by name; built in Swift, a percentage above a
   hundred could overflow the share's arithmetic and a burst of zero switched
   the whole guard off in silence.
+=======
+- **`Package.resolved` grows from three entries to twenty-nine.** The chat
+  client is a direct dependency and brings a NIO-based HTTP and websocket
+  stack with it. Every entry is listed in `docs/WHAT-IT-TALKS-TO.md`, read out
+  of the lock file rather than estimated, because `TRUST-4` is that you can
+  see what else comes with it and a graph this size arriving without a diff is
+  the thing the narrow version range exists to prevent.
+- **The package now listens and now writes a file.** Two ports, both named by
+  you with no default, both bound to `LISTEN_ADDRESS` which defaults to
+  loopback; and one SQLite database at `STORE_PATH`, which also has no
+  default. `docs/WHAT-IT-TALKS-TO.md` previously said the package opened no
+  socket and wrote no file, and now says the opposite in the same words rather
+  than dropping the claim quietly.
+>>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
 
 
 - `Package.resolved` is committed instead of ignored, so two clones of one

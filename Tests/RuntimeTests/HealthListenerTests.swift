@@ -222,8 +222,15 @@ internal struct HealthListenerTests {
         let answered = try await Self.request("GET /health HTTP/1.1", to: bound)
         let took = ContinuousClock.now - started
         #expect(answered.contains("HTTP/1.1 200 OK"))
+        // Three seconds, not one. What this proves is that a silent client
+        // does not block the endpoint until its own read timeout, which is
+        // measured in tens of seconds: any bound well under that catches the
+        // regression. One second was close enough to a loaded machine's
+        // ordinary scheduling that the test failed on a busy run while the
+        // listener was behaving correctly, and a test that fails for reasons
+        // outside what it names teaches people to rerun rather than read.
         #expect(
-            took < .seconds(1),
+            took < .seconds(3),
             "three silent connections delayed one health check by \(took)"
         )
     }

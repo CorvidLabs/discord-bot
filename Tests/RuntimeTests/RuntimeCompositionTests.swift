@@ -74,7 +74,7 @@ internal struct RuntimeCompositionTests {
         // reach is a diff somebody reads, so this list is the diff: adding a
         // package means adding it here and in `docs/WHAT-IT-TALKS-TO.md`, and
         // a reviewer sees both.
-        let expected: Set<String> = ["swift-algorand", "swift-crypto"]
+        let expected: Set<String> = ["swift-algorand", "swift-crypto", "DiscordBM"]
         let declared = Set(
             text.components(separatedBy: ".package(url:")
                 .dropFirst()

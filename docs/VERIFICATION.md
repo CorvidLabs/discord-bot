@@ -435,7 +435,16 @@ pooled holdings alongside them without breaking anything.
 8. **JSON decodes** into the five fields. Otherwise `400` with
    `{"error":"Invalid JSON"}`.
 9. **The payload validates.** Otherwise `400` with `{"error":"<reason>"}`.
-10. **Only then `200`**, and the work starts after the answer has been sent.
+10. **The store is open.** In the window between the port binding and the
+    boot finishing there is nowhere to put a verification yet, and the answer
+    is `503` with `{"status":"starting"}`. Retry it: a `200` there would tell
+    you to record a verification the bot threw away.
+11. **Only then `200`**, and the work starts after the answer has been sent.
+
+With no shared secret configured the bot is running with verification
+switched off, and this route does not exist: every request to it, with a key
+or without one, is `404`. An empty header and an unset secret would otherwise
+compare equal, which would be an open door into somebody's roles.
 
 Step 9 is the one worth understanding. The API key proves who sent the request,
 not that the request makes sense. The bot refuses a bad payload **before** it
@@ -589,7 +598,9 @@ then identify to Discord.
 The consequence for you is that **a bound socket is not evidence of health**.
 That is why `/health` answers `503 {"status":"starting"}` until the gateway is
 actually up, and why a deploy gate should wait for `200` rather than for the
-port to open.
+port to open. Up means the gateway's own ready event has arrived: asking a
+chat library to connect returns before the websocket is open, so that call
+returning is not evidence either.
 
 ### The portal is reachable before boot completes
 

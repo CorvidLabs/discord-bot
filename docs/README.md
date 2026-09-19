@@ -15,7 +15,9 @@ everything else links to it.**
 | [`../hi/`](../hi/) | What somebody wants, as plain sentences with ids that never move. The product decision: a threshold, a default, what happens when we cannot answer. | How any of it is built. A criterion never names a type or a variable. |
 | [`../specs/<module>/`](../specs/) | One module's contract: its purpose, every exported symbol, its invariants, its behavioural examples and its error cases. One per target, changed in the same pull request as the code. | Anything about another module, and anything an operator reads. |
 | [`CONFIGURATION.md`](CONFIGURATION.md) | Every environment variable: what it means, whether it is required, its default, and what goes wrong when it is wrong. The worked example, which a test loads. | Whether a variable is a secret or leaves the machine. That is the next row. |
-| [`WHAT-IT-TALKS-TO.md`](WHAT-IT-TALKS-TO.md) | Every outside service this reaches, every secret it asks for, the dependency graph, and the commands that check each claim. | What a variable means or what a sensible value is. |
+| [`WHAT-IT-TALKS-TO.md`](WHAT-IT-TALKS-TO.md) | Every outside service this reaches, every secret it asks for, every port it listens on, the dependency graph, and the commands that check each claim. | What a variable means or what a sensible value is. |
+| [`VERIFICATION.md`](VERIFICATION.md) | The wire contract between this bot and the portal that takes a signature: every call, every status, the transport constraint, and what a conforming portal must do. Written so the other half can be built from it and nothing else. | Whether the portal should be a separate service at all. That is the next row. |
+| [`decisions/`](decisions/) | One open question per file, with what has been decided and what has not. | Anything already decided and built, which belongs in a spec. |
 | [`../AGENTS.md`](../AGENTS.md) | The order of work (intent, then contract, then code) and the rules that bite while writing it. | Process: branches, commits, pull requests, releases. |
 | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | How a change arrives: branches, commit prefixes, the gates to run, the pull request template, how a release is cut. | The rules about the code itself. |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | What changed between two versions. New work under `Unreleased`. | Why a rule exists. That belongs in `hi/` or in a spec. |
@@ -29,6 +31,7 @@ everything else links to it.**
 | You are | Read |
 |---------|------|
 | Deciding whether to install this at all | [`WHAT-IT-TALKS-TO.md`](WHAT-IT-TALKS-TO.md), then [`../README.md`](../README.md) for what does not exist yet |
+| Trying to run the bot | [`CONFIGURATION.md`](CONFIGURATION.md) for the chat surface and storage, then [`VERIFICATION.md`](VERIFICATION.md) if you want `/verify` to work |
 | Setting it up for your own community | [`CONFIGURATION.md`](CONFIGURATION.md), starting at the worked example and reading upward |
 | Trying to understand the payout arithmetic | [`../README.md`](../README.md), then [`../hi/reserve.md`](../hi/reserve.md), then [`../specs/reserve/`](../specs/reserve/) |
 | About to write code | [`../AGENTS.md`](../AGENTS.md), then the `hi/` family you are touching, then that module's spec |
