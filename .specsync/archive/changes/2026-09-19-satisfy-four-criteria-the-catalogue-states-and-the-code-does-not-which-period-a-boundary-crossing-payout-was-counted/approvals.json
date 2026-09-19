@@ -135,6 +135,13 @@
         "reserve": "451a288e52cef4709245c8f766291422d0d665100874ddb87ac53d8d5b7fb03a",
         "store": "c57247595bcd33ebfb21ae98f9bb31cb6c41a272ff9baf682038deab9840e19d"
       }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1789857999,
+      "digest": "301c0ff5647a511974ac44e5f73ea759ef4936f066212b4ca2152c86cd007385",
+      "note": "Same-PR finalization closing digest"
     }
   ],
   "reopenings": []

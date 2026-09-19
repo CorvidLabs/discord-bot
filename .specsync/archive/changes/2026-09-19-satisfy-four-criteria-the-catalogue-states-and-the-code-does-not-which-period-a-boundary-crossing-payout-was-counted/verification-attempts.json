@@ -1,0 +1,1653 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1789857869,
+      "commit": "22349e5810f9fc5b6e1f7ad0bcc627077cae0b08",
+      "contract_digest": "a0ba97a6d5f44d448c38c5129b45c23a1cfb4c6743f1dd3557cd891f243dec06",
+      "execution_digest": "d06882533e49375cbb671208582930362ed3851a30d1d0358d7ced9bfa588453",
+      "workspace_digest": "d4c2b15fc79e6b98d2834321830eb55cdc8ba13f91ade7ef9aafb4aaa04f9a84",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec chain --spec games --spec gating --spec reserve --spec runtime --spec store --spec surface --spec verify",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-chain-020",
+        "REQ-chain-021",
+        "REQ-chain-022",
+        "REQ-chain-023",
+        "REQ-reserve-009",
+        "REQ-store-016",
+        "REQ-store-017"
+      ]
+    },
+    {
+      "timestamp": 1789857881,
+      "commit": "22349e5810f9fc5b6e1f7ad0bcc627077cae0b08",
+      "contract_digest": "a0ba97a6d5f44d448c38c5129b45c23a1cfb4c6743f1dd3557cd891f243dec06",
+      "execution_digest": "f7ccb698bcf550b28f0d74d176c3ac8a12620c3c8f94fd296511eaec48860336",
+      "workspace_digest": "d4c2b15fc79e6b98d2834321830eb55cdc8ba13f91ade7ef9aafb4aaa04f9a84",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec chain --spec games --spec gating --spec reserve --spec runtime --spec store --spec surface --spec verify",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-chain-020",
+        "REQ-chain-021",
+        "REQ-chain-022",
+        "REQ-chain-023",
+        "REQ-reserve-009",
+        "REQ-store-016",
+        "REQ-store-017"
+      ]
+    },
+    {
+      "timestamp": 1789857891,
+      "commit": "78319dda9f72ccbf5546049da7806904eb44461a",
+      "contract_digest": "a0ba97a6d5f44d448c38c5129b45c23a1cfb4c6743f1dd3557cd891f243dec06",
+      "execution_digest": "f7ccb698bcf550b28f0d74d176c3ac8a12620c3c8f94fd296511eaec48860336",
+      "workspace_digest": "d4c2b15fc79e6b98d2834321830eb55cdc8ba13f91ade7ef9aafb4aaa04f9a84",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec chain --spec games --spec gating --spec reserve --spec runtime --spec store --spec surface --spec verify",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-chain-020",
+        "REQ-chain-021",
+        "REQ-chain-022",
+        "REQ-chain-023",
+        "REQ-reserve-009",
+        "REQ-store-016",
+        "REQ-store-017"
+      ]
+    },
+    {
+      "timestamp": 1789857897,
+      "commit": "1d9e48b087f9ca46ee0f241af64e7f78694bfa64",
+      "contract_digest": "a0ba97a6d5f44d448c38c5129b45c23a1cfb4c6743f1dd3557cd891f243dec06",
+      "execution_digest": "f7ccb698bcf550b28f0d74d176c3ac8a12620c3c8f94fd296511eaec48860336",
+      "workspace_digest": "d4c2b15fc79e6b98d2834321830eb55cdc8ba13f91ade7ef9aafb4aaa04f9a84",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec chain --spec games --spec gating --spec reserve --spec runtime --spec store --spec surface --spec verify",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-chain-020",
+        "REQ-chain-021",
+        "REQ-chain-022",
+        "REQ-chain-023",
+        "REQ-reserve-009",
+        "REQ-store-016",
+        "REQ-store-017"
+      ]
+    },
+    {
+      "timestamp": 1789857963,
+      "commit": "1a4cfbe4e9b596a2ccf3496f057b9fbe82c7e86c",
+      "contract_digest": "fc1cd969a3f54cde9fc9815d0b01238ed64577e7c2b077bc1859062aa80448d2",
+      "execution_digest": "dcc0c45d8ae0e85b263f641c5509338cf9234e7b6fa4fe6eb05046677a96a5b2",
+      "workspace_digest": "d4c2b15fc79e6b98d2834321830eb55cdc8ba13f91ade7ef9aafb4aaa04f9a84",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec chain --spec reserve --spec store",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-chain-020",
+        "REQ-chain-021",
+        "REQ-chain-022",
+        "REQ-chain-023",
+        "REQ-reserve-009",
+        "REQ-store-016",
+        "REQ-store-017"
+      ]
+    },
+    {
+      "timestamp": 1789857977,
+      "commit": "a5975d319ecca9601ae51aaf4c59ce1e476fa933",
+      "contract_digest": "fc1cd969a3f54cde9fc9815d0b01238ed64577e7c2b077bc1859062aa80448d2",
+      "execution_digest": "dcc0c45d8ae0e85b263f641c5509338cf9234e7b6fa4fe6eb05046677a96a5b2",
+      "workspace_digest": "d4c2b15fc79e6b98d2834321830eb55cdc8ba13f91ade7ef9aafb4aaa04f9a84",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec chain --spec reserve --spec store",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-chain-020",
+        "REQ-chain-021",
+        "REQ-chain-022",
+        "REQ-chain-023",
+        "REQ-reserve-009",
+        "REQ-store-016",
+        "REQ-store-017"
+      ]
+    },
+    {
+      "timestamp": 1789857983,
+      "commit": "c9ffa5448d4a0b94e079149a6ab2ebcfd000347d",
+      "contract_digest": "fc1cd969a3f54cde9fc9815d0b01238ed64577e7c2b077bc1859062aa80448d2",
+      "execution_digest": "dcc0c45d8ae0e85b263f641c5509338cf9234e7b6fa4fe6eb05046677a96a5b2",
+      "workspace_digest": "d4c2b15fc79e6b98d2834321830eb55cdc8ba13f91ade7ef9aafb4aaa04f9a84",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec chain --spec reserve --spec store",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-chain-020",
+        "REQ-chain-021",
+        "REQ-chain-022",
+        "REQ-chain-023",
+        "REQ-reserve-009",
+        "REQ-store-016",
+        "REQ-store-017"
+      ]
+    },
+    {
+      "timestamp": 1789857983,
+      "commit": "6916da726e43e74254fdaaa947d98776a05b8481",
+      "contract_digest": "fc1cd969a3f54cde9fc9815d0b01238ed64577e7c2b077bc1859062aa80448d2",
+      "execution_digest": "dcc0c45d8ae0e85b263f641c5509338cf9234e7b6fa4fe6eb05046677a96a5b2",
+      "workspace_digest": "d4c2b15fc79e6b98d2834321830eb55cdc8ba13f91ade7ef9aafb4aaa04f9a84",
+      "acceptance_input_digest": "9f8fcdce6b9d1947b384bf2e8c4f01ed027b2bcae643a94761879ee1077276d6",
+      "acceptance_manifest": {
+        "schema_version": 1,
+        "entries": [
+          {
+            "path": "Sources/Chain",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "c8b56ae121742c0d400eda27e0e095686a04cda0bc2cb768212d409f8fcdb0ec",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "Sources/Chain/AccountDataSource.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "9dbf8507f74b4e3f9e3153a34cdf5d644317eeb9699cfe0bd7ab88a7c7c70b8c",
+            "entry_digest": "113c6c6e6a7d2a08cc4b70b81a1f948102df8b937aee898822de12fea4b229d2",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/BalanceCombiner.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "c7e4b6421793ebf67a2f4656c9e23887653d7a22622336dcb2561fc50709344e",
+            "entry_digest": "d152c5adb7e682ab6aab337d5181095d34cd3db4a5dfbd605aeacb5d54e6c440",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/BatchedChainReader.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "354d5b696ddf1679478f50fba564b199585977a5a84bcac1523a592c227db8be",
+            "entry_digest": "9d95c10364639103e7f3f7b1ddd050e81a2f98ce5d590ec2436ef12a2528ef16",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/CallerShare.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "fe5f915b8213bc8e03aad8c22d7c575a8c8540344ad24db8aadc93648c66f09b",
+            "entry_digest": "55ce3f8f3b892443046598d5df31545bc74cc88ebd50af69a441c343703365e1",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/ChainConfiguration.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "2f7898d1c7e30b02849c68a38685d16559f709cbead91cce1fad6755eee3259c",
+            "entry_digest": "0ddc1fdc537764360eaaa1f05945211efd2e21c66d99b6405391bcf43db540b2",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/ChainConfigurationError.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b2dc328310a65bead5ea37117b9bb1684148002dfeb7df9f2c2f9436d5bb7400",
+            "entry_digest": "7cc7a13b7b2c8f46787117858d17b8edd39077a0f1d129f494159640080b0a61",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/ChainEnvironment.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "4d2667a8606976bae5e88dcf324a712d8426728880419ca2b65469f18275c59f",
+            "entry_digest": "9bcb0f67a88aef077f64283fce7cc43a4578e6db79f985be12c5e567a2f17f9c",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/ChainError.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e22fb156587135b40a73037ab89bf1396d6e25a04217796c3fee1b6c9faec2d1",
+            "entry_digest": "77121d3e07ef205938381e9414fc51959e65a6693c303714796754ba68853cbf",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/ChainFormatting.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "3c58b6131f95168dbf7390fbb7322dcfa84a77cbfbd6fc593f2f36bd56e26556",
+            "entry_digest": "f4e44edcf801d807019c508f855cd9d567ce9bb5a25268b7f325ddfbaadbfeca",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/ChainHealth.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "a24a072d7f7bf074ba202023ef923c00ad7abe8e74591c08a8b68d36ea89287c",
+            "entry_digest": "72ea4160f5d3e1bccf5ae5f46a753f7b4053eb9a9ee115fda0b8449c08bfacf6",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/ChainHealthAssembly.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "f4e4a19e44a114fbccd1637548b40a120fd41f0000a5b9d91f2cd7b3760bf59e",
+            "entry_digest": "4d23d41215d19d3c630bd7d3128966fd11e3e1ccf8ae64d51644472a8026da87",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/ChainNotice.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "f85b4261864092404624a2bb546d6acb4020b5da213ae622beb417dffb5b7896",
+            "entry_digest": "16d7bbb004ad533af5ac2ed5a5f411f08d8158bc4d9db3c36bcb84dbbe84d558",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/ChainReader.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "7adb3a933a0a36b3b0507d1f863f2fa585d3f3f0eadf3059da4a80ead5a2ea5f",
+            "entry_digest": "eff351593b85cb2859cbc63229740eede2337259ce85098c7994dc5311a374c5",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/ChainReading.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "4b018cebc7da8d5b08c5e0c281699daebebec2f8965e4cb752d164c49565b84f",
+            "entry_digest": "bd814c387248097bd3119bc03deaea7f331aed7f60fc5300a8dbbf0047261030",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/DailyRequestBudget.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "d1c7d0a2b9e193f8d0dd5767909601cd6edee04fefe92618b5418e4e47eba228",
+            "entry_digest": "ef5f240e758e087c46dc230dc130ef3747e324d5091b6c9a952a7edb6b7e7383",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/ExpiringMap.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "fae5cb0cbf160928e58adcafcb75a733e8df9660dd4aa871596a31b63929de34",
+            "entry_digest": "78147134974404299356b9d2a7bf737680f1aef9e05694e143d6c873e0aec530",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/GatingBridge.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "4d8546f3f1cae2b4dd4fc19bd38fdd51c0bc360581cf3b62f49d2e8ed4cd4544",
+            "entry_digest": "070b3625d4022f8b9d426b7e4f2a0c4e1a5216102c81aab00b121e3683a75a54",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/NodeAccountDataSource.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "1e669e7176c6f0c356ac0469edea019c8d64dbf30c68860646bf88d92b6ef46c",
+            "entry_digest": "1ab22c6326c4d03a53f0f50d1ce0c96e7425d600b19e9fe3d8cc6bed2336f6ab",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/PoolCounting.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "6125b5880f5636d199abbe8511cecfde4719c110750e60a8692030960d4ba06b",
+            "entry_digest": "73e0b348ef4681ff8a2f25a92d867f31dd69802f3de7e702da85be77f8914133",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/PoolReserves.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "94a6925ce7aa2290b89acf960bc2e1d852ba15df5612acf431ec531ba77eba93",
+            "entry_digest": "4016523a1a70ee9f09f73ba140fa8009c80d775ac48181d7357dbcc96ff34828",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/ProviderProofProbe.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "daca2fa0aed42aaf0e10566c1999711e85e6398ce3c83de7b6772b03cf9f4a27",
+            "entry_digest": "60eade3909d12c113a9b55afa2158f4000b71fad2716df3a462c6cce45e68f32",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/RequestBudgetSnapshot.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "c16e482a32167f212ba784fff5d1f35e03ce4a3aa097c8b794ee6045b038a06a",
+            "entry_digest": "7f4e05c0fb0b68a63a9644709bd3d7848a957216adf7cd17c2508992b0d2fa50",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/RequestBudgetStore.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "fffa1c4128253d1a457032576dbd3a0089794854a8242978e504c5f8ee639ba5",
+            "entry_digest": "2f9d0f42502c63169a149e8d7edfd83e2375c92fb5161bd9e311297ec2a68660",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/RequestCaller.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "f68a9396089a4888c3fa7288836fc27853c7d850849574d536d1965fa8a96d0e",
+            "entry_digest": "f2cca2b04e50c1df8215eefd39b00b11a37a19d91a092e2dfc67227729f67281",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/RequestGovernor.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "cea95bba2b59aa58ca3d8dc319f8d3d242c20d86cc69c2b0b3f69d84d86bb3ae",
+            "entry_digest": "a1654e1d9c4320468c36066a45dc0a1b88e49d9ba3507317f81e92a129198f5b",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/RequestRateLimiter.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "429947bbf9b0897eb1932c7e690940f2bd10ef1d3f0846cf0d55b0d6ca653f83",
+            "entry_digest": "76481f42ac1d5afa4ad10d9765d635d622a08881ad7176139cc94a84c1ddc626",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/TokenBucket.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "34dfda550027bb2df9d722ed228e739ad358bd83f759f6bad9a6534e6b5ddcea",
+            "entry_digest": "679afb4bc2105711275f12d3e51a614bf8ae8706035c44c86d2e22c783f31b03",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/TokenProfile+Amounts.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "21a69d1df86a551021ec9ff02cb4a70a2ee26dc669b65489422eac2fbc5bd184",
+            "entry_digest": "1c98567039d3ff781e6d9d5373689e802dae4d02760029acfd14ed03742b8a49",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/UTCDay.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "66f826ec12cde18017d5f2524b22580541ebd696529e21da4e0c48b26c570b80",
+            "entry_digest": "5547b325260e6d93a30dd669fa7b7d177201c272f4bdd9dd6d397c4b4456103f",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/WalletCheck.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "54c9e5a3b3fd06d693e58f651c0c127c291d64cf795d666a5f5943d2388875b0",
+            "entry_digest": "dc0bd96bcadd221ce443e9bedd4ac05033f79b5e39b4f2395d1602f60fe2e843",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Chain/WalletCheckCache.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "43c40616c5ac8ff9b73ee61077708b1988e8a59d38b3c27d5feb8da6275f456d",
+            "entry_digest": "5c77d9e25f45449974e0823afa3afe0beda543ff866688828506ba710df59b68",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "Sources/Reserve",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "a038bbb3f11ab5dd08e7a97787a2cc2c298945a7f5b93a0bd114e1be08b67857",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveAsset.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e40a4d4dc9bc2df181c8345a30bac0523224087909f6d362aa0bad8ac4c5d30d",
+            "entry_digest": "da9e92e620e902666feb0ca9c2b1388bf10b62d7959d8bcdfcb296fc69cafcff",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveAudit.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "61ebba6a5a12a9fd5b6a25dc4cf7b4584970b60653e7a7d0bb73c3d02bb5b187",
+            "entry_digest": "ea01479442ee4b455398089cfdf44e198ee56739e371e0ed0ff048efd49ec09a",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveCoding.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "a6532299d708ae3d9c0be16939bb06329fe08fcbde6243dcd90dba013b797f56",
+            "entry_digest": "6964f5902c036bff421341af313ab2532d64adb64841c510f74863170f85018c",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveConfiguration.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "be8c7d73866de5ec90baac6e1e4ee9765cccdeaa391be10249d984666e7ae6a9",
+            "entry_digest": "b7818b0b4d06dbd81dccb3c1dfc29edbda1ab4ff92af1d22975183b8bff45795",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveConfigurationError.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b3b03f56f86db715bfa9f30ab37e27c195ca6bb08d3b2171f398c7cd87a076bc",
+            "entry_digest": "f550e6f4ed5e214a8b3baf57d8b24c074e35d3e8ff5a778d7b7f886550dc5f5d",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveEpochCharge.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "33e457cac247d7fbb1fa15bd7758aefe9e99cf9b56baf30a928d6da3e59d97fb",
+            "entry_digest": "ce93f3f8d064ee754b288c7eda550770e7a600f7a0edc2625d8c5e9c87ed10ea",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveEpochOutcome.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "960f83f97ac666ffb6846a6596fbc15688a098678e8513977f70376a20ba4a4c",
+            "entry_digest": "7091732ec06252e9fc1b743190ee56e4674b7666b22e17bae65db38324b4f5c2",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveEpochPlan.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "095b864f4f256d55236e1c44c4cb527d2ed7ee0a1dc11e114d99df6da80722b6",
+            "entry_digest": "62226029c546c59dd5606fae4e2340e4a39d8956121cbe67446ff67976ab3fd0",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveEpochRecord.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "5656d885f9f6f2a0e657efccffa60d128240bd4b90a53cf7606a78927c9e250b",
+            "entry_digest": "a5476bc30a07990e784afa14749963e6e5a359597d1203c65df6b041deb0023a",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveEpochSplit.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "837067dae1feea7aeeca5af7fe723d4a870687675af85b65cf78c42ecb50e7cd",
+            "entry_digest": "1842cbfc418f10b38d259b7955e84f61a39754f5f3ecc084786e51aa628a15f7",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveError.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "a6701a7191995ecf14d1c35e1c713b7ef54b8dea4c6d3762792866741085d79d",
+            "entry_digest": "d08e1e9bb962349db50b4fec1720b74217a09c9a59d875a7bb7ead3936da9983",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveFormatting.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "78dea03398b6890df41f01c2c008be4305767c3ab24417e47b58fbbafa380dd4",
+            "entry_digest": "819c47373c194671c381cf761c29821cb12049586b36a11851938851330789a7",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveGate.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "24c7e467906dc56e2e38cb1006b23226bd56d1ad94a1eb7e4e762b94fa44a51b",
+            "entry_digest": "cb24621e4bd39e64b1a4a87a166376de4ad392ac5303f1977de415c64aa668e0",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReservePayer.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "999f8dcde1a43536ee55d9362572bfbd4606a69e58d2dc20bffd1fe9ec72b3dd",
+            "entry_digest": "8181ec6f3f997619c9ecb0bc50a73d0a0eba5291ab6250dd41bc0bc2e04b0e2c",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReservePeriod.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b9974bf0e56856c371135dc6d0630d6b8ab00fda265aae75141958c725b9dbdc",
+            "entry_digest": "267f196e940056fc659f8b1a5fd9ac6c335a701128c1f1ef23f71b59559fdcc7",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReservePlanner.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e233b16feb1f8eb86c88c6d65c5334fb09765a57e7461ab98920082574604b08",
+            "entry_digest": "64e8af5c3064419872e9ec48afcbe81d145a7c7ccf149e5d122a93db38f50f66",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveRecipient.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e222a807b0b23cf826207b83d9c191571a9dc9844499e24737ba3c1cdc5ca59e",
+            "entry_digest": "4b94a77d778f65408f07acb88c70b1c5aa9f54bdf4461f3f8593fc811185a395",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveRunner.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "fa3331fa0923a0803eed588a91359485798a9fe9729e55aa97ebcead89342486",
+            "entry_digest": "3a5153d5a46ff540c2f8f8535603cf62aaa073ad67ec958c675636cdddd659cc",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveSchedule.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b5c6263c3394e7ff9761f474c41221918477f49bde4e45c36ab9a15655c859e5",
+            "entry_digest": "146e9a98ec260fb3e45a5f8d51082131cc18b5752f3aa6f507ec3c4331220a8f",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveShare.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "4b436aa87f8ba25820ea0113cc862776cacbf8e8c8d080a52bcae80985c98a3f",
+            "entry_digest": "4aa37904ad9f20ddb25fbdcd590ff290abdec4e61f45f3991522b4c6f0abd4b1",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveSpendLimits.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "447935a432cb36fb6c244568beee8922ffcc9c7e78a2d5912d5b73d759c266cd",
+            "entry_digest": "504a95cdfe3c663375f2783c5468741ea9c97b1b468008141d7c84efd8da026d",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveState.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "39cfdff947c0ac46629f71cd80919ae230be5416ae7708c49c55926c3ee3e8a9",
+            "entry_digest": "d584a5c59a74d39d04623fe7708245b1a883e0adec75b1130139c57c4682dfec",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveStore.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "c580ed5c5f92cd6c24bf19dd357908db594cdff93ca3f034a2f3b18308b16291",
+            "entry_digest": "b684ba3d93d75d99344e83d954032cdda880e5991993e96ec9432537d89d825b",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveStream.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "4388ca015c86865d251063ef3afd37a088b43e352ff28ce8d47f71e1b1bcd37c",
+            "entry_digest": "effaa18790248f7103d2130124439c0c46bc8b86683015a49c39db314342d5b7",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Reserve/ReserveStreamProjection.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "404075b37fde94f54d35dfa7e2a584c0aba10a933643a7607bac9b5c05d83154",
+            "entry_digest": "1d2936d060d0c8f2ded318f2dd7f2e2999440f5ba2fcb1e317412e36160fbfa0",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "Sources/Store",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "7d172a426960b11df6b07bfd14e9051f3231c47794ba17b8c80b83929653a23c",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "Sources/Store/AccountRecord.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "9faa4748e9e32499343b092d08ecac618d6629e7d3b29ee17faec0539bb9b990",
+            "entry_digest": "570ec9fae179eab2247b5b2bff5063f6e768e3e1bd68725b7bf25c6653fdf7c5",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/Store/BotStore.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "3162153dfccdf828b3cd901e7309f423d9ef902edd68473d0b49482c29300a67",
+            "entry_digest": "6f02e4a3c81a68ee8263efb1b3e4d78033ada4626a8949666379ae1709a31b43",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/Store/InMemoryStore.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "a9daa56934f817eeb657c206c8e97bfef58d49a415549da06e914c4f671515f9",
+            "entry_digest": "5c4b41754a420b070b7dcf791ba8a51db875254ee030ee021cb0973b7bfb347a",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/Store/MemberDisclosure.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "45cb97477e074f56adc88d7d1e4cbefd7a0af10fd8dda1415f847c6e60a884e9",
+            "entry_digest": "fda26da6b9203a1384351d63dd2406bc8a7e307e259afc25c7eac9c0b1f8f368",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/Store/MemberKey.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "a1e58a1ff5f57bc13d45a97821264f437a64a4fbc0a425695d206b1fcf8cb6e2",
+            "entry_digest": "191b011378ebfa7fc75a96546d875adf68d54154c91bc802093da373744f31c2",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/Store/MemberRecord.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "aae8e87445ba1829d43d9ed53113653519e3cfa6bd851d439e4b4d4993757c1f",
+            "entry_digest": "82096ffc8f776c9ed57b430ce1d90d25252b7655faaa2951618693b63d139a05",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/Store/ReserveSpendReconciliation.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "7a477861bb3bf590935ee3cbdb77a08c8301a8fdf0551788fcf9e2d623d72efc",
+            "entry_digest": "ff3fab1152aedc461fcca40da28b83766da851f1352a2c907280919abe23bb72",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/Store/RoleBaselineRecord.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "68b4665d5c6c6f03e46cc414453be2a20acee051fd62b5e320caf70b8b1a74fe",
+            "entry_digest": "dd5379555cbea56a7bbe7540d3aea3241efb3853f52b6e343229c7d05c897ee2",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/Store/StoreDate.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "739bf090f4dc96a9a9673b524be5f7bd8ff49211f30f91449d54c3df149c32c4",
+            "entry_digest": "02311aac20a1b70ae1ec09467d8e25f2e23409c58b46508b6d35abcb13f09359",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/Store/StoreError.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "7c697817e2e54ef9a582de82e449ead1f5497de14a9928695377415b45643ede",
+            "entry_digest": "9858959ff017d0a7ba06f18b5761e24d9c93973a91444008a99c6bd993ce6f0b",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/Store/StoreTable.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "616ad1270692cb4cf338620dea3cb8f4ec34a0b9d8e0d961fbd0b342897488a7",
+            "entry_digest": "04364f5c25aa51864df82b2a4c8111d0fd2884aa37f29733d8a3831f22aaa225",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreSQLite",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "68ec5294b6dcca2331e0abc85faee666df243cb2ff159d7c811955e47cc76094",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "Sources/StoreSQLite/BaseUnits.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b739ce0e28882a5e7c8c5be3ddd8f81669bfbca2316b4f1416b4d65cc6a27740",
+            "entry_digest": "23bd1cdcfbaa05ca1c0fd3764091b1ddb89c9ccba9c4f19c9d6fb2110fc0b16e",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreSQLite/Connection.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "2c2dd613fe02a83121db5177a80acce7eee9df02b260c3960173e6d2ed74c38d",
+            "entry_digest": "6a87afb6040f657e8378b2ccdc573c36049db76e3df366672aef547c27573443",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreSQLite/DurableVolume.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "366e24caab3ba239fd7662601e15d300546faccfe01ffed7be8f51ce57e1e160",
+            "entry_digest": "2807d896bebf9bd333ac0d17b86375234fb743f9c9f3eb73567d1189ab989aca",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreSQLite/InstanceLease.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "bafee694dc4b5b4c2433e90b9d6431bf120be481d7267c2ea68fded49010523f",
+            "entry_digest": "30d71327c014b0f20b77fb9e4d7654e886a70e77eeb38210cbbc97e10cf420cd",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreSQLite/SQL.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "92a216618bd78890728109583b2e12aaa5a03ad7abd6feafd04806a650d5b375",
+            "entry_digest": "e6b86c4bf6797bda9d6d0f4388e830e0dd50bb93ee28142db4d34456f13dbda8",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreSQLite/SQLValue.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "a332db0ac7b43c1184a4c951bd4abd70df69a044834865e0bd34dafd709f4221",
+            "entry_digest": "cf87851e8529702baaf11c9433bea0ed2eed60c78bcae7c8e528bb5d6be0c65f",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreSQLite/SQLiteStore+Members.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "2b31534ac99e64eb73e5953034aaa2918d7c51d77cb2a7367615d9c07ada7c08",
+            "entry_digest": "b891a826242ea752e3a016a5fff778aaa2a9367153b7e66e7f11c8ebf6554e47",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreSQLite/SQLiteStore+Reserve.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "7344d837c4f526c77fc7d6d5bb5bd2bad93e312310fd15ea931d0b0d1f56f225",
+            "entry_digest": "5bd31f4c40495ec9e9c6c6d269b0df9eeb1fcd023daf3a6c815ef9873f705cb7",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreSQLite/SQLiteStore.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "823fff1cb82ddfa67bbba9656459b798dc48506f33f11314c97389e73ca2d775",
+            "entry_digest": "53e2dfbf1a83132725acb5ef2c3c2ec376f8a1ccd4c75847d8c6bb3a247807fd",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreSQLite/SQLiteStoreError.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "36637339b01a9085b6b6b80091cbd13847febeb34dfe78a433d4487e4ccb26c2",
+            "entry_digest": "b8fa5ed00a2bef3ddd67647bd9ffbcc0d1d9abae6cd750fc5b03c783b1579218",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreSQLite/Schema.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "55ef0ffe056880790c9473364ba398128ef5466dc68362210c706ea8edd17f21",
+            "entry_digest": "5cce5bd3e7f912404a02d6d8285eeb7b892bd2becb82892285b3bf0d0ebd39f4",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreSQLite/SchemaMigration.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "70405b36cab76002d7e41e2673bf7591cfb8824f2c0d0ac6bd7456d2540ce335",
+            "entry_digest": "5a2545d10bcf16d2836eabe87db979073f667692ac1199b4db76bb4d5dcb2606",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreSQLite/SchemaMigrator.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e11e2bc536bcabdbf0f00ea3cb1719e07161f0f74174508dbf85754893caeeb1",
+            "entry_digest": "067f5cfffec8070acf0b36373469c03f2bc4ee7a4f6880b6aeb3fe0b522aa4bc",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreSQLite/Statement.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "c7c62db10b2e45ab3dbdfa882922eab1b6584d678ec10d5066ecbd1fe79bd033",
+            "entry_digest": "165a6889a96bad5fe8a5aa5ed4ab4a61131fa7f271f8d5b20a5e4b273d49de8f",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreTestKit",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "eff7c74fc4a909916f29d1799fa466fb96b2ef9dd6416d82306c500438d23251",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "Sources/StoreTestKit/ConformanceDoubles.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "194a9939af95ea721c85a6b3c6d66d835509ef110d4042ddb251f8d372f86d3e",
+            "entry_digest": "3929aa7fd5ab11f3d5726b024f39fac1d5091f4f7dae0a35d34afd1a12849b6c",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreTestKit/ConformanceFixture.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "24711c96f80e1f10f2881d5526724a4c4c1a8b5463acd8c0926eab8537641605",
+            "entry_digest": "9d7a193abee8ba8c478408e5cd7d235a8f60486b7244f0ac217344265cb5afca",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreTestKit/InMemoryConformance.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "0a1878824fcea10f90d148766b1773c2c2f37cc8e5a52b223d089d1122d0b08a",
+            "entry_digest": "523947f89305644b5432c62ad4cb1305ee2cca6513cf92d309542cedcd1742eb",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreTestKit/StoreConformance+Durability.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "45e339940b490ebca5579c0cc2c0a8ca3dd5a51558e0e349827c347899c6a48f",
+            "entry_digest": "114d58774f4fdc786ae007c42c38cd21f79cc1d32ea29b0bed152d56588e6c11",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreTestKit/StoreConformance+Members.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "42394345858083308abf5f9362a0ac412dcf47c09c979f3ada98dc0398f439cb",
+            "entry_digest": "a87cd66ee2e8706d946bb1fa0ccdfca42595764b4e3d300a07a05e970313ec6f",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreTestKit/StoreConformance+Reserve.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "c5411d70951e96f1f006840d9b34db9b4725bf08489268686639a58b0a2ee342",
+            "entry_digest": "1a01543369aaf7632ab790a798798362ab99867d58305268aecabfaa05ec32a0",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreTestKit/StoreConformance.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "ee3c13c39aad971d5f452b64c6ffd20c5b4f01b25c1dfa51f70f4f4b9d173171",
+            "entry_digest": "157ea3438909a6b8d7c315c4a878356ab2442db1ec6700978f1f09060a9d4f2f",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreTestKit/StoreConformanceFailure.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "622ec79f5af097853e8d58047329083389240dfb8fa94f34c1e326ac1338aeae",
+            "entry_digest": "47f5bd473107a9af3c8c0db297d4f207b3aa8619f801fa392e05ec639a4d5f42",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Sources/StoreTestKit/StoreUnderTest.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "2ea883f5882b99da35ffe597480a472d075723acd418a71011fa9e0c31a19a01",
+            "entry_digest": "fb549fac771422c6e4bc5bd58dc7c29081435396b009df80f10a896e7de617c3",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "d665574dbdb4cd71b985bb569dd938a1c44ed2e953728b9d1ef2323e8e41bfe8",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests/BatchedChainReaderTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "31a8d719f163e939e3616b7e272a5d33b2f719e222828e0bfb616acf367dafc6",
+            "entry_digest": "39eb2c7d44cdec75e6703620ce4e996b12c6adb205741b4bcfd92ad85de5cfcc",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests/CallerShareTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e86cd8301b9326c0d173e8b1dcc43b824641f94e2d36ae2bac5bbd59c63aad3a",
+            "entry_digest": "9b52aab672d56c37ab0667b729106f14f427ae1f503eee5b0bb5ec1ef84fea76",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests/ChainConfigurationTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "79a1c77bbbe3520973469cd56a0ce0ae92b58ab3bd522e54a991c9a1f3594b4a",
+            "entry_digest": "d0483197a4e782e1ccfa184ca1b0389591618d9fadb2fd45e73a264fce43211f",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests/ChainFixtures.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "fe9a446ce907b1b70be71226b84c23053aef9727c278447059ce4b0965e57dfc",
+            "entry_digest": "99368919d82d288a57f645063a9dc7c924c18d06eb3d140c5f02232d88102421",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests/ChainHealthTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "3d1df5e4266a25dbd8369eed174227b4b27679d89b958498d9dfffdf0643089b",
+            "entry_digest": "0921156b723d7d1b844ffc34094a89050fd57d75a911f386e36ceeb35b92ce84",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests/ChainReaderTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e50a078b55f7177f97ebde54aaf62569bcfa13137ae85ed04050af311b74e87a",
+            "entry_digest": "9524926fdd00c9e34854b338266ebb0b11790a563c66c9d52bc0ed6811dea1d2",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests/GatingBridgeTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b0d283017b5ea87814e227ce936b19c9bad13355b6e656e2ab4c5c5ead2e9ff6",
+            "entry_digest": "e42704b1dead535a0794773f17437651185adb2fc351c708fa5bbab358a8bafa",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests/IncompleteReadingTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "35103b732964ed18e6784517b6557b40caf24c74ebac45f9f670121b459ea2ac",
+            "entry_digest": "c43b73e9f6a38bd0a621357152354ab460a407a969f97ddb9304c40f09f4029d",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests/PoolShareTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "4a44440121f0514a084fe8f9d3f60db4b74f25d7574ed24a1b6e1c97e73dee68",
+            "entry_digest": "06500db97c98d8a264a447ca1afd6accd3179af7b24d380b247b93c133fd9956",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests/RateLimiterTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "0522d0762eeba292c18e10366e1eac9dc9033c2fa8794046d8bbaac1a6361ef6",
+            "entry_digest": "d400e7729e67655f84e05e29775a73e38f9f2404871910551983aba12611e866",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests/RequestBudgetTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "dd22e5a5c6f96848dd484b4dc9c7f33af44a4867562fe419788c4546c5eff634",
+            "entry_digest": "77ba90a16a53c8e9071fb5a74df0b80e71b996e2795ba43c9c975c6606e57108",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests/RequestGovernorTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "5085c88ffa70250ca2bd0570f70af0c9e8cc3746f525dc355216b5807b80d605",
+            "entry_digest": "ee22d9cdd4aa0baff8b9eeb192111dde2cc519ad0ce9fb4d460bba289c9ab5a0",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests/TokenAmountTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "d2f18ea1e84b2c8ffca947899b9d42a1109e37d4848b1fe3a5e9985ea4293899",
+            "entry_digest": "942550e7480845b005ebe060d694ed633334f3ef41ea8253cf0d9a1a594313dd",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests/WalletCheckCacheTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "d306ee57f6801aa5a3ed32c8b07f946aee0255e04b3f4e8bfcdd743114ba842e",
+            "entry_digest": "6dfa6b84c44fef6aca554a3a4e2cd4f155b9ecf5acd99b8d47d52f59f794ad03",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ChainTests/WalletCheckTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "018cef2fb8b0adf0f4cb7069fd0f73c4e35f2f6115c586b6716a78eabdd49293",
+            "entry_digest": "fc41693fb2175e0eec9ea8f96355c4f46669455f7507df4b99d156090bf87c59",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ReserveTests",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "74ad0b3430597d1999a35f3be8f25ed9464aee1764ce5f48745bca50ffd1f32b",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ReserveTests/ReserveArithmeticTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e46aca735af68202acaafa4b45ca166aa423f249cc794a4149cb4eacbb32990c",
+            "entry_digest": "46f00547cb205cc90d29676e2ce0bf0e3a528d66220f098cd1fa596f0c309404",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ReserveTests/ReserveConfigurationTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "1bb6f559f0fb10819e14dd806a2e0d1f3fd87d8d23d63e44d86c6beb71fb18d3",
+            "entry_digest": "7d55f8023cb2b610dcbd02db49143007ea3faaaceb72576c457e207a731297a6",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ReserveTests/ReserveFixtures.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "c1c4015f6ea1ae0e1fb37550741e7397f36a1ee551443c7cbe3423fa82df396c",
+            "entry_digest": "65fd3858d9b8f12696306f86259bc6e3a16329b5fe42b4e6d35bb988d9f2ef28",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ReserveTests/ReservePeriodTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "bfd7f9b6f81144b28f96fa8cc32c30bb2afe0648679aceaa98389c239f7a3f97",
+            "entry_digest": "c86e2d0c4ab1a1a13029fbaca147c44e95af389bff8a7ca40f7f17f684fc06aa",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ReserveTests/ReservePlanningTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "f7c59f25e375e269b1661393703a0c1765f7b3949a1a4285f015a30ebc545035",
+            "entry_digest": "827fe7e9ee060b386cb21a47dc299a5ede442fc744103f8e86253fc09256250e",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ReserveTests/ReserveRunnerTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "ee7bce85b12442928ee7fdfd64ff14cf88f690cbfd6877fd2c838ed632f5b81b",
+            "entry_digest": "5e6630800640543e43691fe9c90e1ba884d3ae02c1d4450c2d5222e7463bd8ee",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ReserveTests/ReserveStateTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "d36ae81335015a63862bab683a9e2b713f7fd5850b3222f7d3716547cba9f524",
+            "entry_digest": "2a894aff02951872b6fc339911459e9d0abdc9ead59e2f537bdc116e4c2be65c",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/ReserveTests/ReserveStoreTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "ede3d24795684ef1b56c0b36147ae6a2b34d8009c124926f0fb62be55183f546",
+            "entry_digest": "05c0c54164215a230e8d7e744e837682fe74239ac87121842af941d2cff696da",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/StoreSQLiteTests",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "054391bf2ede6f584e5ae85bfe1a59ee6f0e7c0472c140381b787b21ef7dcfda",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/StoreSQLiteTests/DurableVolumeTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "6312575081380582c6f36bde0a40a6342374a6f9b0053b04d8cb5027e4a13346",
+            "entry_digest": "13b8e9df7cca7db3b7912515a91080782c7cbdd0c9d177a1a82865812049a34c",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/StoreSQLiteTests/RawSchema.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "17b8f16e3a81e0ee43210087c34fa6fd7c768ce66be1e9b4d4a6a89a38c3dd49",
+            "entry_digest": "58a2fe0af757f83482a740554066dd58fbb76626d84428ea69a556a4f06a4218",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/StoreSQLiteTests/SQLiteConformanceTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "552f8f2a806abb5729fca194038b977823aae6906cc354b9db5fa2c06767521c",
+            "entry_digest": "cf0edd4b8e8bdfcb488bfd6f7168bc681a7d35caddb9422b57d8245b47eb53ab",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/StoreSQLiteTests/SQLiteFileTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e56e2456de1e3e7d93ae4fa2a1d0b5a282e24a31664a6f9c4949b84157422711",
+            "entry_digest": "addc85e172f6a01a3af25d8b891fbb724d23999e09a5828b1d1f279a0f7b6ca2",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/StoreSQLiteTests/SQLiteProbes.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "07272e8c1d547b38dc01fa256c58f66016920a5b7214048ddd69f35fabe37724",
+            "entry_digest": "31aafcaf7e0b61b02177171e27960b6609cdc95a38d131a34e25cae7cca6b72b",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "Tests/StoreSQLiteTests/TargetShapeTests.swift",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "47ce13ba9f795228772323129d81f985e406dbbda49bb2d0dcc53644475a520b",
+            "entry_digest": "6a83c89dc6d1710fe9f82cf4c83360709b92e25b5cb3de7911428506fa9ded49",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "specs/chain",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "aab4b3f5efac9480178e561de983f52c96143bbcbba6a1fa6ccc35f418da05df",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "specs/chain/chain.spec.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "9457c252f0f5cfce8b75a0aa86706275f2fb01b9fe91c242484d5c15cc3c9126",
+            "entry_digest": "383d190a70541c75c6976643a25d955bda30bf8edd802f56aac1d9ad1c176c38",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "specs/chain/context.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "5ba319b391d11e87fe3097fcb215e42e1328e0ae3c405683cd0ad909dff63184",
+            "entry_digest": "e25f4c567c45c723667f97a255a24e7bbb09c8211e39311dcba1f5c73212973e",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "specs/chain/requirements.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "531b1be67584ae79aa7e9a036cb5f161f043fb542d6b293be2e6b8f9833c9b66",
+            "entry_digest": "8b4e44404696266cb4c256796813d462e958905ee692f2d184119edbf114cbb4",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "specs/chain/tasks.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "6ff6fab43df0269c6bf8cb546c5f6083ee41237854979f272f3efff52bcea255",
+            "entry_digest": "e639928a40ce7d119f8fac318489fca0af4e2c4f3077d9871ae33e26ac554663",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "specs/chain/testing.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "5a779adae1ee10c5c42252c1d35e59ab02a6d401b90f07b6ce78fe510e8eebe9",
+            "entry_digest": "b7e48884150b5ee6accac2cfbd41b15950b8c0976a795637db153adef453e79f",
+            "owners": [
+              "chain"
+            ]
+          },
+          {
+            "path": "specs/reserve",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "5ec6265fdc362490ea8b607feacef07999099335c8367af13c66da1b5ec05b6a",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "specs/reserve/context.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "9ce162c64836c228071d7f79531dda7348bc7b7a733f59ede2303c1f02567cce",
+            "entry_digest": "d2432302273de0d0318339abcb64c18092e43ef15d85fe80b796faeb19c1c715",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "specs/reserve/requirements.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "85d62a46d1abc93dee847f78573db31d3f1d3c5d098be979b9666188785bf01f",
+            "entry_digest": "ef334d0a84615dc41e65a7c212a12db2257a30b76ccf9f73e0b1bd8d3e0386b5",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "specs/reserve/reserve.spec.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "674cea641b9c471099d68ebc60de1c7285223a927f0238c0a45419708a119771",
+            "entry_digest": "53b1966d1e7fa3af324f1ca71d0c1ecf23d9dd1ee27089583975d131a754a2fe",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "specs/reserve/tasks.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "62f1b30a7824c3efad1de6b0eda9cfb887bdf52d2dded57e3aa0909b8a64e1b9",
+            "entry_digest": "9be8a7d9dd20740d1c47a84e6b2ebcbda3ceaf70ee0233d7521476449aea80f7",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "specs/reserve/testing.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "fba1f3987a3fb0a5c9c0822121b510cee4973198869727f433d41a1fbc8d2d1c",
+            "entry_digest": "0b0b8405cccd6b83aa885726abe9560b864379d000f81c58ef78a25abd4748e2",
+            "owners": [
+              "reserve"
+            ]
+          },
+          {
+            "path": "specs/store",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "42d4766c2342a72841e6c768935159691451df35aca2df1c7bfaa8ae7a6c4aab",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "specs/store/context.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "95b47d689fb98fcab05b7fdd3a2f0752b5e54af68854877bbdaf62735dc8a874",
+            "entry_digest": "6e7ee059ddaf6735082ee9fc92f0ae2e46933f6d1098c83c63198593dc0daca8",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "specs/store/requirements.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "ce170d76de7556dd7a7c600685e3b2474fb4445949afad679e1ebf33e3513508",
+            "entry_digest": "f0f12446d52c29fcffe1b3d011c89b0d611c6f8f522747c4bbaba6f8bdf7933e",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "specs/store/store.spec.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "8a6a4d7db7da542284ee6fa40a24d9d0a903294e8f31ee6e0084270a42266fc2",
+            "entry_digest": "262ed31586c48d17b2a65a9c89888d7d33d375f707660aef7d97b1a8a8a98093",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "specs/store/tasks.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b5f083fc8df5a4cfcc15b7e36ab6a09733272047cae848328bf3ac25f239505b",
+            "entry_digest": "f175d0a1587a82f6437ed30ce554005bbc8ee5cb9b19fbcddb97730d8911c36b",
+            "owners": [
+              "store"
+            ]
+          },
+          {
+            "path": "specs/store/testing.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "522896a0256b6e15a36a89591dd625f20fd7ee67cbbf5e5ec7af8ac80db84ce1",
+            "entry_digest": "b79026911a07fb7126583d962963933f2295314e87c72db4e7dfcf14cddd673a",
+            "owners": [
+              "store"
+            ]
+          }
+        ]
+      },
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec chain --spec reserve --spec store",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-chain-020",
+        "REQ-chain-021",
+        "REQ-chain-022",
+        "REQ-chain-023",
+        "REQ-reserve-009",
+        "REQ-store-016",
+        "REQ-store-017"
+      ]
+    }
+  ]
+}
