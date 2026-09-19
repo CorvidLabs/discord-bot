@@ -16,7 +16,8 @@ let package = Package(
         // will grow up beside it depends on this library like any other client
         // would, so the engine can never quietly acquire a Discord import.
         .library(name: "Reserve", targets: ["Reserve"]),
-        .library(name: "Gating", targets: ["Gating"])
+        .library(name: "Gating", targets: ["Gating"]),
+        .library(name: "Games", targets: ["Games"])
     ],
     targets: [
         .target(
@@ -41,6 +42,20 @@ let package = Package(
         .testTarget(
             name: "GatingTests",
             dependencies: ["Gating"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+
+        // The games, as reducers. Clock and randomness arrive as parameters,
+        // so a table replays from a seed and a rule can be pinned by a test.
+        // Nothing here can reach a chain or sign anything, and it has no
+        // dependency through which it could acquire the ability.
+        .target(
+            name: "Games",
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+        .testTarget(
+            name: "GamesTests",
+            dependencies: ["Games"],
             swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
         )
     ]
