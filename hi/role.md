@@ -15,6 +15,8 @@ All of that is about one number. A community also hands out badges for collectio
 
 And this arrives in a server that already has roles in it, nearly all of which have nothing to do with holding anything. The bot is a guest. It adds and removes the roles it was told to manage and leaves everything else alone, and a sweep that suddenly cannot see anybody is a reason to stop rather than a reason to strip a server bare.
 
+A guest also has to be able to let itself out. Switching the bot off should be able to hand back what it granted, in one action, because the alternative is a server left full of roles nobody can explain and nobody remembers how to remove.
+
 ## Criteria
 
 - **ROLE-1**  The role beside my name matches what I actually hold, without me asking for it
@@ -26,6 +28,8 @@ And this arrives in a server that already has roles in it, nearly all of which h
   - **ROLE-4.b**  A collection the bot could not read leaves that badge exactly as it was, while the collections it could read still update
 - **ROLE-5**  The bot adds and removes only the roles I told it to manage, and every other role in my server is untouched
   - **ROLE-5.a**  A sweep that suddenly sees almost nobody refuses rather than clearing the server in one pass
+- **ROLE-6**  When I stop running this I can have it hand back every role it granted, in one action
+  - **ROLE-6.a**  I can see which roles it would take back, and from whom, before it takes any
 
 ## Retired
 

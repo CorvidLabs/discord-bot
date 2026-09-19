@@ -47,3 +47,22 @@ The fixed pot that some of these payouts come out of is a separate family. reser
 - **RAIN-15**  A payout is counted in my token's own units, at whatever precision my token has
   - **RAIN-15.a**  The amount I type and the figure a member reads mean the same thing, and neither assumes a number of decimals my token does not have
   - **RAIN-15.b**  An amount too large to hold refuses rather than wrapping round into a small one
+
+## Retired
+
+Everything from **RAIN-4** to **RAIN-10**, including every sub-criterion under those seven, moved into the RESERVE family when the payout engine became a library in its own right. The whole range is reserved and must never be reused, because somebody reading this catalogue beside the one it was ported from has to be able to follow an id rather than guess at it.
+
+- **RAIN-4**  pay a crowd out of a finite, auditable reserve, with a payout a holder can predict
+        retired: became the RESERVE family. RESERVE-1 and RESERVE-2 say it now
+- **RAIN-5**  choose how long the reserve is paid out over, before the first payment
+        retired: became RESERVE-4
+- **RAIN-6**  a holder is paid at most once per epoch, across every wallet they have verified
+        retired: became RESERVE-3 and the once-per-recipient payout rule
+- **RAIN-7**  a collection can instead pay for every item somebody holds
+        retired: became RESERVE-3 and the once-per-held-unit payout rule
+- **RAIN-8**  what is promised and what has actually gone out are counted separately
+        retired: became RESERVE-5
+- **RAIN-9**  amounts are whole units of the token's own smallest denomination, and the arithmetic does not move
+        retired: became RESERVE-2 and RESERVE-8
+- **RAIN-10**  every one of these rules is pinned by a test
+        retired: not a want somebody has, it is how the others are kept true. RESERVE states each rule in a form a test can fail

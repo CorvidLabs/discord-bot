@@ -29,6 +29,9 @@ Whether it is really working, and what it did last night, belong to SEE. What ca
   - **RUN-7.a**  The copy already serving my server is the one that keeps serving it, and the extra one is the one that stops
 - **RUN-8**  A bot that restarts over and over does not keep redoing the work the last start already finished
   - **RUN-8.a**  A restart does not spend the day's allowance for reading the chain again on a sweep that has only just run
+- **RUN-9**  A new version tells me what has to change before I take it, rather than once it is the only copy running
+  - **RUN-9.a**  A version that needs a setting I do not have refuses to start and names the setting, instead of starting and quietly behaving differently
+  - **RUN-9.b**  Nothing a new version needs of me is discovered at the first sweep, or at the first payment
 
 ## Retired
 

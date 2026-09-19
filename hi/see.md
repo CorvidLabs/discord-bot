@@ -15,6 +15,8 @@ The second half is memory. Most of what an operator needs is not live, it is yes
 
 The third half exists only because somebody else runs this now. The operator did not write it and cannot read it, and the pieces it leans on are pieces they chose: their own chain provider, their own place for proving wallets, their own server. So when one of those is down, saying that something is wrong is not enough; the check has to say which one, or the operator spends the outage restarting the wrong thing. And a problem kept to read later has to be written in terms of something they could change, because a sentence naming what failed inside the code is a sentence they can do nothing with.
 
+Every want above this one begins with somebody looking. The person running this now may not be somebody who looks: they have no monitoring of their own, nothing that pages them, and no reason to open a check at two in the morning. So the last of these is the bot doing the telling, in the place they are already sitting, rather than waiting to be asked.
+
 What the bot made of my settings at startup belongs to ADOPT, and reading the settings back belongs to CATALOG. A member's own way of telling whether the bot is awake before believing an answer from it is LEARN's. This family is the operator's: what is true right now and what was true a few hours ago.
 
 ## Criteria
@@ -34,6 +36,9 @@ What the bot made of my settings at startup belongs to ADOPT, and reading the se
   - **SEE-10.a**  The check names the pieces I chose, so an outage at whoever I read the chain through reads as theirs and not as mine
 - **SEE-11**  A problem I read afterwards names something I could change: a setting, a permission, an account, rather than the code that gave up
 - **SEE-12**  I can tell which version is running, and whether it is the one I meant to put there
+- **SEE-13**  When something breaks the bot tells me, where I already am, without me having to run monitoring of my own
+  - **SEE-13.a**  Where it tells me is somewhere I chose, and being told is something I can turn off
+  - **SEE-13.b**  One outage is one message rather than a stream of them, and I am told when it is over
 
 ## Retired
 

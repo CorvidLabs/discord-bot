@@ -15,6 +15,8 @@ Being open source is what turns the sentence into a fact. A host can be asked wh
 
 Whether an instance can move money at all is the operator's decision and nobody else's. A community that wants roles and nothing else has no paying account, so there is nothing for a host to be custodian of and nothing anybody has to be trusted with. Most communities will want exactly that, and it should be the boring answer rather than a special case.
 
+Leaving has two meanings and carrying a file to your own machine is only the weaker one. That is still this software, and a community that can move between machines but not away has not really been given the option. So what comes out has to be readable by something that is not this: a community that is done with it should be able to walk off with their members, their settings and the record of what was paid, and open all of it somewhere this project never hears about.
+
 If a host cannot say plainly what it can and cannot reach, nobody should buy it. That is the whole family: a person being able to see the boundary, rather than being asked to assume one.
 
 Watching whether an instance is healthy already has a home in SEE. That want does not change because somebody else is paying for the machine.
@@ -34,3 +36,8 @@ Watching whether an instance is healthy already has a home in SEE. That want doe
   - **HOST-7.a**  With no paying account there is nothing for a host to be custodian of, and I can say so plainly to my members
 - **HOST-8**  Moving between running it myself and having somebody run it costs my members nothing
   - **HOST-8.a**  Nobody proves their wallet again because the machine changed hands
+- **HOST-9**  I can take everything out in a form another tool can read, so leaving means moving on rather than only moving machines
+  - **HOST-9.a**  What comes out is all of it: my members and their wallets, my settings, and the record of what was paid
+  - **HOST-9.b**  I can take it out myself, whenever I want it, rather than asking whoever hosts me to prepare it
+- **HOST-10**  My instance serves the one server I set it up for and no other
+  - **HOST-10.a**  Added to a second server it says it does not serve there, rather than answering with another community's data

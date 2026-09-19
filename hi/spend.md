@@ -33,6 +33,9 @@ The other half of this is the record, and who is allowed to make one. Spending i
   - **SPEND-7.a**  A cap of a thousand is a thousand of my token whatever its decimals, because the asset is asked rather than assumed
   - **SPEND-7.b**  A limit named for a period limits that period, so nothing named for a day quietly governs a week
   - **SPEND-7.c**  Nothing spends an amount, an asset or an account I did not set, and there is no default waiting behind any of the three
+- **SPEND-8**  I can retire the key that signs and put a new one in without a single member proving a wallet again
+  - **SPEND-8.a**  What the old key did stays readable afterwards, so the record does not start over when the key does
+  - **SPEND-8.b**  Handing this over to somebody else and replacing a key that was on a laptop that left are the same operation, and neither asks anything of my members
 
 ## Retired
 

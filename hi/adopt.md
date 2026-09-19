@@ -45,3 +45,9 @@ The test of it is simple and unkind. Somebody who has not read the source should
 - **ADOPT-10**  I can run only the parts I want, and the parts I leave out cost me nothing
   - **ADOPT-10.a**  A community with a token and no collections, or collections and no token, is a whole setup rather than a broken one
   - **ADOPT-10.b**  If I never want it to send anything, nothing in my server offers a way to, rather than offering one that then fails
+- **ADOPT-11**  The bot tells me the exact Discord permissions it needs and the invite that grants them, rather than leaving me to work it out
+  - **ADOPT-11.a**  A role I told it to manage that sits above its own in the list is named when it starts, not after a member notices they were never promoted
+  - **ADOPT-11.b**  A permission it is missing is named as the permission to grant, in the words Discord already uses for it
+- **ADOPT-12**  Which chain it reads, and who it reads it through, are mine to set
+  - **ADOPT-12.a**  An asset or a collection that does not exist on the network I pointed it at stops the boot, rather than reading as held by nobody
+  - **ADOPT-12.b**  Which network it settled on is something I can read back when it starts, so a live server pointed at a test one is a mistake I catch before a sweep acts on it

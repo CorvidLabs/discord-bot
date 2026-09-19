@@ -26,7 +26,7 @@ scheduler are all unwritten.
 
 What the whole thing is meant to be is written down rather than implied.
 [`INTENT.md`](INTENT.md) and the files under [`hi/`](hi/) are that catalogue:
-seventeen families of plain sentences about what somebody wants from each part,
+nineteen families of plain sentences about what somebody wants from each part,
 every one with an id that never moves. They describe the intended product, not a
 running one. Only the RESERVE family has code behind it today.
 
@@ -233,7 +233,7 @@ Intent is written down before code, as plain sentences about what somebody wants
 each with an id that never moves. [`INTENT.md`](INTENT.md) indexes the families
 and `hi/` holds them. [`hi/reserve.md`](hi/reserve.md) is the only one with an
 implementation behind it: the engine's 52 criteria were written before any of it
-was built, and the tests cite them by id. The other sixteen families are intent
+was built, and the tests cite them by id. The other eighteen families are intent
 waiting on code, and are marked as such rather than dressed up as features.
 Module contracts live alongside the code and are kept in step with it.
 
