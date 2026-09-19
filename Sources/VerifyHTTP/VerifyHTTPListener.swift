@@ -158,29 +158,6 @@ public actor VerifyHTTPListener {
     /// How many connections may be being read at once.
     private let concurrentReads: Int
 
-    private let acceptQueue = DispatchQueue(label: "verify.http.accept", qos: .utility)
-
-    /// Where a connection is read.
-    ///
-    /// Not the accept queue, because the read blocks for up to
-    /// ``peerTimeoutSeconds`` and a peer that connects and says nothing
-    /// would otherwise hold the whole surface for that long. Not a
-    /// cooperative task either: a blocking read there holds one of the
-    /// pool's few threads, so one silent peer would starve everything else
-    /// this process is doing.
-    ///
-    /// Concurrent, and its workers are still finite, which is why
-    /// ``maximumConcurrentReads`` is counted before a connection is handed
-    /// to it. A queue this wide with no bound in front of it is a queue a
-    /// hundred silent peers fill, and a block queued behind blocked ones
-    /// does not run: the page then goes unanswered with nothing refused
-    /// and nothing logged.
-    private let connectionQueue = DispatchQueue(
-        label: "verify.http.connection",
-        qos: .utility,
-        attributes: .concurrent
-    )
-
     private var stoppedBecause: VerifyHTTPListenerDeath?
     private var wakeWriteEnd: Int32 = -1
     private var isRunning = false
@@ -299,19 +276,27 @@ public actor VerifyHTTPListener {
 
         let answering = service
         let listener = self
-        let connections = connectionQueue
         let report = log
         let budget = peerTimeout
         // One per bind rather than one per listener, so a listener stopped
         // and bound again starts with every slot free rather than with
         // whatever the last loop left.
         let reading = DispatchSemaphore(value: concurrentReads)
-        acceptQueue.async {
+        // A detached thread rather than a dispatch queue. This loop blocks
+        // until the listener is stopped, so on a queue it owns one of
+        // libdispatch's pool threads for the whole life of the listener.
+        // The pool is bounded on Linux and grown on demand on Darwin, which
+        // is why that shape passed here and starved there: a test run that
+        // binds several listeners at once exhausted the pool and every
+        // request went unanswered until its peer timed out. It is the same
+        // rule `SocketHTTPListener` already follows, and the same one the
+        // chat surface's own listener was written against: nothing that
+        // blocks runs on a shared pool.
+        Thread.detachNewThread {
             let death = VerifyHTTPListener.acceptLoop(
                 on: handle,
                 wokenBy: wakeReadEnd,
                 answering: answering,
-                handlingOn: connections,
                 bounding: reading,
                 within: budget
             )
@@ -383,7 +368,6 @@ public actor VerifyHTTPListener {
         on handle: Int32,
         wokenBy wake: Int32,
         answering service: VerifyHTTPService,
-        handlingOn connections: DispatchQueue,
         bounding reading: DispatchSemaphore,
         within peerTimeout: Int
     ) -> VerifyHTTPListenerDeath? {
@@ -455,7 +439,11 @@ public actor VerifyHTTPListener {
                 continue
             }
             let source = addressText(client)
-            connections.async {
+            // Also a thread of its own, for the same reason: this read
+            // blocks for up to the peer's whole budget, and the bound in
+            // front of it only limits how many do so at once. Sixteen
+            // blocked pool threads is most of the pool.
+            Thread.detachNewThread {
                 // Given back when the read is over rather than when the
                 // answer is written: the blocking read is what this bounds,
                 // and the answer goes out from a task nothing here waits
