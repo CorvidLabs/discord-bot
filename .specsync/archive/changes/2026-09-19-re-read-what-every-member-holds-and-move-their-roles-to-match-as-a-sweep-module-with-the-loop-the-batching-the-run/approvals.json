@@ -123,6 +123,13 @@
         "surface": "17f889699465b041de3c940f1a04e24b14e2f78fb3f6d3e1e089a44a719534df",
         "sweep": "028f047edf0cd357e6ccae5f15affe8035de3ba66c29693b1f549dba5f5f044e"
       }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1789858748,
+      "digest": "3affffc00a49543215ceff351e74934ab9d4c94eb59d4cb616c82e5724ebc978",
+      "note": "Same-PR finalization closing digest"
     }
   ],
   "reopenings": []

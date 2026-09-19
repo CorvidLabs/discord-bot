@@ -1,6 +1,6 @@
 ---
 id: re-read-what-every-member-holds-and-move-their-roles-to-match-as-a-sweep-module-with-the-loop-the-batching-the-run
-state: implementing
+state: archived
 type: feature
 base_commit: 3efbbf9e8ad527116e959424063fedfdb869a5a5
 ---

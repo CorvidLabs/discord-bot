@@ -7,11 +7,11 @@
   "title": "Re-read what every member holds and move their roles to match, as a Sweep module with the loop, the batching, the run record and the per-member reasons, that nothing calls yet",
   "description": "Re-read what every member holds and move their roles to match, as a Sweep module with the loop, the batching, the run record and the per-member reasons, that nothing calls yet",
   "kind": "feature",
-  "state": "verifying",
+  "state": "accepted",
   "canonical_applied": true,
   "base_commit": "3efbbf9e8ad527116e959424063fedfdb869a5a5",
   "created_at": 1789858240,
-  "updated_at": 1789858735,
+  "updated_at": 1789858748,
   "affected_specs": [
     "sweep",
     "surface"
