@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "serve-the-page-a-member-s-wallet-signs-against-and-the-routes-it-answers-as-a-verifyhttp-target-that-imports-no-other",
+  "implementation_commit": "37faffff926ea495e708d31b69d614771e1da844",
+  "implementation_tree": "7d53b8674afacd857af35c2e1c824940fe7e2f93",
+  "contract_digest": "0d114403a29ca751bed1572a61497e6dc427b90bed94276d28b6a50bd8781859",
+  "workspace_digest": "cc065706ed5f497efbcfb1dde2db567def8bc4314b227487406a8fe168ede26f",
+  "closing_digest": "ef10d554addefd6ec537ca2689ebc696e5b3369f224002738e1a8e5a87fa31d2",
+  "review_digest": "a989bdf4701f132c99cd1dc475bedea73ea919528ced1541ece5d94c505a1b09",
+  "finalization_digest": "8a532a2da09b9096cafd057d57d79019f9054034446e8047224de81b17b8dd35",
+  "timestamp": 1789858658
+}

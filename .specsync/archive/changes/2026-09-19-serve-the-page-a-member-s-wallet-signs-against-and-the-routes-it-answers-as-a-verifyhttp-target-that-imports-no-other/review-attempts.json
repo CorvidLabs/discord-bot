@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "serve-the-page-a-member-s-wallet-signs-against-and-the-routes-it-answers-as-a-verifyhttp-target-that-imports-no-other",
+      "reviewer": "0xLeif",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "37faffff926ea495e708d31b69d614771e1da844",
+      "contract_digest": "0d114403a29ca751bed1572a61497e6dc427b90bed94276d28b6a50bd8781859",
+      "execution_digest": "77eeaff3192bab26a1f303072f2f31294d57c498028b7d6c011d6de454f927ae",
+      "workspace_digest": "cc065706ed5f497efbcfb1dde2db567def8bc4314b227487406a8fe168ede26f",
+      "timestamp": 1789858648
+    }
+  ]
+}

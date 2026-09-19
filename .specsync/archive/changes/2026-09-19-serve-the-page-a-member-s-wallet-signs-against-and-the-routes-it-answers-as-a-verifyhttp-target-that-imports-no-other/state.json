@@ -7,11 +7,11 @@
   "title": "Serve the page a member's wallet signs against, and the routes it answers, as a VerifyHTTP target that imports no other target in this package and that nothing links yet",
   "description": "Serve the page a member's wallet signs against, and the routes it answers, as a VerifyHTTP target that imports no other target in this package and that nothing links yet",
   "kind": "feature",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "8ea3bf3a95fd9c935675e5ff12457529f43068d3",
   "created_at": 1789857752,
-  "updated_at": 1789858646,
+  "updated_at": 1789858667,
   "affected_specs": [
     "verify-http",
     "verify"

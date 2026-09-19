@@ -1,6 +1,6 @@
 ---
 id: serve-the-page-a-member-s-wallet-signs-against-and-the-routes-it-answers-as-a-verifyhttp-target-that-imports-no-other
-state: implementing
+state: archived
 type: feature
 base_commit: 8ea3bf3a95fd9c935675e5ff12457529f43068d3
 ---
