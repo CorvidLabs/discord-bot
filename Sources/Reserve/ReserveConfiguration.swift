@@ -292,7 +292,7 @@ public struct ReserveConfiguration: Sendable, Equatable {
 
     /// Refuses an eligible list the fixed denominator cannot cover.
     ///
-    /// The alternative — paying the first `denominator` of them — is a short
+    /// The alternative, paying the first `denominator` of them, is a short
     /// payout chosen by sort order, which is the worst possible way to decide
     /// who misses out.
     public func requireWithinDenominator(streamId: String, eligibleUnits: UInt64) throws {

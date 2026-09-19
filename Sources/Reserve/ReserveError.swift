@@ -45,7 +45,7 @@ public enum ReserveError: Error, Equatable, LocalizedError, Sendable {
         case .scheduleNotSelected:
             return "No schedule selected. Choose a duration before anything can pay."
         case .scheduleLocked(let scheduleId, let paidEpochs):
-            return "The schedule is already running as `\(scheduleId)` — \(paidEpochs) epoch(s) paid. "
+            return "The schedule is already running as `\(scheduleId)`: \(paidEpochs) epoch(s) paid. "
                 + "The duration is fixed once the schedule begins, because changing it would move every "
                 + "remaining payment."
         case .unknownSchedule(let raw):
@@ -75,7 +75,7 @@ public enum ReserveError: Error, Equatable, LocalizedError, Sendable {
             return "Stream `\(streamId)` already paid an epoch in \(periodKey). One epoch per period; "
                 + "the next one is due next period."
         case .notTheNextEpoch(let streamId, let requested, let next):
-            return "Stream `\(streamId)` epoch \(requested) is not next — the ledger is on \(next). "
+            return "Stream `\(streamId)` epoch \(requested) is not next: the ledger is on \(next). "
                 + "An epoch can be finished, never skipped."
         case .incompleteRecipients(let count):
             return "Aborted: \(count) recipient(s) could not be read. Working from a list with holes in it "

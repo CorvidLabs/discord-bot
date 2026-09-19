@@ -2,9 +2,9 @@ import Foundation
 
 /// Naming the period an epoch was paid in.
 ///
-/// A firing is identified by its *period* — an ISO week, a year-month — and
-/// never by a timestamp. The difference is the whole point: two runs an hour
-/// apart produce two different timestamps and the same period key, so the second
+/// A firing is identified by its *period*: an ISO week, a year-month. Never
+/// by a timestamp. The difference is the whole point: two runs an hour apart
+/// produce two different timestamps and the same period key, so the second
 /// one is refused. A missed period is still paid late, because the rule is one
 /// epoch per period rather than one epoch per calendar slot.
 ///

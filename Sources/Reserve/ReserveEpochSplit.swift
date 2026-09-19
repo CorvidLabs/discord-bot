@@ -13,10 +13,10 @@ import Foundation
 /// This is the other way. **Every epoch pays the identical floored figure**, and
 /// what will not divide is a residue that is never paid and never hidden: it is
 /// stated, and paid plus residue equals the share exactly. The residue is
-/// usually tiny — twenty smallest units per slot, a fifty-thousandth of a whole
-/// unit — but it is accounted for rather than swallowed, because an amount that
-/// cannot be reconciled is an amount somebody will eventually accuse you of
-/// taking.
+/// usually tiny: twenty smallest units per slot, a fifty-thousandth of a whole
+/// unit. It is still accounted for rather than swallowed, because an amount
+/// that cannot be reconciled is an amount somebody will eventually accuse you
+/// of taking.
 public struct ReserveEpochSplit: Sendable, Equatable {
 
     // MARK: - Properties

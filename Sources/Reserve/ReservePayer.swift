@@ -4,7 +4,7 @@ import Foundation
 ///
 /// This is the only signal that gives a claim back, so the bar for raising it is
 /// deliberately high: the refusal must have happened before anything was handed
-/// over. Not opted in, frozen, over a limit, an unfunded account — all fine.
+/// over. Not opted in, frozen, over a limit, an unfunded account: all fine.
 ///
 /// An attempt that was dispatched and then got no answer is **not** this. It may
 /// have gone through, and a claim released on a payment that actually landed is
@@ -28,9 +28,9 @@ public struct ReservePaymentRefusal: Error, Equatable, Sendable {
 ///
 /// The engine never sends anything. It works out what is owed, writes down that
 /// it is about to be paid, and then asks the host to pay it. Everything about
-/// how — a chain, a bank, a ledger entry, a spreadsheet — is on the other side
-/// of this protocol, which is why the engine can be tested end to end without a
-/// network.
+/// how the host pays, over a chain, through a bank, as a ledger entry, into a
+/// spreadsheet, is on the other side of this protocol, which is why the engine
+/// can be tested end to end without a network.
 ///
 /// The seam also exists for a blunter reason: when payment lives inside a
 /// concrete type that holds a key and talks to a network, none of the failure
@@ -43,7 +43,7 @@ public protocol ReservePayer: Sendable {
     /// ``ReservePaymentRefusal`` when nothing moved and the claim should be
     /// given back; throw anything else to keep the claim.
     ///
-    /// - Returns: A reference the operator can check the payment against — a
+    /// - Returns: A reference the operator can check the payment against: a
     ///   transaction id, a receipt number, anything that is evidence rather than
     ///   an assurance.
     func pay(entry: ReserveEpochEntry, streamId: String, epoch: UInt64) async throws -> String

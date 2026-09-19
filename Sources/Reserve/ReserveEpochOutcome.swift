@@ -8,7 +8,7 @@ public struct ReserveReceipt: Sendable, Equatable {
     /// What was owed.
     public let entry: ReserveEpochEntry
 
-    /// What the payer gave back as proof — a transaction id, a receipt number.
+    /// What the payer gave back as proof: a transaction id, a receipt number.
     public let reference: String
 
     // MARK: - Initializers
@@ -33,7 +33,7 @@ public struct ReserveFailedPayment: Sendable, Equatable {
     /// Whether the claim was handed back.
     ///
     /// True only when the payer proved nothing moved. False means the slot stays
-    /// claimed and unpaid for this epoch — the value stays in the reserve, and
+    /// claimed and unpaid for this epoch: the value stays in the reserve, and
     /// nobody is at risk of being paid twice for it.
     public let claimReleased: Bool
 
@@ -50,7 +50,7 @@ public struct ReserveFailedPayment: Sendable, Equatable {
 ///
 /// Note what is *not* here: a success flag. An epoch that paid nobody, an epoch
 /// that paid everybody, and an epoch that paid most of them are all reported the
-/// same way — as lists — because collapsing that into a boolean is how a partly
+/// same way, as lists, because collapsing that into a boolean is how a partly
 /// paid epoch gets announced as a success.
 public struct ReserveEpochOutcome: Sendable, Equatable {
 

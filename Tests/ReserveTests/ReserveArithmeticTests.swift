@@ -5,7 +5,7 @@ import Testing
 /// The arithmetic, pinned in smallest units.
 ///
 /// Every figure here is exact. Nothing is approximated, nothing is compared with
-/// a tolerance, and nothing goes near a `Double` — which is the property under
+/// a tolerance, and nothing goes near a `Double`, which is the property under
 /// test as much as the numbers are.
 @Suite("Reserve arithmetic")
 struct ReserveArithmeticTests {
@@ -441,7 +441,7 @@ struct ReserveArithmeticTests {
             nextEpoch: [Fixture.members: 1, Fixture.passes: 1]
         )
         // 50 × ceil(269,230.76923) = 50 × 269,231 = 13,461,550. One round-up of
-        // the total would say 13,461,539 — understating the charge on the very
+        // the total would say 13,461,539: understating the charge on the very
         // figure whose job is to warn about the limit.
         #expect(audit.nextEpochLimitCostWholeUnits == 13_461_550)
     }

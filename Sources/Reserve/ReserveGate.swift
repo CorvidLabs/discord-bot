@@ -2,7 +2,7 @@ import Foundation
 
 /// The one-at-a-time gate on reserve epochs.
 ///
-/// Running an epoch means reading the ledger, planning against it, then paying —
+/// Running an epoch means reading the ledger, planning against it, then paying,
 /// and every step of that suspends. If two runs start while the ledger still
 /// says the epoch is untouched, both build the identical plan, both pay, and
 /// **every eligible recipient is paid twice**: precisely the failure the epoch

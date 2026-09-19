@@ -3,7 +3,7 @@ import Foundation
 /// Works out what one epoch still owes.
 ///
 /// Pure. Hand it recipients and what the epoch has already paid and it answers
-/// what is left. No clock, no network, no storage — which is what makes every
+/// what is left. No clock, no network, no storage, which is what makes every
 /// rule below something a test can pin rather than something a comment claims.
 public struct ReservePlanner: Sendable {
 
@@ -85,7 +85,7 @@ public struct ReservePlanner: Sendable {
 
         // All three are `var` and all three are updated as the plan is built. A
         // `let` here would only catch what a *previous* run paid, so two rows
-        // for one account — or one person's two accounts — would both be paid
+        // for one account, or one person's two accounts, would both be paid
         // inside a single plan.
         var paidAccounts = record.paidAccountSet
         var paidRecipients = record.paidRecipientIdSet

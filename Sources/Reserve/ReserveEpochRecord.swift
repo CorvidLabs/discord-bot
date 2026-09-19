@@ -10,7 +10,7 @@ import Foundation
 /// payment becomes two: the value has left, nothing on disk says so, and the
 /// next run pays the same person again. Claiming first inverts the risk. A crash
 /// now leaves a claim with no payment, which under-pays by one slot and leaves
-/// the value in the reserve. That is the recoverable direction — an under-paid
+/// the value in the reserve. That is the recoverable direction: an under-paid
 /// slot can be paid next epoch; an over-paid one is gone.
 public struct ReserveEpochRecord: Codable, Sendable, Equatable {
 
@@ -131,7 +131,7 @@ public struct ReserveEpochRecord: Codable, Sendable, Equatable {
 
     /// Gives a claim back after an attempt that provably moved nothing.
     ///
-    /// Only for a refusal raised *before* anything was handed over — not opted
+    /// Only for a refusal raised *before* anything was handed over, not opted
     /// in, frozen, over a limit, an unfunded account. An attempt that got no
     /// answer keeps its claim, because the value may have left. `startedAt` is
     /// deliberately kept: the epoch really did begin.
