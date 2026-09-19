@@ -32,8 +32,8 @@ struct BootSequenceTests {
 
     actor CountingRegistrar: CommandRegistrar {
         private(set) var registered: [String] = []
-        func register(_ commands: [CommandDefinition], guildId: String) async throws {
-            registered = commands.map(\.name)
+        func register(_ catalog: ValidatedCatalog, guildId: String) async throws {
+            registered = catalog.names
         }
         var names: [String] { registered }
     }

@@ -91,7 +91,15 @@ public struct SettingsAudit: Sendable, Equatable {
     /// - Parameters:
     ///   - settings: The one snapshot of the machine's variables.
     ///   - keysRead: Every variable any loader asked for.
-    public static func of(settings: Settings, keysRead: Set<String>) -> SettingsAudit {
+    ///   - catalogue: Every entry in play: this build's own, plus any a
+    ///     linked part supplied through ``ChatGateway/settingsEntries``. A
+    ///     variable one of them describes is read by something, so it is
+    ///     neither a typo nor reserved.
+    public static func of(
+        settings: Settings,
+        keysRead: Set<String>,
+        catalogue: [SettingsEntry] = SettingsCatalogue.entries
+    ) -> SettingsAudit {
         var unread: [UnreadSetting] = []
         var reserved: [BootFailure] = []
 
@@ -104,7 +112,7 @@ public struct SettingsAudit: Sendable, Equatable {
             // the program considers unset is one layer refusing what another
             // accepts, which is worse than either rule on its own.
             guard NumberedEnvironment.nonEmpty(name, settings.value) != nil else { continue }
-            if let prefix = SettingsCatalogue.reservedPrefix(of: name) {
+            if let prefix = SettingsCatalogue.reservedPrefix(of: name, given: catalogue) {
                 reserved.append(
                     BootFailure(
                         variable: name,
@@ -117,12 +125,14 @@ public struct SettingsAudit: Sendable, Equatable {
                 )
                 continue
             }
-            guard SettingsCatalogue.isOwned(name), !keysRead.contains(name) else { continue }
-            unread.append(UnreadSetting(name: name, nearest: nearest(to: name)))
+            let described = SettingsCatalogue.entry(for: name, in: catalogue) != nil
+            let owned = SettingsCatalogue.isOwned(name, given: catalogue)
+            guard owned || described, !keysRead.contains(name) else { continue }
+            unread.append(UnreadSetting(name: name, nearest: nearest(to: name, in: catalogue)))
         }
 
         let undescribed = keysRead
-            .filter { SettingsCatalogue.entry(for: $0) == nil }
+            .filter { SettingsCatalogue.entry(for: $0, in: catalogue) == nil }
             .sorted()
 
         return SettingsAudit(unread: unread, reserved: reserved, undescribed: undescribed)
@@ -135,8 +145,8 @@ public struct SettingsAudit: Sendable, Equatable {
     /// One edit, not a general nearest match. A cleverer distance produces a
     /// confident wrong suggestion, which is worse than none: the name is
     /// printed either way, and the operator's eye is the better matcher.
-    private static func nearest(to name: String) -> String? {
-        let candidates = SettingsCatalogue.entries.map(\.pattern)
+    private static func nearest(to name: String, in entries: [SettingsEntry]) -> String? {
+        let candidates = entries.map(\.pattern)
         // A family pattern is compared with its numbers filled in from the
         // name being checked, so `TIER_2_MIM` is offered `TIER_2_MIN` rather
         // than `TIER_#_MIN`, which an operator would have to translate.

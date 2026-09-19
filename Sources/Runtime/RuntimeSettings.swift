@@ -156,11 +156,22 @@ public struct LoadedConfiguration: Sendable {
     /// its asset id (`GatingConfiguration.load`). That is why the first thing
     /// a clean machine is told to set is the asset id.
     ///
-    /// - Parameter settings: The one snapshot of the machine's variables.
+    /// - Parameters:
+    ///   - settings: The one snapshot of the machine's variables.
+    ///   - alsoRead: Variables something outside this module reads from the
+    ///     same snapshot, recorded so the audit does not report them as set
+    ///     and read by nobody. The one caller is a linked chat surface, which
+    ///     reads its own variables because this module is not allowed to name
+    ///     them (`BUILD-4`). The same compromise the chain loader already
+    ///     makes, for the same reason: a read this reader cannot see.
     /// - Throws: ``BootFailure`` naming the variable to change.
-    public static func load(_ settings: Settings) throws -> LoadedConfiguration {
+    public static func load(
+        _ settings: Settings,
+        alsoRead: [String] = []
+    ) throws -> LoadedConfiguration {
         do {
             let loaded = try settings.read { reader -> LoadedConfiguration in
+                reader.note(alsoRead)
                 let gating = try GatingConfiguration.load(reader.lookup)
                 // The chain loader takes a dictionary rather than a lookup, so
                 // its reads cannot record themselves. The names are noted from

@@ -79,17 +79,29 @@ public struct BootSequence: Sendable {
     ///
     /// - Parameter settings: The one snapshot of the machine's variables.
     public func run(settings: Settings) async -> BootOutcome {
-        var state = BootProgress(settings: settings)
+        // What a linked chat surface reads, in its own words. This module
+        // cannot name a chat variable, so the surface describes itself and
+        // the listing, the audit and the reserved-prefix rule all work from
+        // the same list (BUILD-4, RT-014).
+        let chatEntries = seams.chat?.settingsEntries ?? []
+        let catalogue = SettingsCatalogue.entries + chatEntries
+        var state = BootProgress(settings: settings, hasChat: seams.chat != nil)
 
         // 1. The banner, before the settings are even read.
         await state.write(StartupReportWriter.opening(capability: seams.spending), to: seams.output)
         state.passed.append(.banner)
-        await state.write(StartupReportWriter.catalogue(settings: settings), to: seams.output)
+        await state.write(
+            StartupReportWriter.catalogue(settings: settings, catalogue: catalogue),
+            to: seams.output
+        )
 
         // 2. Configuration. The only gate that touches nothing, so a wrong
         //    variable costs no lock, no socket and no request.
         do {
-            state.configuration = try LoadedConfiguration.load(settings)
+            state.configuration = try LoadedConfiguration.load(
+                settings,
+                alsoRead: chatEntries.filter { !$0.isFamily }.map(\.pattern)
+            )
         } catch {
             return await refuse(BootFailure.configuration(error), &state)
         }
@@ -99,7 +111,11 @@ public struct BootSequence: Sendable {
                 &state
             )
         }
-        state.audit = SettingsAudit.of(settings: settings, keysRead: configuration.keysRead)
+        state.audit = SettingsAudit.of(
+            settings: settings,
+            keysRead: configuration.keysRead,
+            catalogue: catalogue
+        )
         if let refusal = state.audit?.refusal {
             return await refuse(refusal, &state)
         }
@@ -165,7 +181,9 @@ public struct BootSequence: Sendable {
         )
 
         // 5. The bind, which produces the value nothing can identify without.
-        let health = HealthState(componentNames: Self.componentNames(for: configuration))
+        let health = HealthState(
+            componentNames: Self.componentNames(for: configuration, hasChat: seams.chat != nil)
+        )
         await health.markReached(HealthComponent.store)
         let socket = HealthListener(state: health)
         let bound: ListenerBound
@@ -233,21 +251,42 @@ public struct BootSequence: Sendable {
             StartupReportWriter.parts(
                 configuration: configuration,
                 capability: seams.spending,
-                chainOutcome: chainOutcome
+                chainOutcome: chainOutcome,
+                hasChat: seams.chat != nil
             ),
             to: seams.output
         )
 
-        // 7. The chat service. Nothing conforms to the seam in this build, so
-        //    this gate does nothing here; a chat variable being set was
-        //    already refused at the configuration gate, which is where an
-        //    operator finds out this build has no chat surface (RT-014).
+        // 7. The chat service, if this build has one. It is handed the value
+        //    the bind produced and cannot be reached without it, which is
+        //    what makes identifying before binding a program that does not
+        //    compile rather than a comment somebody moves (RUN-7.a). A build
+        //    with no chat surface refused a chat variable back at the
+        //    configuration gate instead, which is where an operator finds
+        //    out (RT-014).
+        //
+        //    Health is **not** raised here. The gate returning says the
+        //    identify was asked for, and asking for a websocket is not
+        //    having one, so the surface reports its own session through the
+        //    closure below and the component stays unreached until the
+        //    service's opening event arrives (SEE-1.a).
         if let chat = seams.chat {
             do {
-                try await chat.connect(afterBinding: bound)
+                try await chat.connect(afterBinding: bound) { state in
+                    switch state {
+                    case .open: await health.markReached(HealthComponent.chat)
+                    case .closed: await health.markUnreached(HealthComponent.chat)
+                    }
+                }
             } catch {
-                // Before the store closes, not after: a retry task still in
-                // flight holds the governor, which holds this store.
+                // The session first, and before the store closes. For the
+                // live surface this throws only once the identify has been
+                // spent, so a refusal that walked away would leave an
+                // identified session and a reconnecting client behind while
+                // the process exits and a supervisor starts another one.
+                await chat.disconnect()
+                // A retry task still in flight holds the governor, which
+                // holds this store.
                 await Self.stopBackground(&state)
                 await socket.stop()
                 await opened.store.close()
@@ -283,6 +322,7 @@ public struct BootSequence: Sendable {
             report: await state.finish(capability: seams.spending, to: seams.output),
             health: health,
             listenerSocket: socket,
+            chat: seams.chat,
             store: opened.store,
             governor: governor,
             output: seams.output,
@@ -311,11 +351,25 @@ public struct BootSequence: Sendable {
     /// incident the endpoint exists for. Off parts are named in the startup
     /// report instead (RT-016).
     ///
-    /// - Parameter configuration: What loaded.
-    internal static func componentNames(for configuration: LoadedConfiguration) -> [String] {
+    /// **A linked chat surface contributes one**, and it starts unreached.
+    /// A process whose websocket never opens is not a degraded bot, it is a
+    /// bot that is not in the server, and the whole reason this endpoint
+    /// exists is that nothing watching could tell the two apart (SEE-1,
+    /// SEE-1.a).
+    ///
+    /// - Parameters:
+    ///   - configuration: What loaded.
+    ///   - hasChat: Whether this build was given a chat surface.
+    internal static func componentNames(
+        for configuration: LoadedConfiguration,
+        hasChat: Bool = false
+    ) -> [String] {
         var names = [HealthComponent.store]
         if configuration.chain.verifiesAssetDecimals {
             names.append(HealthComponent.chain)
+        }
+        if hasChat {
+            names.append(HealthComponent.chat)
         }
         return names
     }
@@ -459,6 +513,11 @@ fileprivate struct BootProgress {
     // MARK: - Properties
 
     fileprivate let settings: Settings
+
+    /// Whether this build was given a chat surface, so a refusal's own Parts
+    /// section says the same thing a clean start's would.
+    fileprivate let hasChat: Bool
+
     fileprivate var passed: [BootGate] = []
     fileprivate var configuration: LoadedConfiguration?
     fileprivate var audit: SettingsAudit?
@@ -475,8 +534,9 @@ fileprivate struct BootProgress {
 
     // MARK: - Initializers
 
-    fileprivate init(settings: Settings) {
+    fileprivate init(settings: Settings, hasChat: Bool) {
         self.settings = settings
+        self.hasChat = hasChat
     }
 
     // MARK: - Internal Methods
@@ -506,7 +566,8 @@ fileprivate struct BootProgress {
                 StartupReportWriter.parts(
                     configuration: configuration,
                     capability: capability,
-                    chainOutcome: chainOutcome
+                    chainOutcome: chainOutcome,
+                    hasChat: hasChat
                 )
             )
         }

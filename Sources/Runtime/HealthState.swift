@@ -174,4 +174,15 @@ public enum HealthComponent: Sendable {
 
     /// The node, when the boot was told to confirm the asset against it.
     public static let chain = "chain"
+
+    /// The chat service, when this build was given a surface.
+    ///
+    /// **Raised by the session's own opening event and by nothing else.** The
+    /// chat gate returning proves only that the identify was asked for:
+    /// asking for a websocket is not having one, so a gate that marked this
+    /// reached would answer 200 to a deploy gate while every interaction is
+    /// delivered to nobody. Lowered again when the session ends, because a
+    /// green check on a deaf process is worse than no check at all (SEE-1,
+    /// SEE-1.a, SEE-10).
+    public static let chat = "chat"
 }

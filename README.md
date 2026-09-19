@@ -13,10 +13,13 @@ That is the product this is meant to become. Some of it is now written.
 the open, a piece at a time, out of a private bot that has been running a live
 community for months. There is a binary: it reads your settings, tells you what
 it made of them, opens its store, checks your asset against your node and
-answers a health endpoint. The Discord surface is written and tested beside it
-— the command catalogue, the router, the cards and four command handlers — but
-the executable links neither of its targets, so nothing in this build connects
-to a gateway. What is missing is listed below rather than implied.
+answers a health endpoint. Give it a `DISCORD_BOT_TOKEN` and a
+`DISCORD_GUILD_ID` and it also opens a gateway and registers two commands,
+`/ping` and `/help`. Set neither and it starts exactly as it did before,
+identifying to nothing. `/verify` and `/unlink` are written and are **not**
+registered, because the half of verification that answers a wallet is not
+assembled here and offering a command that cannot finish is worse than not
+offering it. What is missing is listed below rather than implied.
 
 | Target | What it is |
 |--------|------------|
@@ -30,7 +33,7 @@ to a gateway. What is missing is listed below rather than implied.
 | `Verify` | Deciding whether somebody controls an Algorand account, from a signature their own wallet produced. The five lines they sign, the session those lines belong to, a tolerant reader for what a wallet sends back, and fifteen ordered refusals. It reads nothing: no network, no clock, no key, no setting. |
 | `Surface` | What a member touches, minus the chat client: the command catalogue, the validator that refuses offline a catalogue Discord would refuse, the interaction router and its acknowledgement rules, the payload bounds counted in UTF-16, the cards, the boot order and four command handlers. It declares no chat client, so all of it is tested with no token, no network and no guild. |
 | `SurfaceDiscord` | The adapter, and the only target that knows what a snowflake is. Payload mapping, interaction decoding, card rendering, role application, a listening socket and the HTTP client for the verification portal. |
-| `BotMain` | The program, as the `bot` executable. The arguments, the one snapshot of the process environment, the live seams, the signals and the exit. It decides nothing, and it links `Runtime` and `StoreSQLite` only — which is why this build has no gateway. |
+| `BotMain` | The program, as the `bot` executable. The arguments, the one snapshot of the process environment, the live seams, the signals and the exit. It decides nothing: it is the only place that links `Runtime`, `StoreSQLite`, `Surface` and `SurfaceDiscord` together, and it builds a chat gateway only when you have configured one. |
 
 ```bash
 swift test    # 1131 tests in 91 suites
@@ -87,12 +90,13 @@ every environment variable, its default, and what goes wrong when it is wrong,
 ending in a worked example that a test loads through the real loaders.
 [`docs/README.md`](docs/README.md) maps which document owns which fact.
 
-### The four commands
+### The four commands, two of which are registered
 
-Written and tested, and **not reachable from the binary yet**: `BotMain` links
-`Runtime` and `StoreSQLite`, so nothing in this build registers a command or
-answers one. They are here because the code is written and under test, not
-because you can type them in a server today.
+`/ping` and `/help` are registered and answered by `swift run bot` once you
+set a token and a server. `/verify` and `/unlink` are written, tested and
+deliberately **not** registered: they need the verification half — a callback
+listener and a portal client — which the executable does not assemble, so
+every `VERIFY_` variable is still refused by name rather than half-honoured.
 
 | Command | What it does |
 |---------|--------------|
@@ -116,10 +120,10 @@ verification entirely rather than failing on it.
 Still most of it, and what is missing is most of what a community would
 actually use:
 
-- **The surface is not wired to the program.** `Surface` and `SurfaceDiscord`
-  are written and tested, and `BotMain` links neither of them, so there is no
-  gateway connection, nothing registers a command, and nothing turns a role
-  string from `Gating` into a Discord role. Wiring them is the next change.
+- **Verification has no way in.** The surface is wired to the program now,
+  but only `/ping` and `/help` are registered. Reading a member's roles and
+  setting them is implemented against the chat client and nothing calls it
+  yet, so no role string from `Gating` reaches Discord.
 - **No way for a member to reach wallet verification.** The part that decides
   whether somebody owns an account is here, offline and tested: `Verify` mints
   the challenge, keeps the session, reads the signed transaction a wallet sends

@@ -28,12 +28,18 @@ public protocol CommandRegistrar: Sendable {
 
     /// Replaces this server's commands with these.
     ///
+    /// It takes ``ValidatedCatalog`` rather than an array of definitions, so
+    /// a registration that has not been through the validator does not
+    /// compile. An invalid catalogue is a `400` that fails the boot, and
+    /// under a supervisor that restarts the process it fails again for ever
+    /// (`ADOPT-2`).
+    ///
     /// - Parameters:
-    ///   - commands: The validated catalogue.
+    ///   - catalog: The catalogue, with proof that it passed the validator.
     ///   - guildId: The server. Guild commands, never global: a global
     ///     command appears in every server the bot is in, and this instance
     ///     serves one (`HOST-10`).
-    func register(_ commands: [CommandDefinition], guildId: String) async throws
+    func register(_ catalog: ValidatedCatalog, guildId: String) async throws
 }
 
 /// Something that identifies to the gateway.
@@ -241,11 +247,13 @@ public struct BootSequence: Sendable {
             await health.setVerification(.off)
         }
 
-        try CommandValidator.validate(catalog.commands)
-        steps.append(.validatedCatalog(commandCount: catalog.commands.count))
+        // The validator's own answer is what the registrar takes, so these
+        // two steps cannot be put in the other order by an edit.
+        let validated = try CommandValidator.validated(catalog)
+        steps.append(.validatedCatalog(commandCount: validated.commands.count))
 
-        try await registrar.register(catalog.commands, guildId: configuration.guildId)
-        steps.append(.registeredCommands(commandCount: catalog.commands.count))
+        try await registrar.register(validated, guildId: configuration.guildId)
+        steps.append(.registeredCommands(commandCount: validated.commands.count))
 
         try await gateway.identify()
         steps.append(.identified)

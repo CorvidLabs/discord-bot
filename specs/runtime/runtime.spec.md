@@ -28,6 +28,7 @@ files:
   - Sources/Runtime/StoreOpening.swift
   - Sources/Runtime/VariableNames.swift
   - Sources/BotMain/BotMain.swift
+  - Sources/BotMain/ChatSurface.swift
   - Sources/BotMain/LiveSeams.swift
 
 db_tables: []
@@ -67,9 +68,12 @@ is why the endpoint answers `starting` until the parts that must be up are up
 
 ### What is deliberately absent
 
-- **No chat client.** The seam is a protocol over Foundation types with a role
-  and a member both `String`. Nothing conforms to it and no package dependency
-  was added.
+- **No chat client, in this target.** The seam is a protocol over Foundation
+  types with a role and a member both `String`, and the one conformance lives
+  in the adapter, which depends on this target. SwiftPM refuses a cycle, so
+  this target can never depend back and `Store` stays two edges further away
+  still. Nothing here imports a chat library and nothing here names a
+  snowflake, a server or a channel.
 - **No wallet verification, and no boot gate for one.** When one arrives it is
   a component that can be unreached without the bot being down, because losing
   the part that proves a wallet should lose verification and nothing else
@@ -107,7 +111,7 @@ belongs to which. `BotMain` exports nothing: every declaration in it is
 | `budget` | The gate that puts today's request count back into the one governor. |
 | `bind` | The gate that binds the health endpoint, and the listener method that does it and returns ``ListenerBound``. |
 | `chain` | The gate that asks the node whether the asset is the one the operator described; the chain seam on ``RuntimeSeams``; the loaded chain configuration; and the health component named for the node. |
-| `chat` | The gate that identifies to the chat service, and the chat seam on ``RuntimeSeams``, which is nil in every build at this commit. |
+| `chat` | The gate that registers and identifies to the chat service; the chat seam on ``RuntimeSeams``, nil when this build was given no surface; the ``SettingsGroup`` the surface's own variables are listed under; and the health component the session's own opening event reaches. |
 | `loops` | The gate where a sweep and a scheduler will go. It is empty. |
 | `BootOutcome` | What a start came to. |
 | `running` | It walked the gates and is up: the outcome case, and the ``RuntimeResult`` case that carries the instance the caller waits on. |
@@ -129,8 +133,11 @@ belongs to which. `BotMain` exports nothing: every declaration in it is
 | `nextRetryDelay` | The wait before the retry after one that waited this long. Pure, so the schedule is pinned by a test rather than by waiting for one. |
 | `probe` | Asks the node once and classifies the answer. |
 | `classify` | Which of the four answers an error is. Asks whether a 403 is the provider's own quota refusal before treating it as a wrong credential. |
-| `ChatGateway` | The chat service, as this module is willing to know about it: a protocol over Foundation types with a role and a member both `String`. Nothing in the package conforms to it. |
-| `connect` | Identifies to the service. Takes the proof that a listener is already bound, which is what makes the wrong order a compile error. |
+| `ChatGateway` | The chat service, as this module is willing to know about it: a protocol over Foundation types with a role and a member both `String`. One target conforms to it, and it is the only one that may: the adapter that knows what a snowflake is. |
+| `settingsEntries` | Every variable the linked surface reads, described as this module's own catalogue describes its own. The surface describes itself because a module that links no chat library may not name a chat variable, and the descriptions are what put those variables in the report, count them as read, and stop them being refused as belonging to a part that does not exist. |
+| `connect` | Registers what this build offers, then identifies to the service. Takes the proof that a listener is already bound, which is what makes the wrong order a compile error, and the closure the surface reports its session through, because returning from it is not a websocket. |
+| `ChatSessionState` | Whether the chat session is open, as the gateway itself sees it. Two cases and no detail: the reason a session ended belongs in the surface's own log, where the words for it exist. |
+| `closed` | The session ended, and nothing is being delivered. |
 | `roleIds` | Every role a member holds now, including ones this build knows nothing about. |
 | `setRoles` | Sets a member's roles to exactly this set. |
 | `disconnect` | Stops talking to the service. |
@@ -190,6 +197,7 @@ belongs to which. `BotMain` exports nothing: every declaration in it is
 | `help` | Print the four. |
 | `usage` (text) | What each verb does, one line each, with the exit codes. |
 | `parse` | The verb in the arguments, or the refusal to print. |
+| `needsChatSurface` | Whether this verb needs a chat surface built before it runs. Two of the four: `help` has to work on a machine where nothing is configured, and `rehearse` speaks to nobody. |
 | `RuntimeOutput` | Where the report and the refusals go. A seam, because the report is something a test has to read, and because where a report should go when the process is not a terminal is not settled. |
 | `write` | Writes lines an operator is meant to read. |
 | `writeError` | Writes lines about something being wrong. |
@@ -302,8 +310,8 @@ belongs to which. `BotMain` exports nothing: every declaration in it is
 
 1. **The bind precedes any identify.** A successful bind returns a
    ``ListenerBound`` whose initialiser is internal to this module, and
-   ``ChatGateway/connect(afterBinding:)`` requires one, so identifying first
-   does not compile from another target.
+   ``ChatGateway/connect(afterBinding:reporting:)`` requires one, so
+   identifying first does not compile from another target.
 
    **The limit of that, stated.** It proves a bound listener exists when
    connect is called. It does **not** prove the bind happened first in time,
@@ -371,12 +379,14 @@ belongs to which. `BotMain` exports nothing: every declaration in it is
     connection.**
 
 12. **A part that is off contributes no component.** The components are built
-    from the configuration, not from a constant:
+    from the configuration and from what was linked, not from a constant:
     `CHAIN_VERIFY_ASSET_DECIMALS=false` means the node is not a component of
     this instance at all, rather than a component marked reached that nothing
-    has reached. An answer that says this instance has spoken to the node when
-    nothing ever has is the three hour incident the endpoint exists for. The
-    off part is named in the report's Parts section instead.
+    has reached, and a build with no chat surface declares no chat component
+    rather than waiting for ever on one. An answer that says this instance has
+    spoken to the node when nothing ever has is the three hour incident the
+    endpoint exists for. The off part is named in the report's Parts section
+    instead.
 
 13. **The report is written as it is produced, not buffered to the end.** Each
     gate's section goes to standard output as the gate finishes, so a start
@@ -397,6 +407,26 @@ belongs to which. `BotMain` exports nothing: every declaration in it is
     unset, which is what every loader in the package already does, so a
     compose file passing an empty variable through is not a refusal from one
     layer that the next layer would have ignored.
+
+16. **The chat gate returning is not health.** A linked chat surface
+    contributes ``HealthComponent/chat``, and the gate never marks it
+    reached: identifying is asking for a websocket, and the call returns as
+    soon as the attempt is under way. Only the session's own opening event
+    raises it, through the closure
+    ``ChatGateway/connect(afterBinding:reporting:)`` takes, and the session
+    ending lowers it again. A process whose websocket never opens, or opens
+    and dies, is not a degraded bot: it is a bot that is not in the server,
+    and nothing watching could tell the two apart, which is what the endpoint
+    is for (`SEE-1`, `SEE-1.a`).
+
+17. **The verb is known before anything is built.** `BotMain` parses the
+    arguments first and builds a chat surface only for the two verbs that
+    would use one. `help` has to work on a machine where nothing is
+    configured, `check` exists to say what is wrong with the settings, and a
+    refusal that pre-empted it disabled the one diagnostic verb with exactly
+    the class of fault it is for, then named it as the thing to run. A `check`
+    whose chat settings are refused prints the whole listing first and the
+    refusal last, with the surface's own variables still in the listing.
 
 ## Behavioral Examples
 
@@ -437,10 +467,41 @@ by mistake, the report says `Ladder, 2 rungs` and `the ladder stopped at
 TIER_3_NAME, which is not set`. The fourth rung is dropped rather than
 renumbered, and it is visible before a sweep acts on it.
 
-**A chat token on a build with no chat surface.** `DISCORD_BOT_TOKEN` set
-refuses at the configuration gate with 78, naming the variable and saying this
-build has no chat surface. It does not start and answer healthy while never
-appearing in the server.
+**A chat token on a build with no chat surface.** `DISCORD_BOT_TOKEN` set,
+and ``RuntimeSeams/chat`` nil, refuses at the configuration gate with 78,
+naming the variable and saying this build has no chat surface. It does not
+start and answer healthy while never appearing in the server.
+
+**A chat surface that never opens its websocket.** Every gate passes, the
+report says `on   chat surface`, and `GET /health` answers:
+
+```
+HTTP/1.1 503 Service Unavailable
+{"status":"starting","waiting":["chat"]}
+```
+
+It stays that way until the session's own opening event arrives, and goes back
+to it if the session ends. A gateway outage, a token revoked at runtime, or a
+privileged intent the application was never granted all look like this, and in
+each of them the registration over HTTP has already succeeded, so the boot has
+nothing to refuse on. A deploy gate polling this endpoint holds rather than
+going green on a bot that is not in the server.
+
+**`bot help` on a machine with half a chat surface.** `DISCORD_GUILD_ID` set
+and no token: the usage text, exit 0. The surface is built only for `run` and
+`check`, so a verb that reads none of those variables is not refused for one.
+`bot check` with the same settings prints the banner, the whole catalogue
+including the chat variables, what it made of the rest, and then the refusal
+naming `DISCORD_BOT_TOKEN`, exiting 78.
+
+**A chat token on a build that has one.** The same variable, with a surface
+linked, is ordinary. The surface described it through
+``ChatGateway/settingsEntries``, so the listing prints it under **The chat
+service**, the audit counts it read, and a value never appears anywhere
+because the surface marked it secret. A **typo** under that prefix,
+`DISCORD_BOT_TOKE`, is then a probable typo reported beside its correction
+rather than a refusal: the prefix belongs to a part this build has, and
+refusing an unknown name there would break both directions of an upgrade.
 
 ## Error Cases
 
@@ -449,7 +510,7 @@ appearing in the server.
 | A required variable is unset or unusable | 78 | ``BootFailure`` naming it and the sentence its loader carries |
 | `STORE_PATH` is relative | 78 | A supervisor restarting elsewhere would open a different, empty store |
 | `HEALTH_PORT` is not a port | 78 | Zero to 65535; zero lets the operating system choose |
-| A variable in a reserved prefix is set | 78 | This build has no chat surface or no verification |
+| A variable in a reserved prefix is set and nothing linked describes it | 78 | This build has no chat surface or no verification. A prefix a linked part claims is no longer reserved, whole |
 | The node says the asset does not exist | 78 | ``ChainGateOutcome/contradiction``, naming `TOKEN_ASSET_ID` |
 | The node says the precision differs | 78 | Naming `TOKEN_DECIMALS`; every balance would be wrong by a factor of ten per place |
 | The node answers 401, or 403 that is not a quota refusal | 78 | Naming `CHAIN_API_TOKEN`; waiting does not fix a credential |
@@ -489,3 +550,18 @@ a product later breaks nobody; demoting one is a breaking change.
   health state and the one-route listener, the bind-before-identify type, the
   four verbs, and the executable. No chat client, no payer, no verification and
   no loops.
+- **1**. The chat seam is filled. ``RuntimeSeams/chat`` is a real gateway in
+  the assembled executable and nil in a build that links no adapter, and the
+  chat gate hands it the value the bind produced. A linked surface describes
+  its own variables through ``ChatGateway/settingsEntries``; the listing, the
+  audit and the reserved-prefix rule all read the same list, so a chat
+  variable is known rather than reserved **when something reads it** and is
+  refused exactly as before when nothing does.
+- **1.1**. The chat surface is a health component. It is declared when one is
+  linked, the chat gate never marks it reached, and the surface reports its
+  own session through a closure ``ChatGateway/connect(afterBinding:reporting:)``
+  takes: the opening event raises it and the session ending lowers it. The
+  gate's refusal path now leaves the session before it unwinds the port and
+  the store, and `BotMain` parses its verb before it builds anything, so
+  `help` and `rehearse` are no longer gated on the chat settings and `check`
+  prints its listing before the refusal.

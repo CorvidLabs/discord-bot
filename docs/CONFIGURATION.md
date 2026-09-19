@@ -291,20 +291,34 @@ not](#which-mistakes-refuse-by-name-and-which-do-not).
 
 ## The chat surface
 
-Everything the bot needs to be a bot. All of it is read by
-`SurfaceConfiguration.load`, and a missing or placeholder value stops the boot
-before a port is bound or Discord is spoken to.
+Everything the bot needs to be a bot. A missing or placeholder value stops the
+boot before a port is bound or Discord is spoken to.
 
-**No boot you can run today reads any of it.** The `bot` executable links
-`Runtime` and `StoreSQLite`; `SurfaceConfiguration` lives in `Surface`, which
-nothing links. This section describes the loader as it is written and tested,
-so that wiring it in is a change to the manifest rather than to the contract
-below.
+**Two loaders read this table, and `swift run bot` uses the smaller one.**
+`SurfaceConfiguration.load` reads every row below and belongs to
+`DiscordSurface`, which binds its own two ports and runs its own boot. The
+executable does not use it: it walks the composition root's eight gates, which
+bind one listener and open one store, and the chat surface it builds reads
+only its own four rows plus `BOT_NAME`, through `ChatSurfaceSettings.load`.
+
+So under `swift run bot` today:
+
+- `DISCORD_BOT_TOKEN` is the switch. Unset, and the process starts, serves its
+  health endpoint and identifies to nothing, which is a whole answer rather
+  than a broken one. Set, and `DISCORD_GUILD_ID` is required with it.
+- `DISCORD_APPLICATION_ID` and `DISCORD_ADMIN_ROLE_ID` are read and optional.
+- `HEALTH_PORT`, `HEALTH_ADDRESS` and `STORE_PATH` are the composition root's
+  own, and `LISTEN_ADDRESS` is not read.
+- `VERIFY_CALLBACK_PORT` and every other `VERIFY_` variable is **refused**,
+  because the executable assembles no callback listener and no portal client.
+  Setting one would start a bot that offers nothing to prove an account, so it
+  is refused by name instead. That refusal is why only `/ping` and `/help` are
+  registered today, and not `/verify` and `/unlink`.
 
 | Variable | Required | Default | What it is | What goes wrong if it is wrong |
 |----------|----------|---------|------------|-------------------------------|
 | `DISCORD_BOT_TOKEN` | yes | none | Your bot's token. **A secret.** | A missing one is refused by name. A value still holding an example placeholder is refused separately, with the value quoted, because starting on one points your bot at nothing at all. The token is never printed back out; the application id is read out of it so the boot report can print an invite. |
-| `DISCORD_GUILD_ID` | yes | none | The one server this process serves, as a decimal id copied from Discord with developer mode on. | A value that is not one to twenty digits is refused by name. A valid id for the wrong server loads perfectly, registers the commands there, and refuses every interaction from the server you meant. |
+| `DISCORD_GUILD_ID` | yes | none | The one server this process serves, as a decimal id copied from Discord with developer mode on. | A value that is not one to twenty digits is refused by name, and so is a placeholder: `0` is a legal shape and never a server, so the shape check alone would pass it. A valid id for the wrong server loads perfectly, registers the commands there, and refuses every interaction from the server you meant. |
 | `DISCORD_APPLICATION_ID` | no | read out of the token | Your application id, used only to build the invite URL the boot report prints. | Unset is fine when the token is the ordinary shape. When it cannot be read, the report names this variable instead of printing a URL with a hole in it. |
 | `DISCORD_ADMIN_ROLE_ID` | no | Administrator only | One extra role that may run an operator command. | An empty value grants nobody, deliberately: an unset variable reaches the check as an empty string, and matching on it would make every member with no roles an operator. No operator command ships at this commit; the rule is here so the first one cannot be added as always-on. |
 | `HEALTH_PORT` | yes | none | The port the health check binds. | No default, because a port is your firewall's business. It is bound **before** this process identifies to Discord, which is how a second copy of the bot discovers the first: the second one refuses on the bind and the copy already serving your server keeps serving it. Set it to a port something else is using and the boot stops naming the port. |

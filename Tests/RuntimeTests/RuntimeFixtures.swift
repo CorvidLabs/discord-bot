@@ -193,17 +193,51 @@ internal struct StubChainSource: ChainSourceProviding {
 /// A chat gateway that records what happened to it and in what order.
 internal actor SpyChatGateway: ChatGateway {
 
+    /// What this surface would say it reads, which a real one takes from its
+    /// own configuration loader.
+    internal nonisolated let settingsEntries: [SettingsEntry]
+
     /// What was called, in the order it was called.
     internal private(set) var calls: [String] = []
 
     /// What the bind produced, when connect was reached.
     internal private(set) var boundWhenConnected: ListenerBound?
 
-    internal init() {}
+    /// Whether connect refuses, and with what.
+    private let refusal: (any Error)?
 
-    internal func connect(afterBinding listener: ListenerBound) async throws {
+    /// How the boot asked to be told about the session, so a test can open
+    /// and close one by hand.
+    private var reportSession: (@Sendable (ChatSessionState) async -> Void)?
+
+    internal init(settingsEntries: [SettingsEntry] = [], refusing refusal: (any Error)? = nil) {
+        self.settingsEntries = settingsEntries
+        self.refusal = refusal
+    }
+
+    internal func connect(
+        afterBinding listener: ListenerBound,
+        reporting session: @escaping @Sendable (ChatSessionState) async -> Void
+    ) async throws {
         calls.append("connect")
         boundWhenConnected = listener
+        // Kept even on a refusal, because a live surface that throws out of
+        // connect has already taken the closure and may still report.
+        reportSession = session
+        if let refusal { throw refusal }
+    }
+
+    /// Says the session opened, as the service's own event would.
+    ///
+    /// Never done by ``connect(afterBinding:reporting:)``: the whole point
+    /// of the closure is that returning from connect is not a websocket.
+    internal func openSession() async {
+        await reportSession?(.open)
+    }
+
+    /// Says the session ended, as the event stream running out would.
+    internal func closeSession() async {
+        await reportSession?(.closed)
     }
 
     internal func roleIds(ofMember member: String) async throws -> Set<String> {

@@ -9,7 +9,7 @@ import Surface
 /// in a test. This is the only place those values become HTTP, and it holds
 /// no rules of its own: if it is deciding something, that decision is in the
 /// wrong place.
-public struct ReplySending: Sendable {
+public struct ReplySending: InteractionReplying {
 
     // MARK: - Properties
 

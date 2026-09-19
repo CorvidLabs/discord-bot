@@ -222,7 +222,12 @@ let package = Package(
         // search.
         .executableTarget(
             name: "BotMain",
-            dependencies: ["Runtime", "StoreSQLite"],
+            // `Surface` and `SurfaceDiscord` are here so the two halves are
+            // one program: the composition root declares a chat seam and
+            // this is where something that conforms to it is built. Nothing
+            // below this line links either of them, so the rest of the
+            // package is unchanged by their being here.
+            dependencies: ["Runtime", "StoreSQLite", "Surface", "SurfaceDiscord"],
             swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
         ),
 
@@ -283,6 +288,13 @@ let package = Package(
                 "Store",
                 "Gating",
                 "Chain",
+                // The composition root's seams, so the chat gateway this
+                // target builds is the one that target already declared.
+                // This direction is the design's own plan and creates no
+                // cycle: `Runtime` does not and must never depend on this
+                // target, and SwiftPM refuses a cycle, which is what keeps
+                // `Store` from ever seeing a chat client.
+                "Runtime",
                 .product(name: "DiscordBM", package: "DiscordBM")
             ],
             swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
@@ -294,7 +306,7 @@ let package = Package(
         ),
         .testTarget(
             name: "SurfaceDiscordTests",
-            dependencies: ["SurfaceDiscord", "Surface"],
+            dependencies: ["SurfaceDiscord", "Surface", "Runtime", "Store", "Gating"],
             swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
         ),
 

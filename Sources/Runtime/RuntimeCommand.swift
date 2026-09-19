@@ -23,6 +23,22 @@ public enum RuntimeCommand: String, Sendable, Equatable, CaseIterable {
 
     // MARK: - Public Methods
 
+    /// Whether this verb needs a chat surface built before it runs.
+    ///
+    /// Two of the four. `help` is the one command that has to work on a
+    /// machine where nothing is configured, and `rehearse` runs the role
+    /// rules over members it invents and speaks to nobody. Building the
+    /// surface before the verb is known made a chat misconfiguration refuse
+    /// every verb the binary has, including the one whose whole job is to
+    /// say what is wrong with the settings, whose refusal then tells the
+    /// operator to run the command it has just disabled (RT-026, RUN-9).
+    public var needsChatSurface: Bool {
+        switch self {
+        case .run, .check: return true
+        case .rehearse, .help: return false
+        }
+    }
+
     /// What each verb does, one line each.
     public static var usage: [String] {
         [
