@@ -40,6 +40,11 @@ every outside service this contacts, every secret it asks for, the commands
 that check each claim, and a plain account of what a reader cannot check by
 grepping this repository. Read it before installing anything.
 
+[`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) is what an operator sets:
+every environment variable, its default, and what goes wrong when it is wrong,
+ending in a worked example that a test loads through the real loaders.
+[`docs/README.md`](docs/README.md) maps which document owns which fact.
+
 ### What is missing
 
 Most of it, and what is missing is the part a person would actually use:
