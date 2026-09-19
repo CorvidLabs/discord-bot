@@ -15,14 +15,22 @@ document disagree, the code is right and this is a bug.
 
 ## Before the tables
 
+<<<<<<< HEAD
 **There is no executable yet.** This package is seven libraries, and nothing in
 it starts a process. So "refused" below means the loader throws, naming the
 variable, and a host that calls it gets an error instead of a configuration.
 When there is a bot, that is its boot failing. The refusals are real today and
 every one of them is reachable from a test; the process that would print them
 is not written.
+=======
+**There is an executable now**, `discord-bot`. "Refused" below means the boot
+stops with one sentence naming one variable, before it has bound a port or
+spoken to Discord. Every refusal is also reachable from a test, which is how
+they stay true.
+>>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
 
-**Three loaders read all of this**, and a host calls them in this order:
+**Four loaders read all of this**, and the executable calls them in this
+order:
 
 1. `TokenProfile.load` reads the token, because nothing else can be converted
    without its precision.
@@ -32,7 +40,12 @@ is not written.
    reads the node and the brakes. It deliberately has no variable for the
    asset, so the asset is written down once in your file and cannot be written
    down twice differently.
+4. `SurfaceConfiguration.load` reads the chat surface: the token, the server,
+   the two ports and the portal. `DisclosureSettings.load` reads the two
+   sentences a member is shown before they sign, and is called only when a
+   portal is configured.
 
+<<<<<<< HEAD
 `Reserve`, `Store`, `StoreSQLite`, `Games` and `Verify` read **no environment
 variable at all**. For four of them that is a happenstance of what they do;
 for `Verify` it is a security property, and it is asserted rather than
@@ -44,6 +57,12 @@ settings that this package does not yet have a place to read, and they arrive
 with the host that serves the page. What that means for storage and for a
 reserve is in [Storage](#storage-no-variables-yet) and
 [The reserve](#the-reserve-no-variables-yet).
+=======
+`Reserve`, `Store`, `StoreSQLite` and `Games` read **no environment variable at
+all**. What that means for a reserve is in
+[The reserve](#the-reserve-no-variables-yet); the database path is read by
+the executable and is in [Storage](#storage).
+>>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
 
 ### Rules that apply to every variable
 
@@ -227,17 +246,18 @@ one, a value that is not a number at all.
 
 ---
 
-## Storage, no variables yet
+## Storage
 
-`Store` and `StoreSQLite` read **no environment variable**. The path to the
-database file arrives as a parameter to `SQLiteStore.open(at:)`, deliberately,
-so that a test can never quietly find an operator's live file. When there is a
-host, the variable that names that path will be documented here; today there is
-no such variable, and this section exists so nobody invents one and expects it
-to be read.
+`Store` and `StoreSQLite` read **no environment variable**. The path arrives
+as a parameter to `SQLiteStore.open(at:)`, deliberately, so that a test can
+never quietly find an operator's live file. The executable is what reads the
+variable and passes it in.
 
-Two facts about the store that an operator will meet even without a variable to
-set:
+| Variable | Required | Default | What it is | What goes wrong if it is wrong |
+|----------|----------|---------|------------|-------------------------------|
+| `STORE_PATH` | yes | none | Where the database file goes. | There is no default on purpose: a file this package chose is a file you do not know to back up. A path on a network filesystem is refused outright, because it cannot promise a write has reached storage and the whole no-double-pay discipline rests on that promise. A path in a container's writable layer loads perfectly and loses every member the first time the container is replaced. |
+
+Two facts about the store that an operator will meet:
 
 - **A network filesystem is refused.** It cannot promise a write has reached
   storage when it says it has, and the whole no-double-pay discipline rests on
@@ -280,6 +300,40 @@ And one that is worth knowing after: **no role id is ever validated.** Any
 non-empty string is accepted, so a placeholder or a wrong digit loads perfectly.
 See [Which mistakes refuse by name, and which do
 not](#which-mistakes-refuse-by-name-and-which-do-not).
+
+---
+
+## The chat surface
+
+Everything the bot needs to be a bot. All of it is read by
+`SurfaceConfiguration.load`, and a missing or placeholder value stops the boot
+before a port is bound or Discord is spoken to.
+
+| Variable | Required | Default | What it is | What goes wrong if it is wrong |
+|----------|----------|---------|------------|-------------------------------|
+| `DISCORD_BOT_TOKEN` | yes | none | Your bot's token. **A secret.** | A missing one is refused by name. A value still holding an example placeholder is refused separately, with the value quoted, because starting on one points your bot at nothing at all. The token is never printed back out; the application id is read out of it so the boot report can print an invite. |
+| `DISCORD_GUILD_ID` | yes | none | The one server this process serves, as a decimal id copied from Discord with developer mode on. | A value that is not one to twenty digits is refused by name. A valid id for the wrong server loads perfectly, registers the commands there, and refuses every interaction from the server you meant. |
+| `DISCORD_APPLICATION_ID` | no | read out of the token | Your application id, used only to build the invite URL the boot report prints. | Unset is fine when the token is the ordinary shape. When it cannot be read, the report names this variable instead of printing a URL with a hole in it. |
+| `DISCORD_ADMIN_ROLE_ID` | no | Administrator only | One extra role that may run an operator command. | An empty value grants nobody, deliberately: an unset variable reaches the check as an empty string, and matching on it would make every member with no roles an operator. No operator command ships at this commit; the rule is here so the first one cannot be added as always-on. |
+| `HEALTH_PORT` | yes | none | The port the health check binds. | No default, because a port is your firewall's business. It is bound **before** this process identifies to Discord, which is how a second copy of the bot discovers the first: the second one refuses on the bind and the copy already serving your server keeps serving it. Set it to a port something else is using and the boot stops naming the port. |
+| `VERIFY_CALLBACK_PORT` | yes | none | The port your portal's callback arrives on. | As above. Setting it to the same number as `HEALTH_PORT` is refused, because one process cannot bind a port twice. |
+| `LISTEN_ADDRESS` | no | `127.0.0.1` | What both listeners bind. | Loopback by default, because the alternative default is every interface on a process that may one day hold a signing key. A portal on another machine needs this widened and needs the port reachable only from that machine. |
+| `BOT_NAME` | no | `this bot` | What the bot calls itself at the top of a card. | Cosmetic, and the default deliberately names no project. |
+
+### Verification
+
+Set `VERIFY_PORTAL_URL` and verification exists. Leave it out and it does
+not: `/verify` and `/unlink` are never registered, nothing in your server
+offers to prove an account, and the boot says so in one line rather than
+leaving you to notice (`ADOPT-10.b`).
+
+| Variable | Required | Default | What it is | What goes wrong if it is wrong |
+|----------|----------|---------|------------|-------------------------------|
+| `VERIFY_PORTAL_URL` | no | verification off | Where the other half lives. Absolute `http` or `https`, with a host, no trailing slash. | A trailing slash is taken off for you. A URL with no host is refused by name. A URL pointing somewhere that is not a conforming portal fails the boot's health call, which is deliberate: a bot that starts anyway hands members a link into nothing. |
+| `VERIFY_SHARED_SECRET` | with a portal | none | The one secret both halves hold. **A secret.** At least 32 random bytes. | One secret, not one per direction. Two variables is how an operator sets the outbound one, passes their own health gate, and fails every `/verify` with a `401` nobody sees. The boot makes a keyed probe: if your portal answers it and the secrets disagree, the boot stops. A portal that offers nothing to probe is reported as unprobed rather than as agreed. |
+| `VERIFY_OPERATOR_NAME` | with a portal | none | Who runs this instance, shown to a member before they sign. | Required, with no default, because no sentence this package ships can say who runs your server. A member deciding whether to sign is deciding about you. |
+| `VERIFY_VISIBILITY_NOTE` | with a portal | none | Which of what is kept other members can see, in your words. | Required for the same reason. Only you know whether your server shows a rung, an account, both or neither. |
+| `VERIFY_OPERATOR_CONTACT` | no | none | How to reach you: a channel, an address, a handle. | Unset simply leaves it off the card. |
 
 ---
 
