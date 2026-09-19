@@ -5,7 +5,7 @@ module: reserve
 
 # Semantic delta: reserve
 
-## Added
+## MODIFIED
 
 ### REQUIREMENT REQ-reserve-009
 

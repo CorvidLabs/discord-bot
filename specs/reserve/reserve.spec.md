@@ -1,6 +1,6 @@
 ---
 module: reserve
-version: 1
+version: 2
 status: active
 files:
   - Sources/Reserve/ReserveAsset.swift
@@ -485,3 +485,4 @@ Every exported symbol of the `Reserve` library target, in source order.
 | 2026-09-18 | maintainers | `ReserveSpendLimits.periodEnd` is read rather than carried: `requireWithinLimits` now takes `now` and refuses limits from a period that has ended, before it checks their size. |
 | 2026-09-18 | maintainers | A once-per-recipient line claims the whole person's holdings, and the claim lists became append-only so a store can write the difference. |
 | 2026-09-19 | maintainers | An epoch's record and a run's outcome carry the ceilings they were measured against, as an ordered list appended before the first payment, so a boundary-crossing epoch names both periods; the cadence period is renamed wherever it sat beside the spending one. |
+| 2026-09-19 | SpecSync | satisfy-four-criteria-the-catalogue-states-and-the-code-does-not-which-period-a-boundary-crossing-payout-was-counted: Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing |

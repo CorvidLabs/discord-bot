@@ -266,43 +266,48 @@ module SHALL bound one caller only, never a crowd.
 
 The tracking itself SHALL be bounded in memory. A caller whose share has
 refilled completely carries no information and SHALL be forgotten, so that the
-table holds only callers currently drawing on the day. Forgetting a caller
+table holds only callers currently drawing on the day and cannot grow with
+every member who touched the bot since midnight. Forgetting a caller
 SHALL NOT hand them a fresh share beyond what refilling had already restored.
 Where the number of tracked callers reaches a bound, a caller not already
 tracked SHALL be refused rather than admitted untracked, and a caller already
-tracked SHALL NOT be evicted to make room. Throttling SHALL be visible to an
-operator in the same snapshot every other budget figure comes from, naming how
-many callers are currently held and how much of the day their shares have
-taken.
+tracked SHALL NOT be evicted to make room, because evicting the caller who is
+drawing hardest is the way an attacker buys themselves a new allowance.
 
-- Covered by `CallerShareTests.swift`: one member caller exhausts their own
-  share and is then refused while the day's counter shows only what they took;
-  a refused caller leaves a second caller and the instance's own work
-  succeeding at the same instant; reaching a share is not a pause and records
-  no notice however many times it happens; a share refills during the day,
-  refills only to its burst however long a caller has been idle, and an
-  all-or-nothing reservation larger than what a caller has left takes nothing
-  from the caller and nothing from the day; the tracking is bounded, with a
-  refilled caller forgotten, a newcomer at the bound refused and a caller
-  already drawing never evicted; the snapshot names the callers currently held
-  and what their shares have taken; with no daily budget nobody is refused;
-  and a restart hands a caller at most one fresh burst while the day's own
-  count is restored from the store (RUN-11, SEE-9, SEE-5, SEE-11, RUN-8.b,
-  HOST-2).
-- Covered by `CallerShareTests.swift`: a reservation larger than the burst is
-  refused with `callerShareCannotCover` and carries no instant, because an
-  allowance never holds more than its burst and any date given would be a
-  fixed point rather than a waiting time; a clock stepped backwards grants a
-  spent caller nothing back, then or once it is corrected; and the health body
-  carries the refusals as well as the callers currently held, since a caller
-  appears in that count for one request inside a refill interval (RUN-11,
-  SEE-9).
-- Covered by `ChainConfigurationTests.swift`: the share and the burst take
-  their documented defaults as literals, a share above one hundred percent
-  refuses the boot naming the variable, and limits built in Swift rather than
-  read from the environment keep the range the initialiser documents, because
-  a percentage above a hundred can overflow the share's arithmetic and a burst
-  of zero switches the guard off in silence (ADOPT-1, ADOPT-2).
+Throttling SHALL be visible to an operator in the same snapshot every other
+budget figure comes from, naming how many callers are currently held and how
+much of the day their shares have taken. A guard that refuses quietly is one
+an operator cannot tell from a provider outage, and the negative rule above,
+that a share refusal writes no notice, is about not drowning the notice buffer
+rather than about hiding the fact that throttling is happening.
+
+Acceptance Criteria
+- `CallerShareTests` proves one member caller exhausts their own share and is
+  then refused, while the day's counter shows only what they actually took
+  (RUN-11).
+- `CallerShareTests` proves a caller refused at their share leaves a second
+  caller and the instance's own work succeeding at the same instant (RUN-11).
+- `CallerShareTests` proves reaching a share is not a pause: no pause is
+  reported by the snapshot and no notice is recorded, however many times the
+  caller is refused (RUN-11, SEE-5).
+- `CallerShareTests` proves a share refills during the day, refills only to
+  its burst however long a caller has been idle, and that an all-or-nothing
+  reservation larger than what a caller has left takes nothing from the caller
+  and nothing from the day (RUN-11, SEE-9).
+- `CallerShareTests` proves the tracking is bounded: a caller whose share has
+  refilled is no longer held, a newcomer at the bound is refused rather than
+  admitted untracked, and a caller already drawing is never evicted to make
+  room for one arriving (RUN-11).
+- `CallerShareTests` proves the snapshot an operator reads names the callers
+  currently held and what their shares have taken, so throttling cannot be
+  happening invisibly (RUN-11, SEE-9).
+- `CallerShareTests` proves that with no daily budget configured no caller is
+  ever refused by a share, and that a restart hands a caller at most one fresh
+  burst while the day's own count is restored from the store (RUN-11,
+  RUN-8.b).
+- `ChainConfigurationTests` proves the share and the burst take their
+  documented defaults as literals, and that a share above one hundred percent
+  refuses the boot naming the variable (ADOPT-1, ADOPT-2).
 
 ### REQ-chain-021
 
@@ -320,21 +325,19 @@ configured SHALL produce an answer that opens no socket of any kind, and a
 proof that could not be taken SHALL leave the answer without proof rather than
 failing it.
 
-- Covered by `ChainHealthTests.swift`: the governor's snapshot is identical in
-  every field before and after an answer is assembled and a recording data
-  source double is never called; an answer still comes back with the day's
-  budget spent and with the breaker tripped by a provider refusal, naming
-  which it is and when it ends, with the status still reporting reachability;
-  an instance with no budget configured reads as having no budget rather than
-  as having none left; and an answer assembled for an instance with no proof
-  configured makes no call at all, while a proof which failed leaves the
-  answer without a provider section and invents nothing (SEE-1.b, SEE-1.a,
-  SEE-9, SEE-10.a, RUN-3).
-- Covered by `RequestGovernorTests.swift`: the snapshot the answer carries
-  reports the day the answer was asked about, so a check run after midnight
-  and before the day's first reservation reads a whole fresh budget rather
-  than yesterday's spent one, and agrees with `remainingRequests(now:)` on the
-  same actor (SEE-1.b, SEE-9).
+Acceptance Criteria
+- `ChainHealthTests` proves the governor's snapshot is identical in every
+  field before and after an answer is assembled, and that a recording data
+  source double is never called (SEE-1.b).
+- `ChainHealthTests` proves an answer still comes back with the day's budget
+  spent and the breaker tripped by a provider refusal, naming which it is and
+  when it ends, with the status still reporting reachability (SEE-1.b,
+  SEE-1.a).
+- `ChainHealthTests` proves an instance with no budget configured reads as
+  having no budget rather than as having none left (SEE-9).
+- `ChainHealthTests` proves an answer assembled for an instance with no proof
+  configured makes no call at all, and that a proof which failed leaves the
+  answer without a provider section and invents nothing (SEE-1.b, SEE-10.a).
 
 ### REQ-chain-022
 
@@ -348,15 +351,18 @@ lowered, and SHALL return no part of any caller's share. The tests holding
 this SHALL name the criterion they protect, so that a later author can see
 they are looking at a promise rather than at behaviour that holds by accident.
 
-- Covered by `RequestGovernorTests.swift`: the whole budget snapshot is equal
-  either side of an unpause that follows a provider quota refusal, with the
-  day's counter part way through rather than at its ceiling; lifting the same
-  pause many times in a row at one pinned instant moves nothing, and lifting a
-  pause that was never set is not a refund either; and an unpause writes
-  nothing to the budget store, with a second governor restoring from that
-  store starting with the same count already spent (RUN-10.a, RUN-8.b).
-- Covered by `CallerShareTests.swift`: a caller who has drawn their share is
-  still at their share after an unpause (RUN-10.a, RUN-11).
+Acceptance Criteria
+- `RequestGovernorTests` proves the whole budget snapshot is equal either side
+  of an unpause that follows a provider quota refusal, with the day's counter
+  part way through rather than at its ceiling (RUN-10.a).
+- `RequestGovernorTests` proves that lifting the same pause many times in a
+  row at one pinned instant moves nothing, and that lifting a pause that was
+  never set is not a refund either (RUN-10.a).
+- `RequestGovernorTests` proves an unpause writes nothing to the budget store,
+  and that a second governor restoring from that store starts with the same
+  count already spent (RUN-10.a, RUN-8.b).
+- `CallerShareTests` proves a caller who has drawn their share is still at
+  their share after an unpause (RUN-10.a, RUN-11).
 
 ### REQ-chain-023
 
@@ -368,17 +374,14 @@ passed its configured lifetime SHALL be reported as absent by that read rather
 than refreshed by it, which is the rule this module already follows for a
 stale proof.
 
-- Covered by `ChainHealthTests.swift`: the held read makes no probe call and
-  leaves the cached proof unchanged; a proof past its lifetime reads as absent
-  through that read rather than being refreshed by it; and the assembled
-  answer takes its proof from that read (SEE-1.b, SEE-10.a).
-- Covered by `ChainHealthTests.swift`: an answer holding no proof starts one
-  probe beside itself and the next answer carries it, a stale one is refreshed
-  the same way rather than in front of the answer, and a provider that is down
-  is probed once rather than once per check. A read that never probes with
-  nothing driving it is an answer that can never carry proof at all, which is
-  the half of the ported health path that was left behind (SEE-1.b,
-  SEE-10.a).
+Acceptance Criteria
+- `ChainHealthTests` proves the held read makes no probe call and leaves the
+  cached proof unchanged (SEE-1.b).
+- `ChainHealthTests` proves a proof past its lifetime reads as absent through
+  that read rather than being refreshed by it (SEE-1.b, SEE-10.a).
+- `ChainHealthTests` proves the assembled answer takes its proof from that
+  read, so nothing on the path that promises to spend nothing can make a
+  request (SEE-1.b).
 
 ## Constraints
 

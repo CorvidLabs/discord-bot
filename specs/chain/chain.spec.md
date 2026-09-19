@@ -1,6 +1,6 @@
 ---
 module: chain
-version: 1
+version: 2
 status: active
 files:
   - Sources/Chain/AccountDataSource.swift
@@ -715,3 +715,4 @@ checked by a test that finishes instantly.
 | 2026-09-18 | maintainers | One `LiquidityPool` and one `CombinedBalance`, both `Gating`'s; `PoolReserves` and `PoolShare` renamed their sides counted and other; `GatingBridge` added, so a `ChainReading` reaches the rules as a `Reading` and a `[WalletCheck]` reaches them as a `MemberHoldings`; the environment read through `Gating.NumberedEnvironment`. |
 | 2026-09-19 | maintainers | Every reservation names a `RequestCaller`, with no default, and a member's caller is held to a refilling share of the day; the snapshot carries what throttling is happening; `ChainHealthAssembler` and `ProviderProofProbe.heldProof` assemble a health answer that spends nothing and still answers once the budget is gone, with the budget as a field of the report and never a status; the unpause guarantee is stated normatively. |
 | 2026-09-19 | maintainers | The health answer starts a probe in the background when it holds no proof, so the read that never probes has something filling it, and a failed probe is cached for its lifetime; `callerShareCannotCover` refuses a count no burst can hold rather than naming an instant that will never come; a caller refused at the tracking bound is told the next sweep rather than midnight; the snapshot answers for the day it is asked about; the health body carries the refusals as well as the callers held; `ChainLimits` built in Swift holds the share range its own documentation states. |
+| 2026-09-19 | SpecSync | satisfy-four-criteria-the-catalogue-states-and-the-code-does-not-which-period-a-boundary-crossing-payout-was-counted: Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing |

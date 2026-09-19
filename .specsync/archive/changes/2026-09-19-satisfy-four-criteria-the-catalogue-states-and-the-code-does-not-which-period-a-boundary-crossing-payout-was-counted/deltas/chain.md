@@ -5,7 +5,7 @@ module: chain
 
 # Semantic delta: chain
 
-## Added
+## MODIFIED
 
 ### REQUIREMENT REQ-chain-020
 

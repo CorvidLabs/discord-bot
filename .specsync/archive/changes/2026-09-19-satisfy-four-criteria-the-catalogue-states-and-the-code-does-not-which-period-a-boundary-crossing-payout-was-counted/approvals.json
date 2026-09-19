@@ -1,0 +1,148 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1789831722,
+      "digest": "a0ba97a6d5f44d448c38c5129b45c23a1cfb4c6743f1dd3557cd891f243dec06",
+      "note": "Approved in session after an interview covering the open trades.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "satisfy-four-criteria-the-catalogue-states-and-the-code-does-not-which-period-a-boundary-crossing-payout-was-counted",
+        "title": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
+        "description": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
+        "kind": "feature",
+        "affected_specs": [
+          "chain",
+          "reserve",
+          "store"
+        ],
+        "affected_paths": [
+          "AGENTS.md",
+          "CHANGELOG.md",
+          "README.md",
+          "Sources",
+          "Tests",
+          "docs",
+          "specs"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "SPEND-9.c: an epoch record names the period it was counted against, so an operator reads it rather than inferring it from two timestamps. RUN-10.a: a test fails if unpausing ever returns any of the day's spent budget. RUN-11: one caller cannot spend the whole day's requests, and what happens when they reach their share is decided and documented rather than emergent. SEE-1.b: a health answer can be assembled without spending a request, proved by a test asserting the request count did not move, and it still answers after the budget is gone. Each criterion is cited by id in the test that protects it."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "chain": "00c34b715ec2562471d6d1ee2eb2b61fb0e373b42da9c55626d7d344ee1928ce",
+        "reserve": "565952295cc8faa76b7ae79b2c213ed25d447126c71a6e2537278bb567444da5",
+        "store": "3f996a746066eaa37777ada60f74823987d2effe335a0ba17c9d01ca99b008c5"
+      }
+    },
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1789857795,
+      "digest": "a0ba97a6d5f44d448c38c5129b45c23a1cfb4c6743f1dd3557cd891f243dec06",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "satisfy-four-criteria-the-catalogue-states-and-the-code-does-not-which-period-a-boundary-crossing-payout-was-counted",
+        "title": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
+        "description": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
+        "kind": "feature",
+        "affected_specs": [
+          "chain",
+          "reserve",
+          "store"
+        ],
+        "affected_paths": [
+          "AGENTS.md",
+          "CHANGELOG.md",
+          "README.md",
+          "Sources",
+          "Tests",
+          "docs",
+          "specs"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "SPEND-9.c: an epoch record names the period it was counted against, so an operator reads it rather than inferring it from two timestamps. RUN-10.a: a test fails if unpausing ever returns any of the day's spent budget. RUN-11: one caller cannot spend the whole day's requests, and what happens when they reach their share is decided and documented rather than emergent. SEE-1.b: a health answer can be assembled without spending a request, proved by a test asserting the request count did not move, and it still answers after the budget is gone. Each criterion is cited by id in the test that protects it."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "chain": "e68fe89567989c78215b32ac714695a8b053fc2cd93c16ac9125f7b1cb58c8d4",
+        "reserve": "451a288e52cef4709245c8f766291422d0d665100874ddb87ac53d8d5b7fb03a",
+        "store": "c57247595bcd33ebfb21ae98f9bb31cb6c41a272ff9baf682038deab9840e19d"
+      }
+    },
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1789857958,
+      "digest": "fc1cd969a3f54cde9fc9815d0b01238ed64577e7c2b077bc1859062aa80448d2",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "satisfy-four-criteria-the-catalogue-states-and-the-code-does-not-which-period-a-boundary-crossing-payout-was-counted",
+        "title": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
+        "description": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
+        "kind": "feature",
+        "affected_specs": [
+          "chain",
+          "reserve",
+          "store"
+        ],
+        "affected_paths": [
+          "Sources/Chain",
+          "Sources/Reserve",
+          "Sources/Store",
+          "Sources/StoreSQLite",
+          "Sources/StoreTestKit",
+          "Tests/ChainTests",
+          "Tests/ReserveTests",
+          "Tests/StoreSQLiteTests",
+          "specs/chain",
+          "specs/reserve",
+          "specs/store"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "SPEND-9.c: an epoch record names the period it was counted against, so an operator reads it rather than inferring it from two timestamps. RUN-10.a: a test fails if unpausing ever returns any of the day's spent budget. RUN-11: one caller cannot spend the whole day's requests, and what happens when they reach their share is decided and documented rather than emergent. SEE-1.b: a health answer can be assembled without spending a request, proved by a test asserting the request count did not move, and it still answers after the budget is gone. Each criterion is cited by id in the test that protects it."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "chain": "e68fe89567989c78215b32ac714695a8b053fc2cd93c16ac9125f7b1cb58c8d4",
+        "reserve": "451a288e52cef4709245c8f766291422d0d665100874ddb87ac53d8d5b7fb03a",
+        "store": "c57247595bcd33ebfb21ae98f9bb31cb6c41a272ff9baf682038deab9840e19d"
+      }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1789857999,
+      "digest": "301c0ff5647a511974ac44e5f73ea759ef4936f066212b4ca2152c86cd007385",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

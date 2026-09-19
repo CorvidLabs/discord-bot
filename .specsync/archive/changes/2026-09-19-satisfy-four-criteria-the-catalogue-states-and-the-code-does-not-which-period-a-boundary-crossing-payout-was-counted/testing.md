@@ -574,3 +574,20 @@ specsync check --strict                      # the contracts and the code still 
    of thousands of reads on an instance whose operator set a large budget. An
    absolute ceiling beside the percentage would close it and costs a third
    variable.
+
+## Requirement evidence
+
+Written after the fact. The work in this change merged as #21 before the
+workspace was finalized, so this table is reconstructed from the living specs
+and the suites that are in the tree today, not from a run recorded at the
+time. Every suite named here exists and passes.
+
+| Requirement | Evidence | What it proves |
+|-------------|----------|----------------|
+| REQ-chain-020 | `Tests/ChainTests/CallerShareTests.swift`, `Tests/ChainTests/ChainConfigurationTests.swift` | A reservation names its caller with no default; a member caller is held to a refilling share of the day; the tracking table is bounded and never evicts a caller already drawing; with no daily budget no caller is refused; the share and burst take documented defaults and a percentage above one hundred refuses the boot by name. |
+| REQ-chain-021 | `Tests/ChainTests/CallerShareTests.swift` | A caller over their share is refused with a typed error carrying the instant their next request would be allowed, and a reservation larger than any burst carries no instant, because no allowance ever holds more than its burst. |
+| REQ-chain-022 | `Tests/ChainTests/RequestGovernorTests.swift` | `unpause` returns none of the day's spent budget, and the snapshot before and after it is identical; the day still ends where it would have. |
+| REQ-chain-023 | `Tests/ChainTests/ChainHealthTests.swift`, `Tests/ChainTests/RequestGovernorTests.swift` | The health answer carries the budget and `caller_refusals` beside `throttled_callers`, and building it moves no counter: a non-probing read makes no call against a counting double. |
+| REQ-store-016 | `Tests/StoreSQLiteTests/SchemaTests.swift`, `Sources/StoreTestKit/StoreConformance+Reserve.swift` | Schema version 3 holds the charges; a file written by this build is refused by the previous one by name; the reverse drops the table whole. |
+| REQ-store-017 | `Sources/StoreTestKit/StoreConformance+Reserve.swift` | Charges round-trip through every backend the conformance suite runs against, in the order they were charged. |
+| REQ-reserve-009 | `Tests/ReserveTests/ReserveRunnerTests.swift`, `Tests/ReserveTests/ReserveStoreTests.swift` | A clean run records exactly one charge naming the period of the limits it was checked against; an epoch cut short and re-run under later limits reads back two in order; the charge reaches the store before the first payment; a host stating no limits records none, and a rehearsal none either; a record from before the field loads with no charges. |

@@ -5,7 +5,7 @@ module: store
 
 # Semantic delta: store
 
-## Added
+## MODIFIED
 
 ### REQUIREMENT REQ-store-016
 
