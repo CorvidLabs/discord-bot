@@ -229,8 +229,13 @@ whoever asked has gone (`Sources/Chain/RequestGovernor.swift:11`), and queueing
 hands one fast caller the power to make everybody else wait, which is the same
 denial of service by a politer route. The refusal is its own `ChainError` case,
 not `requestBudgetSpent`, because the day is fine and the advice differs: it
-names when the share comes back, at the next UTC midnight, and how much of it
-was used. It must not trip the breaker, or one member typing fast stops the
+names when the share comes back and how much of it was used. **When it comes
+back is the refill instant, not the next UTC midnight.** The share settled here
+is a refilling allowance, so the next request is admitted once enough has
+refilled to cover it, which is usually seconds and never a whole day. Midnight
+belongs to the flat per-day counter this change rejected, and leaving that
+phrase here would have had one implementer writing the rejected model into the
+error an operator reads while the code did the other thing. It must not trip the breaker, or one member typing fast stops the
 whole process, which is the criterion inverted. It records no notice per
 refusal, for the reason already written at
 `Sources/Chain/RequestGovernor.swift:249`: a refusal answered to its caller
