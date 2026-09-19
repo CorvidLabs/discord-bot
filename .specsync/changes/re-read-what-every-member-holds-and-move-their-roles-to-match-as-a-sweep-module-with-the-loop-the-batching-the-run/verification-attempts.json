@@ -126,6 +126,48 @@
         "REQ-sweep-023",
         "REQ-sweep-024"
       ]
+    },
+    {
+      "timestamp": 1789858733,
+      "commit": "46bf85a9fa9e34f87304f2dac1da03fdff7c7e46",
+      "contract_digest": "58f570d6018286735c7f619ec909314106daed5543edf2747ad9ca351cdae3f1",
+      "execution_digest": "41da64c2fcbd186423bdf2a1465bde3cb8949404583c18ad8c57d867b59ca241",
+      "workspace_digest": "37b1982df0f44cda98ba23d61d85a3e8cfbb195c2954783d82239b89bfa0dbe2",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec surface --spec sweep",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-surface-019",
+        "REQ-sweep-001",
+        "REQ-sweep-002",
+        "REQ-sweep-003",
+        "REQ-sweep-004",
+        "REQ-sweep-005",
+        "REQ-sweep-006",
+        "REQ-sweep-007",
+        "REQ-sweep-008",
+        "REQ-sweep-009",
+        "REQ-sweep-010",
+        "REQ-sweep-011",
+        "REQ-sweep-012",
+        "REQ-sweep-013",
+        "REQ-sweep-014",
+        "REQ-sweep-015",
+        "REQ-sweep-016",
+        "REQ-sweep-017",
+        "REQ-sweep-018",
+        "REQ-sweep-019",
+        "REQ-sweep-020",
+        "REQ-sweep-021",
+        "REQ-sweep-022",
+        "REQ-sweep-023",
+        "REQ-sweep-024"
+      ]
     }
   ]
 }
