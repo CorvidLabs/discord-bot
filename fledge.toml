@@ -1,0 +1,9 @@
+[tasks.build]
+cmd = "swift build"
+
+[tasks.test]
+cmd = "swift test"
+
+[lanes.verify]
+description = "Native verification used by the unified Trust gate"
+steps = ["build", "test"]

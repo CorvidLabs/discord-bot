@@ -1,0 +1,12 @@
+# Risk scoring. A build tree or a resolved dependency graph is not a change
+# somebody made, so it must not move the verdict on one.
+[exclude]
+paths = [
+  ".build/**",
+  "Package.resolved",
+  ".augur/**",
+]
+
+[thresholds]
+review = 35
+block = 65

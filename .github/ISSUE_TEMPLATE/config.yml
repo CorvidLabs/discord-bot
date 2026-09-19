@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a vulnerability
+    url: https://github.com/CorvidLabs/discord-bot/security/advisories/new
+    about: Key handling, the payout path and the verification webhook are reported privately, never as a public issue.
+  - name: Question or idea
+    url: https://github.com/CorvidLabs/discord-bot/discussions
+    about: Ask about the engine, or float something before it becomes a feature request.
