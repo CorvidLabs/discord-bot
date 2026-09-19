@@ -100,6 +100,40 @@ struct TierLadderTests {
         #expect(ladder.storedRung("Platinum") == nil)
     }
 
+    @Test("A ladder built by hand with two rungs of one name resolves a stored row to neither")
+    func ambiguousStoredNameResolvesToNoRung() {
+        // `TierConfiguration.load` refuses this ladder, so it can only arrive
+        // from a host that built one in code. The leniency used to answer with
+        // whichever rung sorted lowest, which is a rung picked for a reason
+        // nobody wrote down; a row that names two rungs names no rung.
+        let ladder = TierLadder(rungs: [
+            Tier(id: "gold_a", name: "Gold", minimumBaseUnits: 100),
+            Tier(id: "gold_b", name: "gold", minimumBaseUnits: 200)
+        ])
+        #expect(ladder.storedRung("Gold") == nil)
+        #expect(ladder.storedRung("gold") == nil)
+
+        // The ids are still unambiguous, and still resolve.
+        #expect(ladder.storedRung("gold_a")?.minimumBaseUnits == 100)
+        #expect(ladder.storedRung("GOLD_B")?.minimumBaseUnits == 200)
+    }
+
+    @Test("A hand-built rung named after the no-rung label does not answer to the label")
+    func theNoRungLabelResolvesToNoRung() {
+        // The loader reserves the label for the same reason: a stored row
+        // naming it says the member was on no rung, and resolving it to a rung
+        // grants that rung's role to somebody who reached nothing.
+        let ladder = TierLadder(
+            rungs: [Tier(id: "guest_rung", name: "Guest", minimumBaseUnits: 100)],
+            unrankedName: "Guest"
+        )
+        #expect(ladder.storedRung("Guest") == nil)
+        #expect(ladder.storedRung("guest") == nil)
+
+        // The rung is still reachable by its own id, which is not the label.
+        #expect(ladder.storedRung("guest_rung")?.name == "Guest")
+    }
+
     @Test("A card shows the operator's own word for holding too little")
     func unrankedIsNamed() throws {
         let ladder = try TierConfiguration.load(

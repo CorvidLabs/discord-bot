@@ -111,10 +111,12 @@ struct TierConfigurationTests {
     @Test("Two rungs at one threshold are refused, because one could never be reached")
     func duplicateMinimumRefused() throws {
         #expect(
-            throws: GatingConfigurationError.duplicateMinimum(
-                minimum: 100,
+            throws: GatingConfigurationError.duplicateThreshold(
+                baseUnits: 100_000_000,
                 first: "TIER_1_MIN",
-                second: "TIER_2_MIN"
+                firstWhole: 100,
+                second: "TIER_2_MIN",
+                secondWhole: 100
             )
         ) {
             try TierConfiguration.load(
@@ -202,7 +204,15 @@ struct TierConfigurationTests {
         // on the ceiling. Comparing the numbers the operator typed sees two
         // different rungs; comparing what they convert to sees the ladder
         // nobody can climb that they actually wrote.
-        #expect(throws: GatingConfigurationError.self) {
+        #expect(
+            throws: GatingConfigurationError.duplicateThreshold(
+                baseUnits: UInt64.max,
+                first: "TIER_1_MIN",
+                firstWhole: 18_446_744_073_709_551_615,
+                second: "TIER_2_MIN",
+                secondWhole: 18_000_000_000_000_000_000
+            )
+        ) {
             try TierConfiguration.load(
                 from: Fixture.environment(overriding: [
                     "TIER_1_MIN": "18446744073709551615",
@@ -210,6 +220,29 @@ struct TierConfigurationTests {
                 ]),
                 token: try Fixture.token()
             )
+        }
+    }
+
+    @Test("A refusal over two saturating thresholds prints both numbers and the one they met at")
+    func saturatingRefusalNamesAllThreeNumbers() throws {
+        // The refusal used to carry one of the typed numbers, which is a
+        // threshold neither rung sits at: they collided on the ceiling, and
+        // an operator shown 18,000,000,000,000,000,000 has been sent to look
+        // for a collision at a number that is in only one of their variables.
+        do {
+            _ = try TierConfiguration.load(
+                from: Fixture.environment(overriding: [
+                    "TIER_1_MIN": "18446744073709551615",
+                    "TIER_2_MIN": "18000000000000000000"
+                ]),
+                token: try Fixture.token()
+            )
+            Issue.record("a ladder with two unreachable rungs loaded")
+        } catch let error as GatingConfigurationError {
+            let sentence = try #require(error.errorDescription)
+            #expect(sentence.contains("TIER_1_MIN is 18,446,744,073,709,551,615"))
+            #expect(sentence.contains("TIER_2_MIN is 18,000,000,000,000,000,000"))
+            #expect(sentence.contains("come to 18,446,744,073,709,551,615 of its smallest unit"))
         }
     }
 

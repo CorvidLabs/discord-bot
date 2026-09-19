@@ -29,14 +29,32 @@ public enum NumberedEnvironment: Sendable {
 
     // MARK: - Public Methods
 
-    /// Refuses a list that carries on past the last number scanned.
+    /// Refuses an unbroken list that carries straight on past the last number
+    /// scanned.
     ///
     /// An operator who numbered a thirty-third entry wrote configuration this
     /// module would otherwise drop on the floor, which is the silent fallback
     /// the rule above forbids. Every loader calls this once it has read
-    /// ``maxEntries`` entries without a gap, so a longer list is a refusal
-    /// naming the variable rather than a list that is quietly shorter than the
-    /// one that was written.
+    /// ``maxEntries`` entries with no gap, so an unbroken list longer than
+    /// this module reads is a refusal naming the variable rather than a list
+    /// quietly shorter than the one that was written.
+    ///
+    /// **It probes one number, because one number is all it can probe.** A
+    /// loader is handed a lookup, not an environment it can list, so it cannot
+    /// ask what else an operator wrote: it can only name a variable and ask
+    /// about that one. Any wider sweep would need a second arbitrary ceiling
+    /// to stop at, and the entry above *that* would be dropped in the same
+    /// silence, one number further along.
+    ///
+    /// So an operator who wrote 1 to 32 and then 34 has left a gap at 33, and
+    /// the gap rule above governs from there: the list ends at the gap and the
+    /// 34th is dropped, exactly as a gap at 4 drops a 5th. That is a dropped
+    /// entry rather than a renumbered one, which is the trade this module
+    /// makes at every size, and reading the loaded configuration back at boot
+    /// is what makes a dropped entry visible (ADOPT-9.a). The refusal here is
+    /// narrower than the gap rule on purpose: it is for the one case the gap
+    /// rule cannot cover, where the list stopped for a reason that is nowhere
+    /// in the operator's file.
     ///
     /// - Parameters:
     ///   - key: The variable that would start the entry after the last one
@@ -53,19 +71,40 @@ public enum NumberedEnvironment: Sendable {
     /// Blank counts as unset on purpose: `TIER_3_NAME=` in an env file is
     /// somebody commenting a rung out, and reading it as a rung named ""
     /// helps nobody.
+    ///
+    /// Newlines come off as well as spaces. Almost everything here arrives
+    /// from a file, a file's last line ends in a newline, and `.whitespaces`
+    /// does not include one: trimming spaces alone made `TIER_1_MIN=100\n`
+    /// a value that is not a number, while another layer reading the same
+    /// line got 100. One layer refusing what another accepts is worse than
+    /// either rule on its own.
     public static func nonEmpty(_ key: String, _ lookup: (String) -> String?) -> String? {
         guard
-            let value = lookup(key)?.trimmingCharacters(in: .whitespaces),
+            let value = lookup(key)?.trimmingCharacters(in: .whitespacesAndNewlines),
             !value.isEmpty
         else { return nil }
         return value
     }
 
+    /// A number with its digit separators taken out, ready to parse.
+    ///
+    /// Underscores are allowed wherever anything in this package reads a
+    /// number, because an operator typing a threshold or a request budget
+    /// with nine zeros in it will use them and should not be punished for it.
+    /// The rule lives here on its own rather than inside one reader, so every
+    /// layer gives the same answer: `100_000` was once a threshold in one
+    /// place and not a number at all in another.
+    ///
+    /// - Parameter raw: The value as it was written down.
+    /// - Returns: The same digits with every `_` removed.
+    public static func withoutDigitSeparators(_ raw: String) -> String {
+        raw.replacingOccurrences(of: "_", with: "")
+    }
+
     /// A variable that has to be a whole number and has to be set.
     ///
-    /// Underscores are allowed as digit separators, because an operator
-    /// typing a threshold with nine zeros in it will use them and should not
-    /// be punished for it.
+    /// Digit separators are taken out by ``withoutDigitSeparators(_:)``, which
+    /// is the one place that rule lives.
     public static func requiredWholeNumber(
         _ key: String,
         purpose: String,
@@ -74,7 +113,7 @@ public enum NumberedEnvironment: Sendable {
         guard let raw = nonEmpty(key, lookup) else {
             throw GatingConfigurationError.missing(key: key, purpose: purpose)
         }
-        guard let value = UInt64(raw.replacingOccurrences(of: "_", with: "")) else {
+        guard let value = UInt64(withoutDigitSeparators(raw)) else {
             throw GatingConfigurationError.notANumber(key: key, value: raw)
         }
         return value

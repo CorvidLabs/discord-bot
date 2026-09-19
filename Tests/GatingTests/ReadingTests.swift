@@ -40,16 +40,19 @@ struct ReadingTests {
     func combinedNeedsBothHalves() {
         let missingDirect = MemberHoldings(
             memberId: "member-1",
+            isVerified: true,
             directBalance: .unknown,
             liquidityPositions: .known([])
         )
         let missingPositions = MemberHoldings(
             memberId: "member-1",
+            isVerified: true,
             directBalance: .known(100),
             liquidityPositions: .unknown
         )
         let both = MemberHoldings(
             memberId: "member-1",
+            isVerified: true,
             directBalance: .known(100),
             liquidityPositions: .known([
                 LiquidityPosition(poolId: "a", lpBaseUnits: 1, tokenBaseUnits: 25)
@@ -68,6 +71,7 @@ struct ReadingTests {
         // at all, which is the one failure nobody would think to look for.
         let holdings = MemberHoldings(
             memberId: "member-1",
+            isVerified: true,
             directBalance: .known(UInt64.max),
             liquidityPositions: .known([
                 LiquidityPosition(poolId: "a", lpBaseUnits: 1, tokenBaseUnits: 1_000)
@@ -80,6 +84,7 @@ struct ReadingTests {
     func absentPoolIsZero() {
         let holdings = MemberHoldings(
             memberId: "member-1",
+            isVerified: true,
             liquidityPositions: .known([
                 LiquidityPosition(poolId: "a", lpBaseUnits: 5, tokenBaseUnits: 10)
             ])
@@ -89,7 +94,7 @@ struct ReadingTests {
             LiquidityPosition(poolId: "b", lpBaseUnits: 0, tokenBaseUnits: 0)
         ))
         // With no list read at all, the same question has no answer.
-        let unread = MemberHoldings(memberId: "member-1")
+        let unread = MemberHoldings(memberId: "member-1", isVerified: true)
         #expect(unread.position(inPool: "a") == .unknown)
     }
 

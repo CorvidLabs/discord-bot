@@ -42,8 +42,32 @@ public enum GatingConfigurationError: Error, Equatable, LocalizedError, Sendable
     /// Two entries share a display name, which is what gets stored and counted.
     case duplicateName(name: String, first: String, second: String)
 
-    /// Two rungs sit at one threshold, so one can never be reached.
+    /// Two count rungs sit at one threshold, so one can never be reached.
+    ///
+    /// A count of pieces is compared exactly as it was written, so the number
+    /// here is the number in both variables. A ladder rung is compared after
+    /// conversion and reports ``duplicateThreshold(baseUnits:first:firstWhole:second:secondWhole:)``
+    /// instead.
     case duplicateMinimum(minimum: UInt64, first: String, second: String)
+
+    /// Two ladder rungs come to one threshold once converted, so one can
+    /// never be reached.
+    ///
+    /// Separate from ``duplicateMinimum(minimum:first:second:)`` because the
+    /// two numbers an operator typed are not always the number they collided
+    /// on. Thresholds are written in whole tokens and compared in the token's
+    /// smallest unit, and two different whole numbers past what that
+    /// precision can express both saturate to the same ceiling. Reporting
+    /// either of the typed numbers would name a threshold neither rung
+    /// actually sits at, so all three figures are carried and the message
+    /// prints all three.
+    case duplicateThreshold(
+        baseUnits: UInt64,
+        first: String,
+        firstWhole: UInt64,
+        second: String,
+        secondWhole: UInt64
+    )
 
     /// Two entries claim the same on-chain asset.
     case duplicateAsset(assetId: UInt64, first: String, second: String)
@@ -86,6 +110,11 @@ public enum GatingConfigurationError: Error, Equatable, LocalizedError, Sendable
         case let .duplicateMinimum(minimum, first, second):
             return "\(first) and \(second) both sit at \(GatingFormatting.grouped(minimum)). "
                 + "Two rungs at one threshold means one can never be reached."
+        case let .duplicateThreshold(baseUnits, first, firstWhole, second, secondWhole):
+            return "\(first) is \(GatingFormatting.grouped(firstWhole)) and \(second) is "
+                + "\(GatingFormatting.grouped(secondWhole)), and at this token's precision both "
+                + "come to \(GatingFormatting.grouped(baseUnits)) of its smallest unit. Two rungs "
+                + "at one threshold means one can never be reached."
         case let .duplicateAsset(assetId, first, second):
             return "\(first) and \(second) both name asset \(assetId). One holding cannot belong "
                 + "to two of them."

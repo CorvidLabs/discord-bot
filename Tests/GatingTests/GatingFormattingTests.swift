@@ -18,12 +18,33 @@ struct GatingFormattingTests {
         #expect(GatingFormatting.amount(1_234, decimals: 0) == "1,234")
     }
 
-    @Test("A silly precision answers with the raw units rather than taking the process down")
-    func absurdPrecision() {
-        // Ten to the twentieth overflows and the multiply traps, which would
-        // end the process rather than the card.
-        #expect(GatingFormatting.amount(1_234, decimals: 20) == "1,234")
-        #expect(GatingFormatting.amount(1_234, decimals: -1) == "1,234")
+    @Test("A precision no divisor could hold is still written out exactly")
+    func precisionPastADivisor() {
+        // Dividing needed ten to the power of the precision to fit in a
+        // UInt64, so twenty places answered with the smallest units
+        // themselves: 1,234 hundred-quintillionths printed as 1,234 whole
+        // ones, a hundred quintillion times too large, and nothing said. The
+        // point is moved through the digits now, so there is no ceiling to
+        // fall off.
+        #expect(GatingFormatting.amount(1_234, decimals: 20) == "0.00000000000000001234")
+        #expect(GatingFormatting.amount(UInt64.max, decimals: 19) == "1.8446744073709551615")
+        #expect(GatingFormatting.amount(UInt64.max, decimals: 20) == "0.18446744073709551615")
+        #expect(GatingFormatting.amount(1, decimals: 255) == "0." + String(repeating: "0", count: 254) + "1")
+
+        // A precision of none is not a silly precision: a zero-decimal asset
+        // holds whole units in its smallest unit, and that is all of them.
+        #expect(GatingFormatting.amount(1_234, decimals: 0) == "1,234")
+
+        // Below zero there is no honest answer, so `UInt8` means there is no
+        // question: `GatingFormatting.amount(1_234, decimals: -1)` no longer
+        // compiles, where it used to answer "1,234".
+    }
+
+    @Test("An amount keeps its grouping on the whole side and every digit on the fraction side")
+    func groupingAndFractionTogether() {
+        #expect(GatingFormatting.amount(1_234_567_000_001, decimals: 6) == "1,234,567.000001")
+        #expect(GatingFormatting.amount(0, decimals: 6) == "0")
+        #expect(GatingFormatting.amount(UInt64.max, decimals: 6) == "18,446,744,073,709.551615")
     }
 
     @Test("Grouping is the same on every machine, because it is not a formatter")

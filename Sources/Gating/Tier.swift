@@ -182,7 +182,8 @@ public struct TierLadder: Sendable, Equatable {
         rungs.first { $0.id == id }
     }
 
-    /// The rung a stored row named, or nil when it names none of them.
+    /// The rung a stored row named, or nil when it names none of them, and
+    /// nil when it names more than one.
     ///
     /// Deliberately lenient, in this order: the id exactly, the id ignoring
     /// case, then the display name ignoring case. A store that recorded the
@@ -197,6 +198,17 @@ public struct TierLadder: Sendable, Equatable {
     /// otherwise resolve to the rung and grant its role to somebody on no rung
     /// at all.
     ///
+    /// **The leniency carries its own guards, rather than borrowing the
+    /// loader's.** ``TierConfiguration/load(_:token:)`` refuses a ladder with
+    /// two rungs of one id or one name, and refuses a rung named after the
+    /// no-rung label, so a loaded ladder can never reach the ambiguous cases.
+    /// A host that builds a ladder in code reaches them at once, and used to
+    /// get whichever rung sorted lowest with nothing said. Each pass now
+    /// answers only when exactly one rung matches, and the no-rung label
+    /// answers with no rung, whatever a hand-built ladder called its rungs.
+    /// Under-granting for one sweep is recoverable; granting a rung to
+    /// somebody who is on no rung is what the loader's rule exists to stop.
+    ///
     /// The cost of a name match is that **renaming a rung orphans every row
     /// that named it** until the next sweep rewrites them. An operator who
     /// renames a rung should run a resync afterwards.
@@ -205,13 +217,47 @@ public struct TierLadder: Sendable, Equatable {
     /// under-granting for one sweep is recoverable, granting a role that no
     /// longer exists is not.
     public func storedRung(_ stored: String) -> Tier? {
-        if let exact = rung(id: stored) {
+        let wanted = stored.lowercased()
+        // The word for holding too little is a label, not a rung. A row that
+        // stored it says the member was on no rung, so it resolves to none.
+        if wanted == unrankedName.lowercased() || wanted == unrankedSlug {
+            return nil
+        }
+        if let exact = onlyRung(where: { $0.id == stored }) {
             return exact
         }
-        let wanted = stored.lowercased()
-        if let byId = rungs.first(where: { $0.id.lowercased() == wanted }) {
+        if let byId = onlyRung(where: { $0.id.lowercased() == wanted }) {
             return byId
         }
-        return rungs.first { $0.name.lowercased() == wanted }
+        return onlyRung { $0.name.lowercased() == wanted }
+    }
+
+    // MARK: - Private Methods
+
+    /// The no-rung label as an id would be written, or the label itself when
+    /// there is nothing in it to make an id from.
+    ///
+    /// Compared against a stored row as well as the label, because
+    /// ``TierConfiguration/load(_:token:)`` refuses a rung whose id is this
+    /// slug and the leniency has to refuse the same thing.
+    private var unrankedSlug: String {
+        NumberedEnvironment.slug(unrankedName) ?? unrankedName.lowercased()
+    }
+
+    /// The one rung this matches, or nil when none of them do and nil when
+    /// several do.
+    ///
+    /// Several is the case that matters: a hand-built ladder can hold two
+    /// rungs of one name, and answering with either of them is picking for a
+    /// reason nobody wrote down.
+    ///
+    /// - Parameter matches: True for a rung the stored row could mean.
+    private func onlyRung(where matches: (Tier) -> Bool) -> Tier? {
+        var found: Tier?
+        for rung in rungs where matches(rung) {
+            guard found == nil else { return nil }
+            found = rung
+        }
+        return found
     }
 }

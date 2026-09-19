@@ -46,7 +46,14 @@ public enum CombinedBalance: Sendable {
         /// The two added together. This is what the ladder is read against.
         public let combined: UInt64
 
-        /// Whether the member has an account besides the one just linked.
+        /// Whether the member has more than the one account in hand.
+        ///
+        /// True from ``CombinedBalance/across(_:)`` when the list held more
+        /// than one account, and true from
+        /// ``CombinedBalance/afterLinking(account:directBaseUnits:liquidityBaseUnits:knownAccounts:)``
+        /// when something was on record besides the account that just signed.
+        /// Both answer the question a card asks: is this figure the whole of
+        /// what they hold, or only the part in front of us?
         public let otherAccountsExist: Bool
 
         // MARK: - Initializers
@@ -55,7 +62,8 @@ public enum CombinedBalance: Sendable {
         ///   - direct: Held directly, across every account.
         ///   - liquidity: Held in pools, across every account.
         ///   - combined: The two added together.
-        ///   - otherAccountsExist: Whether there is more than the one account.
+        ///   - otherAccountsExist: Whether there is more than the one account
+        ///     in hand.
         public init(direct: UInt64, liquidity: UInt64, combined: UInt64, otherAccountsExist: Bool) {
             self.direct = direct
             self.liquidity = liquidity

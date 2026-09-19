@@ -3,10 +3,17 @@ import Foundation
 /// Writing integer smallest units out for a person to read, and keeping a
 /// payload inside the bounds Discord accepts.
 ///
-/// Nothing here that touches an amount touches `Double`, `NumberFormatter` or
-/// a locale. A grouping separator that moves between macOS and Linux turns a
-/// reconciliation into an argument, and floating point cannot represent these
-/// values exactly in the first place.
+/// Every amount somebody has to be able to check goes through ``grouped(_:)``
+/// or ``amount(_:decimals:)``, and neither of those touches `Double`,
+/// `NumberFormatter` or a locale. A grouping separator that moves between
+/// macOS and Linux turns a reconciliation into an argument, and floating
+/// point cannot represent these values exactly in the first place.
+///
+/// ``compact(_:decimals:)`` is the exception, and the only declaration in this
+/// file that goes near `Double` or `pow`. It is for a card where the exact
+/// figure is not the point, it throws digits away deliberately, and its own
+/// documentation says so at length. Nothing anybody has to check may go
+/// through it.
 public enum GatingFormatting: Sendable {
 
     // MARK: - Numbers
@@ -16,18 +23,18 @@ public enum GatingFormatting: Sendable {
     /// Hand-rolled because `NumberFormatter` is locale-sensitive and, on Linux,
     /// not identical to its Darwin counterpart.
     public static func grouped(_ value: UInt64) -> String {
-        let digits = Array(String(value))
-        var out: [Character] = []
-        for (index, digit) in digits.enumerated() {
-            if index > 0, (digits.count - index) % 3 == 0 {
-                out.append(",")
-            }
-            out.append(digit)
-        }
-        return String(out)
+        groupedDigits(String(value))
     }
 
     /// Smallest units written as a decimal amount, with no digit lost.
+    ///
+    /// The point is moved through the digits rather than by dividing, so the
+    /// answer is exact at every precision an asset can have. Dividing needed
+    /// ten to the power of `decimals` to fit in a `UInt64`, which capped this
+    /// at nineteen places, and the guard that kept the multiply from trapping
+    /// answered a twentieth with the smallest units themselves: one base unit
+    /// of a twenty-decimal asset printed as `1`, a whole one, with nothing
+    /// said.
     ///
     /// Trailing zeros of the fraction are trimmed, because `1,000.500000` and
     /// `1,000.5` are the same number and the shorter one is easier to check.
@@ -38,29 +45,25 @@ public enum GatingFormatting: Sendable {
     ///   - decimals: How many decimal places that asset has. **Not six.** The
     ///     original assumed six in nine separate places, which is correct for
     ///     exactly one token and silently wrong by a factor of a million for
-    ///     the next one.
+    ///     the next one. `UInt8` rather than `Int`, because a precision below
+    ///     zero has no honest answer and the wider type invited one.
     /// - Returns: The amount as digits, grouped, with a fraction only when
     ///   there is one.
-    public static func amount(_ baseUnits: UInt64, decimals: Int) -> String {
-        // Ten to the twentieth overflows `UInt64` and `*=` traps, taking the
-        // process with it. A nonsensical `decimals` is answered with the raw
-        // units rather than a crash.
-        guard decimals > 0, decimals <= 19 else { return grouped(baseUnits) }
-        var divisor: UInt64 = 1
-        for _ in 0..<decimals {
-            divisor *= 10
+    public static func amount(_ baseUnits: UInt64, decimals: UInt8) -> String {
+        let places = Int(decimals)
+        guard places > 0 else { return grouped(baseUnits) }
+        var digits = String(baseUnits)
+        if digits.count <= places {
+            // One digit more than the fraction takes, so there is always a
+            // whole part to print even when it is a single zero.
+            digits = String(repeating: "0", count: places - digits.count + 1) + digits
         }
-        let whole = baseUnits / divisor
-        let fraction = baseUnits % divisor
-        guard fraction > 0 else { return grouped(whole) }
-        var digits = String(fraction)
-        if digits.count < decimals {
-            digits = String(repeating: "0", count: decimals - digits.count) + digits
+        var fraction = String(digits.suffix(places))
+        while fraction.hasSuffix("0") {
+            fraction.removeLast()
         }
-        while digits.hasSuffix("0") {
-            digits.removeLast()
-        }
-        return "\(grouped(whole)).\(digits)"
+        let whole = groupedDigits(String(digits.dropLast(places)))
+        return fraction.isEmpty ? whole : "\(whole).\(fraction)"
     }
 
     /// A balance shortened to `1.5M` or `250K`, for a card where the exact
@@ -75,7 +78,7 @@ public enum GatingFormatting: Sendable {
     /// the function keeps looking like the convenient one.
     ///
     /// Truncates rather than rounds, so it can never show more than is held.
-    public static func compact(_ baseUnits: UInt64, decimals: Int) -> String {
+    public static func compact(_ baseUnits: UInt64, decimals: UInt8) -> String {
         let divisor = pow(10.0, Double(decimals))
         let value = Double(baseUnits) / divisor
         let suffixes = ["", "K", "M", "B", "T"]
@@ -155,6 +158,23 @@ public enum GatingFormatting: Sendable {
     }
 
     // MARK: - Private Methods
+
+    /// Groups a string of digits in threes.
+    ///
+    /// Takes digits rather than a number because ``amount(_:decimals:)`` moves
+    /// the point through the digits of a value whose whole part it never
+    /// builds a `UInt64` out of.
+    private static func groupedDigits(_ digits: String) -> String {
+        let characters = Array(digits)
+        var out: [Character] = []
+        for (index, digit) in characters.enumerated() {
+            if index > 0, (characters.count - index) % 3 == 0 {
+                out.append(",")
+            }
+            out.append(digit)
+        }
+        return String(out)
+    }
 
     /// Floors a double to `places`, never rounds up. Showing more than is held
     /// is the one direction that is not merely untidy.

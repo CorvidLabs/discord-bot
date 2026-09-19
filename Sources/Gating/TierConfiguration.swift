@@ -102,7 +102,11 @@ public enum TierConfiguration: Sendable {
         var roleIds: [String: String] = [:]
         var seenIds: [String: String] = [:]
         var seenNames: [String: String] = [:]
-        var seenMinimums: [UInt64: String] = [:]
+        // Keyed by the converted threshold, and carrying the whole number the
+        // operator typed beside the variable, because a refusal has to be able
+        // to print both: the two numbers they wrote and the one ceiling those
+        // two came to.
+        var seenMinimums: [UInt64: (key: String, whole: UInt64)] = [:]
 
         for index in 1...NumberedEnvironment.maxEntries {
             let prefix = "TIER_\(index)_"
@@ -125,11 +129,20 @@ public enum TierConfiguration: Sendable {
             // this token's precision can express land on the same ceiling, and
             // comparing the typed numbers would let that ladder load: two
             // rungs at one threshold, one of them unreachable, nothing said.
+            // The refusal carries both typed numbers and the ceiling, because
+            // in that case neither number the operator wrote is where the two
+            // rungs actually met.
             let minimumBaseUnits = token.baseUnits(whole: whole)
             if let first = seenMinimums[minimumBaseUnits] {
-                throw GatingConfigurationError.duplicateMinimum(minimum: whole, first: first, second: minKey)
+                throw GatingConfigurationError.duplicateThreshold(
+                    baseUnits: minimumBaseUnits,
+                    first: first.key,
+                    firstWhole: first.whole,
+                    second: minKey,
+                    secondWhole: whole
+                )
             }
-            seenMinimums[minimumBaseUnits] = minKey
+            seenMinimums[minimumBaseUnits] = (key: minKey, whole: whole)
 
             // Two rungs sharing a display name would be merged by everything
             // that counts them, because a stored row records the name.

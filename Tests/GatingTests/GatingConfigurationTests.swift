@@ -73,6 +73,7 @@ struct GatingConfigurationTests {
             configuration: configuration,
             holdings: MemberHoldings(
                 memberId: "member-1",
+                isVerified: true,
                 directBalance: .known(5),
                 liquidityPositions: .known([])
             ),
@@ -94,5 +95,27 @@ struct GatingConfigurationTests {
         let copper = try #require(renamed.ladder.rung(id: "bronze"))
         #expect(copper.name == "Copper")
         #expect(renamed.roleId(for: copper) == Fixture.bronze)
+    }
+
+    // MARK: - One answer per written value, across every layer
+
+    @Test("A value that ends in a newline is the value, because a file's last line does")
+    func trailingNewlineIsNotPartOfTheValue() throws {
+        let configuration = try Fixture.configuration(overriding: [
+            "TIER_1_MIN": "100\n",
+            "TIER_1_NAME": "Bronze\n"
+        ])
+        let bronze = try #require(configuration.ladder.rung(id: "bronze"))
+        #expect(bronze.name == "Bronze")
+        #expect(bronze.minimumBaseUnits == 100 * 1_000_000)
+    }
+
+    @Test("A number written with separators is the number, wherever it is written")
+    func digitSeparatorsAreNotPartOfTheNumber() throws {
+        let configuration = try Fixture.configuration(overriding: ["TIER_1_MIN": "100_000"])
+        // By id, not by position: raising this rung's threshold reorders the ladder.
+        let bronze = try #require(configuration.ladder.rung(id: "bronze"))
+        #expect(bronze.minimumBaseUnits == 100_000 * 1_000_000)
+        #expect(NumberedEnvironment.withoutDigitSeparators("1_000_000") == "1000000")
     }
 }

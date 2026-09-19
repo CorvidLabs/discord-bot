@@ -78,9 +78,12 @@ public struct TokenProfile: Sendable, Equatable, Hashable {
     ///   - assetId: The on-chain asset id.
     ///   - symbol: The ticker.
     ///   - displayName: The longer name; the symbol when omitted.
-    ///   - decimals: Decimal places, at most 19. Ten to the twentieth
-    ///     overflows `UInt64`, so more is refused here rather than trapping
-    ///     somewhere downstream.
+    ///   - decimals: Decimal places, at most 19. ``baseUnitsPerWholeUnit`` is
+    ///     ten to this power and has to fit in a `UInt64` for
+    ///     ``baseUnits(whole:)`` to convert a threshold at all, so more is
+    ///     refused here rather than trapping somewhere downstream. Writing an
+    ///     amount out has no such ceiling: ``GatingFormatting/amount(_:decimals:)``
+    ///     moves the point through the digits instead of dividing.
     ///   - logoURL: A card thumbnail.
     ///   - cardColor: A card colour.
     ///   - links: Where a member can go.
@@ -128,7 +131,7 @@ public struct TokenProfile: Sendable, Equatable, Hashable {
 
     /// Smallest units written out at this token's precision, no digit lost.
     public func format(_ baseUnits: UInt64) -> String {
-        GatingFormatting.amount(baseUnits, decimals: Int(decimals))
+        GatingFormatting.amount(baseUnits, decimals: decimals)
     }
 
     /// Smallest units written out with the ticker after them.

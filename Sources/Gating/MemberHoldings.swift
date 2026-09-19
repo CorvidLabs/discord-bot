@@ -20,6 +20,11 @@ public struct MemberHoldings: Sendable, Equatable {
     ///
     /// Not a reading: a linked account is this bot's own record, and if it
     /// cannot read its own records it has nothing to decide with.
+    ///
+    /// It is the one field of this type with no default, because it is the
+    /// one whose defaults both lie. `true` grants the verified badge on a
+    /// sweep that read nothing about anybody, and `false` takes it off every
+    /// member who has one. The caller knows; it says so.
     public let isVerified: Bool
 
     /// The gated token held directly, summed across accounts, in base units.
@@ -46,14 +51,15 @@ public struct MemberHoldings: Sendable, Equatable {
 
     /// - Parameters:
     ///   - memberId: Who this is.
-    ///   - isVerified: Whether they have a verified account.
+    ///   - isVerified: Whether they have a verified account. No default:
+    ///     see the property.
     ///   - directBalance: The gated token held directly, in base units.
     ///   - liquidityPositions: Every position, or unknown.
     ///   - collectionCounts: Pieces held per collection id. A collection left
     ///     out reads as unknown, never as zero.
     public init(
         memberId: String,
-        isVerified: Bool = true,
+        isVerified: Bool,
         directBalance: Reading<UInt64> = .unknown,
         liquidityPositions: Reading<[LiquidityPosition]> = .unknown,
         collectionCounts: [String: Reading<Int>] = [:]

@@ -150,6 +150,7 @@ struct RoleRulesTests {
         // dropped a member several rungs for an outage that lasted a minute.
         let holdings = MemberHoldings(
             memberId: "member-1",
+            isVerified: true,
             directBalance: .unknown,
             liquidityPositions: .known([]),
             collectionCounts: [Fixture.passes: .known(0), Fixture.pals: .known(0)]
@@ -184,6 +185,7 @@ struct RoleRulesTests {
     func unreadLiquidityHoldsTheLadder() throws {
         let holdings = MemberHoldings(
             memberId: "member-1",
+            isVerified: true,
             directBalance: .known(Fixture.whole(90)),
             liquidityPositions: .unknown,
             collectionCounts: [Fixture.passes: .known(0), Fixture.pals: .known(0)]
@@ -203,6 +205,7 @@ struct RoleRulesTests {
     func unreadCollectionHoldsOnlyItself() throws {
         let holdings = MemberHoldings(
             memberId: "member-1",
+            isVerified: true,
             directBalance: .known(Fixture.whole(1_000)),
             liquidityPositions: .known([]),
             collectionCounts: [Fixture.passes: .known(0), Fixture.pals: .unknown]
@@ -224,6 +227,7 @@ struct RoleRulesTests {
         // A caller that simply forgot a collection must not strip its roles.
         let holdings = MemberHoldings(
             memberId: "member-1",
+            isVerified: true,
             directBalance: .known(0),
             liquidityPositions: .known([]),
             collectionCounts: [:]
@@ -235,22 +239,49 @@ struct RoleRulesTests {
         #expect(decision.unknowns.count == 2)
     }
 
-    @Test("Nothing read at all changes nothing at all")
+    @Test("A sweep that read nothing about somebody takes nothing away from them")
     func everythingUnknown() throws {
-        let holdings = MemberHoldings(memberId: "member-1")
+        // Everything on chain is unread, so every role those facts decide is
+        // held. The verified badge is decided by this bot's own record rather
+        // than by a read, so it is still granted, and the caller had to say
+        // so: `isVerified` is the one field of `MemberHoldings` with no
+        // default, because a caller who said nothing used to be taken to mean
+        // yes and the badge went out on a sweep that read nothing.
+        let holdings = MemberHoldings(memberId: "member-1", isVerified: true)
         let current: Set<String> = [Fixture.gold, Fixture.passBadge, Fixture.providerBadge]
         let decision = try Self.decide(holdings, current: current)
 
         #expect(decision.target == current.union([Fixture.verified]))
         #expect(decision.revoked.isEmpty)
+        #expect(decision.granted == [Fixture.verified])
         #expect(decision.disposition == .changed)
         #expect(decision.unknowns.count == 4)
+    }
+
+    @Test("The verified badge follows what the caller said, and there is nothing else it could follow")
+    func verificationIsAlwaysStated() throws {
+        // Two members, identical but for the one field, and the field decides
+        // the badge both ways. Neither answer is safe as a default: yes grants
+        // a badge on a sweep that read nothing, no takes it off everybody who
+        // has one, so `MemberHoldings` makes the caller say which.
+        let said = try Self.decide(
+            MemberHoldings(memberId: "member-1", isVerified: true),
+            current: []
+        )
+        let saidNot = try Self.decide(
+            MemberHoldings(memberId: "member-1", isVerified: false),
+            current: [Fixture.verified]
+        )
+        #expect(said.granted == [Fixture.verified])
+        #expect(saidNot.revoked == [Fixture.verified])
+        #expect(saidNot.granted.isEmpty)
     }
 
     @Test("An unread fact is reported once, however many roles it was holding")
     func unknownsAreNotRepeated() throws {
         let holdings = MemberHoldings(
             memberId: "member-1",
+            isVerified: true,
             directBalance: .known(0),
             liquidityPositions: .unknown,
             collectionCounts: [Fixture.passes: .known(0), Fixture.pals: .known(0)]
@@ -273,6 +304,7 @@ struct RoleRulesTests {
         ])
         let holdings = MemberHoldings(
             memberId: "member-1",
+            isVerified: true,
             directBalance: .known(0),
             liquidityPositions: .known([]),
             collectionCounts: [Fixture.passes: .known(0), Fixture.pals: .unknown]
@@ -300,6 +332,7 @@ struct RoleRulesTests {
         ])
         let holdings = MemberHoldings(
             memberId: "member-1",
+            isVerified: true,
             directBalance: .unknown,
             liquidityPositions: .known([]),
             collectionCounts: [Fixture.passes: .known(0), Fixture.pals: .known(0)]
@@ -322,6 +355,7 @@ struct RoleRulesTests {
         ])
         let holdings = MemberHoldings(
             memberId: "member-1",
+            isVerified: true,
             directBalance: .known(0),
             liquidityPositions: .known([]),
             collectionCounts: [Fixture.passes: .known(2), Fixture.pals: .unknown]
@@ -351,7 +385,7 @@ struct RoleRulesTests {
         ])
         let decision = RoleRules.decide(
             configuration: configuration,
-            holdings: MemberHoldings(memberId: "member-1", directBalance: .known(5)),
+            holdings: MemberHoldings(memberId: "member-1", isVerified: true, directBalance: .known(5)),
             currentRoleIds: []
         )
 
@@ -366,6 +400,7 @@ struct RoleRulesTests {
         let decision = try Self.decide(
             MemberHoldings(
                 memberId: "member-1",
+                isVerified: true,
                 directBalance: .known(Fixture.whole(10_000)),
                 liquidityPositions: .unknown,
                 collectionCounts: [Fixture.passes: .known(0), Fixture.pals: .known(0)]
@@ -478,6 +513,7 @@ struct RoleRulesTests {
     func summary() throws {
         let holdings = MemberHoldings(
             memberId: "member-1",
+            isVerified: true,
             directBalance: .unknown,
             liquidityPositions: .known([]),
             collectionCounts: [Fixture.passes: .known(1), Fixture.pals: .known(0)]

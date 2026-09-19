@@ -29,7 +29,7 @@ public struct AdminAllowlist: Sendable, Equatable {
         var seen: Set<String> = []
         var kept: [String] = []
         for account in accounts {
-            let trimmed = account.trimmingCharacters(in: .whitespaces)
+            let trimmed = account.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty, seen.insert(trimmed).inserted else { continue }
             kept.append(trimmed)
         }
@@ -73,10 +73,14 @@ extension AdminAllowlist {
 
     /// Reads `ADMIN_WALLET_n` upward from 1, stopping at the first gap.
     ///
-    /// Unset means an empty list, not a default member. A list longer than
-    /// ``NumberedEnvironment/maxEntries`` is refused rather than cut short:
-    /// an administrator the operator wrote down and this module dropped is
-    /// somebody locked out of their own deployment with nothing said.
+    /// Unset means an empty list, not a default member. An unbroken list
+    /// longer than ``NumberedEnvironment/maxEntries`` is refused rather than
+    /// cut short: an administrator the operator wrote down and this module
+    /// dropped is somebody locked out of their own deployment with nothing
+    /// said. A gap ends the list wherever it falls, here as everywhere else,
+    /// so an account numbered above a gap is dropped by that rule and not
+    /// rescued by this one; see
+    /// ``NumberedEnvironment/refuseOverflow(_:_:)``.
     public static func load(_ lookup: (String) -> String?) throws -> AdminAllowlist {
         var accounts: [String] = []
         for index in 1...NumberedEnvironment.maxEntries {
