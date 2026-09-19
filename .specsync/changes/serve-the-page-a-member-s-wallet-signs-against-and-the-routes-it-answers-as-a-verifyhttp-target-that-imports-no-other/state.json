@@ -11,7 +11,7 @@
   "canonical_applied": true,
   "base_commit": "8ea3bf3a95fd9c935675e5ff12457529f43068d3",
   "created_at": 1789857752,
-  "updated_at": 1789858641,
+  "updated_at": 1789858646,
   "affected_specs": [
     "verify-http",
     "verify"
