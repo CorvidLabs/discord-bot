@@ -13,6 +13,8 @@ Caps refuse; they never clamp. A clamp silently turns "send 50,000" into "send 1
 
 A limit is only a limit if the number in it means what the person setting it thinks it means, and that stops being obvious the moment the same software is pointed at somebody else's asset. A thousand whole units of one token is not a thousand whole units of another, so how many decimals an asset has is something to ask the asset rather than something to assume. A setting named for a period has to govern that period: a ceiling labelled for a day that quietly covers a week is off by a factor of seven, with real money behind the difference. And nothing arrives with an amount, an account or an asset already filled in, because a default that spends is a default somebody finds out about afterwards.
 
+A period is also something a long job can fall out of the bottom of. A payout that starts inside one week's ceiling and is still running when the next week begins has to be charged to one of them, and the answer an operator can reason about is that a job is held to the period it was measured against, because the alternative is one run spending the end of one ceiling and the start of the next. The job still finishes: a payout cut off at midnight is the half-finished payout every other rule here exists to prevent.
+
 The other half of this is the record, and who is allowed to make one. Spending is written down before the money moves, not as a courtesy log but because the record is what the remaining allowance is counted from: a payment nobody wrote down is a payment the limit has forgotten, and forgetting always fails in the expensive direction. The key that can sign belongs to whoever is running the thing. It is theirs to supply, it is never printed back out, and a bot with no key at all should run happily and simply be unable to pay, rather than pretend.
 
 ## Criteria
@@ -36,6 +38,10 @@ The other half of this is the record, and who is allowed to make one. Spending i
 - **SPEND-8**  I can retire the key that signs and put a new one in without a single member proving a wallet again
   - **SPEND-8.a**  What the old key did stays readable afterwards, so the record does not start over when the key does
   - **SPEND-8.b**  Handing this over to somebody else and replacing a key that was on a laptop that left are the same operation, and neither asks anything of my members
+- **SPEND-9**  A job long enough to cross from one period into the next is still held to one period's ceiling
+  - **SPEND-9.a**  Everything one job spends is counted against a single period, so running slowly cannot spend the end of one ceiling and the start of the next
+  - **SPEND-9.b**  A job that was allowed to start finishes even though the period rolled over under it, because stopping half way down the list is the thing the check was for
+  - **SPEND-9.c**  I can tell which period a job that crossed the boundary was counted against, rather than working it out from timestamps
 
 ## Retired
 
