@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "bring-the-discord-surface-across-gateway-lifecycle-slash-command-registration-validated-offline-the-interaction-router",
+  "slug": "bring-the-discord-surface-across-gateway-lifecycle-slash-command-registration-validated-offline-the-interaction-router",
+  "title": "Bring the Discord surface across: gateway lifecycle, slash command registration validated offline, the interaction router, the reply layer and its payload bounds, and cards as values",
+  "description": "Bring the Discord surface across: gateway lifecycle, slash command registration validated offline, the interaction router, the reply layer and its payload bounds, and cards as values",
+  "kind": "feature",
+  "state": "draft",
+  "base_commit": "769ac92a79230935f4eff9856af9d6f964b15a33",
+  "created_at": 1789828378,
+  "updated_at": 1789828381,
+  "affected_specs": [],
+  "affected_paths": [
+    "Sources",
+    "Tests",
+    "Package.swift"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "A new Discord target arrives with its own contract under specs/, which is an addition. No merged module's canonical spec text changes.",
+  "acceptance_criteria": [
+    "Every command definition is validated offline, before anything is registered with Discord, and a definition Discord would reject fails a test rather than crash-looping a boot. A handler that will take longer than three seconds defers first, and one that can outlive a fifteen minute interaction token reaches the person who asked another way. Every reply is bounded in the units Discord counts, and an over-long payload is refused with a message rather than becoming a reply that never arrives. A card is a value a test can assert on without a gateway. The whole surface is exercised with no token, no network and no guild."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "research",
+    "design"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "yes"
+  }
+}
