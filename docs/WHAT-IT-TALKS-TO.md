@@ -40,7 +40,7 @@ a short true list is worth more than a long plausible one.
 ## What is in the package
 
 Thirteen targets. Three of them contain code that opens or accepts a
-connection, one writes a file, and the executable links four.
+connection, one writes a file, and the executable links four of them.
 
 | Target | Dependencies | Opens or accepts a connection? |
 |--------|--------------|--------------------------------|
@@ -54,8 +54,8 @@ connection, one writes a file, and the executable links four.
 | `Runtime` | `Gating`, `Chain`, `Store` | It **accepts** one: the health listener binds a socket on your machine. It originates none |
 | `Verify` | Foundation, `swift-algorand`, `swift-crypto` | No. It is one import away from a node client, which is the position `Chain` is also in, and `Tests/VerifyTests/TargetShapeTests.swift` reads its sources and proves no client is constructed, no request type is named and nothing is logged. |
 | `Surface` | Foundation, `Store`, `Gating`, `Chain` | No. It declares no chat client and opens nothing. |
-| `SurfaceDiscord` | `Surface`, `Store`, `Gating`, `Chain`, `DiscordBM` | Yes: the gateway, the chat API, your portal, and a listening socket. **Nothing links this target**, so none of that runs. |
-| `BotMain` (the `bot` executable) | `Runtime`, `StoreSQLite` | No. It is the arguments, the environment, the signals and the exit |
+| `SurfaceDiscord` | `Surface`, `Store`, `Gating`, `Chain`, `DiscordBM` | Yes: the gateway and the chat API, when you have configured a token. It also holds a listening socket used only by `DiscordSurface`, which the executable does not reach. |
+| `BotMain` (the `bot` executable) | `Runtime`, `StoreSQLite`, `Surface`, `SurfaceDiscord` | Only through the above. It is the arguments, the environment, the signals and the exit, and it is the one place the four are linked together |
 
 Two things in that table are worth checking for yourself, because the rest of
 this document leans on them. The first is the split between `Surface` and
