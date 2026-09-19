@@ -135,7 +135,15 @@ normative statements are in `requirements.md`, cited by requirement id.
       spends the day's budget and still answers once it is gone
       (REQ-runtime-017).
 - [ ] Wire `ProviderProofProbe` for the provider proof, and prove by test that
-      an unset `CHAIN_PROOF_HEADERS` makes no request at all (D10).
+      **with proof headers configured and the cache stale**, answering a health
+      request calls no probe: the refresh happens on the runtime's own
+      schedule, off the request path (D10, REQ-runtime-017).
+      Not "an unset `CHAIN_PROOF_HEADERS` makes no request": that passes
+      already, because `proof(now:)` returns early when no header names are
+      configured, so a handler that calls `proof(now:)` on every request keeps
+      that test green and reaches the network the first time an operator
+      configures headers and the cache expires. A test that cannot fail the
+      thing it is named for is worse than no test, because it is counted.
 - [ ] Bound the read of the request line, and close the connection after one
       answer (D14).
 - [ ] Never set `SO_REUSEPORT`, with the comment saying why: it permits the

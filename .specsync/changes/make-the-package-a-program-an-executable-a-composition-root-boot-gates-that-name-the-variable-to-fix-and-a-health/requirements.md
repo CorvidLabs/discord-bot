@@ -220,6 +220,20 @@ one is set, naming the variable and stating that this build has no chat
 surface, rather than starting, answering healthy and never appearing in the
 server.
 
+The reserved set SHALL be stated in the code as a list of prefixes, not left
+to whoever implements this. It is `DISCORD_` and `VERIFY_`, and the variable
+that will actually be hit is `DISCORD_BOT_TOKEN`, which is the first thing a
+new operator of a package called `discord-bot` will set. Naming it matters
+because there is no chat module yet whose constants could be enumerated, so
+without this sentence one implementer reserves the whole `DISCORD_` prefix,
+another reserves one variable, and a third adds the portal keys: three
+different boots from one environment file.
+
+This also makes a rollback from a later chat-capable build a boot refusal
+until the operator edits their environment, which is a real cost and is
+accepted here rather than discovered: a variable that silently does nothing is
+how somebody concludes the bot is ignoring their token.
+
 - Covered by `SettingsAuditTests.swift` (RUN-9.a, BUILD-4, SEE-1.a).
 
 ### The health listener
