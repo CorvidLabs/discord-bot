@@ -40,7 +40,7 @@ a short true list is worth more than a long plausible one.
 ## What is in the package
 
 Thirteen targets. Three of them contain code that opens or accepts a
-connection, one writes a file, and the executable links four.
+connection, one writes a file, and the executable links four of them.
 
 | Target | Dependencies | Opens or accepts a connection? |
 |--------|--------------|--------------------------------|
@@ -54,8 +54,8 @@ connection, one writes a file, and the executable links four.
 | `Runtime` | `Gating`, `Chain`, `Store` | It **accepts** one: the health listener binds a socket on your machine. It originates none |
 | `Verify` | Foundation, `swift-algorand`, `swift-crypto` | No. It is one import away from a node client, which is the position `Chain` is also in, and `Tests/VerifyTests/TargetShapeTests.swift` reads its sources and proves no client is constructed, no request type is named and nothing is logged. |
 | `Surface` | Foundation, `Store`, `Gating`, `Chain` | No. It declares no chat client and opens nothing. |
-| `SurfaceDiscord` | `Surface`, `Store`, `Gating`, `Chain`, `DiscordBM` | Yes: the gateway, the chat API, your portal, and a listening socket. **Nothing links this target**, so none of that runs. |
-| `BotMain` (the `bot` executable) | `Runtime`, `StoreSQLite` | No. It is the arguments, the environment, the signals and the exit |
+| `SurfaceDiscord` | `Surface`, `Store`, `Gating`, `Chain`, `DiscordBM` | Yes: the gateway and the chat API, when you have configured a token. It also holds a listening socket used only by `DiscordSurface`, which the executable does not reach. |
+| `BotMain` (the `bot` executable) | `Runtime`, `StoreSQLite`, `Surface`, `SurfaceDiscord` | Only through the above. It is the arguments, the environment, the signals and the exit, and it is the one place the four are linked together |
 
 Two things in that table are worth checking for yourself, because the rest of
 this document leans on them. The first is the split between `Surface` and
@@ -435,8 +435,8 @@ is about call sites in `Sources/`. A dependency can open a connection this
 repository never wrote, and no amount of reading these four targets would show
 it.
 
-The package has **three** direct dependencies and 25 that arrive with
-them, 28 pins in all. These are the versions in `Package.resolved`, which is
+The package has **three** direct dependencies and 26 that arrive with
+them, 29 pins in all. These are the versions in `Package.resolved`, which is
 committed, so your build uses exactly these. The list is read out of that file
 rather than estimated, and the command below regenerates it.
 
@@ -453,6 +453,7 @@ rather than estimated, and the command below regenerates it.
 | `swift-atomics` | 1.3.1 | With NIO. |
 | `swift-certificates` | 1.20.0 | With `async-http-client`. TLS certificate handling. |
 | `swift-collections` | 1.6.0 | With several. |
+| `swift-configuration` | 1.2.0 | With NIO. |
 | `swift-crypto` | 3.15.1 | **Direct.** `Verify` checks an Ed25519 signature against a public key on its own; the only signature check `swift-algorand` offers is a method on a type that holds a private key, which is precisely what that target must never hold. Also arrives with `swift-algorand` and with the TLS stack. |
 | `swift-distributed-tracing` | 1.5.0 | With `async-http-client`. |
 | `swift-http-structured-headers` | 1.7.0 | With the HTTP stack. |
@@ -471,7 +472,7 @@ rather than estimated, and the command below regenerates it.
 | `swift-websocket` | 1.6.1 | With `DiscordBM`. The gateway connection. |
 | `zstd` | 1.5.7 | With `compress-nio`. |
 
-That is 25 more entries than this package had before the chat surface
+That is 26 more entries than this package had before the chat surface
 landed, and saying the number is the point: `TRUST-4` is that you can see what
 else comes with it, and a graph this size arriving without a diff would be
 exactly the thing the narrow version range exists to prevent. Most of it is
