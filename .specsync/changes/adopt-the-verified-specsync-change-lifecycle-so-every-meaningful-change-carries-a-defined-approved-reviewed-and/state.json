@@ -7,10 +7,11 @@
   "title": "Adopt the verified SpecSync change lifecycle so every meaningful change carries a defined, approved, reviewed and archived workspace",
   "description": "Adopt the verified SpecSync change lifecycle so every meaningful change carries a defined, approved, reviewed and archived workspace",
   "kind": "operations",
-  "state": "approved",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "c381eaed999fb232bafcc920f61dd82717309e18",
   "created_at": 1789788970,
-  "updated_at": 1789789123,
+  "updated_at": 1789789150,
   "affected_specs": [],
   "affected_paths": [
     ".specsync/sdd.json",
