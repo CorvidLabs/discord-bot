@@ -14,13 +14,14 @@ This repository uses one trust gate. Every session must use it and must not bypa
 ## What this is
 
 A Discord bot for Algorand projects, built in the open a piece at a time. Today
-it is four library targets and no bot: `Reserve` works out what a finite pot
+it is six library targets and no bot: `Reserve` works out what a finite pot
 owes a crowd and records what has been settled, `Gating` decides what holding
 something earns somebody in a server, `Games` is three games of cards and
-chance as replayable reducers, and `Chain` reads an Algorand node behind two
-brakes.
+chance as replayable reducers, `Chain` reads an Algorand node behind two
+brakes, and `Store` with `StoreSQLite` is what one instance remembers between
+restarts.
 
-**There is no gateway, no slash command, no database and no executable**, so
+**There is no gateway, no slash command and no executable**, so
 nothing here can be run or deployed. `README.md` says what exists and what is
 missing; `INTENT.md` says why the engine came first.
 
@@ -47,7 +48,10 @@ missing; `INTENT.md` says why the engine came first.
 | `Sources/Gating/` | The role rules and the operator's configuration. Foundation only. |
 | `Sources/Games/` | The game engine. Foundation only. |
 | `Sources/Chain/` | Reading the chain, and the two brakes. Depends on `Gating` and on `swift-algorand`. |
-| `Tests/` | 594 tests in 39 suites, all offline: `Reserve` 110, `Gating` 133, `Games` 167, `Chain` 184. |
+| `Sources/Store/` | The records, the protocols and the store in memory. Depends on `Reserve`, `Gating` and `Chain`, and on no chat client. |
+| `Sources/StoreTestKit/` | The conformance suite. A plain target no product reaches, so it never ships. |
+| `Sources/StoreSQLite/` | The durable store, over `Sources/CSQLite`, which wraps the platform's own `libsqlite3`. No new pin. |
+| `Tests/` | 635 tests in 47 suites, all offline. Six targets; `swift test` is the only figure worth quoting, because a per-target filter matches suite names across targets and double counts. |
 | `docs/WHAT-IT-TALKS-TO.md` | Every outside service and every secret, derived from the source. A pull request that adds an outbound call, a host, a dependency or a secret edits it in the same pull request. |
 | `CHANGELOG.md` | What changed between two versions. New work goes under `Unreleased`. |
 | `.github/workflows/` | The two gates that run on every pull request, on macOS and on Linux. |
@@ -59,9 +63,9 @@ fledge lanes run verify   # swift build, then swift test
 specsync check --strict   # the spec and the code still agree
 ```
 
-`specsync` counts `Sources/Reserve` and `Sources/Chain`, which are the modules
-with a contract. Adding a module's sources to `source_dirs` without writing its
-spec first turns the gate red, which is the point.
+`.specsync/config.toml` lists every source directory with a contract. Adding a
+module's sources to `source_dirs` without writing its spec first turns the gate
+red, which is the point.
 
 ## Rules that bite
 
@@ -69,6 +73,16 @@ spec first turns the gate red, which is the point.
   locale-sensitive formatting, anywhere near an amount.
 - Limits abort a whole run. They never clamp an amount down to fit.
 - A claim is written and persisted before a payment is attempted, never after.
+  In `StoreSQLite` that is structural rather than remembered: the write scope
+  takes a synchronous body and a payment is `async`, so the wrong order does
+  not compile.
+- An amount is never a signed integer column and never a `Double`. Eight bytes,
+  most significant first, because the payout engine saturates to the largest
+  unsigned value on purpose and half that range does not fit in what SQLite
+  stores.
+- Nothing below the chat boundary holds an identifier that came from a person.
+  A member is named by a key the instance drew at random, and deleting the one
+  row that links it to them is the forgetting.
 - A fact nobody could read is **unknown**, not zero and not empty. A short
   answer is not a smaller true answer. Nothing is granted or taken away on an
   unknown.

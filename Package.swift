@@ -31,7 +31,17 @@ let package = Package(
         .library(name: "Reserve", targets: ["Reserve"]),
         .library(name: "Gating", targets: ["Gating"]),
         .library(name: "Games", targets: ["Games"]),
-        .library(name: "Chain", targets: ["Chain"])
+        .library(name: "Chain", targets: ["Chain"]),
+
+        // The records and the two protocols a host writes against, plus a
+        // store in memory that passes the same conformance suite the durable
+        // one does. A contributor needs nothing installed to use it.
+        .library(name: "Store", targets: ["Store"]),
+
+        // The durable store, on the SQLite the operating system already
+        // ships. Separate from `Store` so a host that wants the records and
+        // the in-memory backend never links a database at all.
+        .library(name: "StoreSQLite", targets: ["StoreSQLite"])
     ],
     // Up to the next *minor*, not the next major. Semantic versioning gives a
     // 0.x release no compatibility promise at all across a minor bump, so
@@ -100,6 +110,63 @@ let package = Package(
         .testTarget(
             name: "ChainTests",
             dependencies: ["Chain", "Gating"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+
+        // What one instance remembers between restarts: the members, the
+        // accounts they proved, the ladder's own safety baseline, and the two
+        // seams the engine already declared.
+        //
+        // It declares no chat client, so `import DiscordBM` here is a missing
+        // module rather than a review comment, and a member is a `String`. The
+        // adapter that will know about snowflakes depends on this target, and
+        // SwiftPM refuses a cycle, so this one can never acquire it back.
+        .target(
+            name: "Store",
+            dependencies: ["Reserve", "Gating", "Chain"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+
+        // The conformance suite, as a product nobody ships. It is a plain
+        // target rather than a library, and no product reaches it, so it is
+        // never built into anything that depends on this package: test code
+        // does not travel, and a failure still points at a real line.
+        .target(
+            name: "StoreTestKit",
+            dependencies: ["Store"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+
+        // The platform's libsqlite3, and nothing else. No amalgamation is
+        // vendored, so this adds no pin and the durability engine underneath
+        // is the one the machine already trusts and already patches.
+        .systemLibrary(
+            name: "CSQLite",
+            path: "Sources/CSQLite",
+            providers: [
+                .apt(["libsqlite3-dev"]),
+                .yum(["sqlite-devel"])
+            ]
+        ),
+
+        // The durable backend. Hand-written C interop over a write-ahead log
+        // this package did not write, which is the trade: the part that must
+        // not lose a payment record is twenty-five years old, and only the
+        // thin layer above it is ours.
+        .target(
+            name: "StoreSQLite",
+            dependencies: ["Store", "CSQLite"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+
+        .testTarget(
+            name: "StoreTests",
+            dependencies: ["Store", "StoreTestKit"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+        .testTarget(
+            name: "StoreSQLiteTests",
+            dependencies: ["StoreSQLite", "Store", "StoreTestKit", "CSQLite"],
             swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
         )
     ]

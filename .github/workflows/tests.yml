@@ -48,11 +48,12 @@ jobs:
         run: swift test
 
   linux:
-    # Everything merged so far is arithmetic that behaves identically on either
-    # platform, which is exactly why nobody noticed there was no Linux gate.
-    # Persistence is the first layer where Foundation genuinely differs, and it
-    # is being written now, so the gate has to exist before the code that needs
-    # it rather than after the first Linux-only bug.
+    # The platform most operators will actually run this on, and the one the
+    # storage layer is most sensitive to: it picks a system library and
+    # branches on how a volume is identified, and only this lane sees either.
+    # Everything merged before persistence was arithmetic that behaves
+    # identically on both platforms, which is exactly why nobody noticed there
+    # was no Linux gate. BUILD-5 cannot be claimed without it.
     #
     # GitHub-hosted for the same reason the macOS job is: a fork's pull request
     # must never run on a maintainer's machine.
@@ -72,6 +73,14 @@ jobs:
         # difference, the first thing anybody reading the log wants is which
         # toolchain it was.
         run: swift --version
+
+      # The one thing this package needs that a toolchain does not bring. It is
+      # installed here rather than assumed, so the prerequisite is stated by
+      # something that runs rather than by a line in a document.
+      - name: Install the SQLite headers
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends libsqlite3-dev
 
       - name: Build
         run: swift build

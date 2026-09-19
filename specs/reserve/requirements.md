@@ -56,6 +56,15 @@ half-finished epoch SHALL skip everyone it already paid.
 
 - Covered by `ReserveRunnerTests.swift` (RESERVE-6.a, RESERVE-6.b, RESERVE-6.c,
   RESERVE-9.b).
+- A once-per-recipient line SHALL claim every holding of the person it pays, on
+  every account of theirs, so the record still refuses a second share after the
+  recipient id stops naming them. Covered by
+  `ReservePlanningTests.swift`, "The line that pays a person claims every
+  wallet's holdings, not just the one paid".
+- The record's three claim lists SHALL only ever grow at the end, so a store
+  keeping them as rows writes the difference rather than the epoch. Covered by
+  `ReserveStateTests.swift`, "Every claim only ever adds to the end of the three
+  lists".
 
 ### REQ-reserve-005
 

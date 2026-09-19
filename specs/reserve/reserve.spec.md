@@ -139,7 +139,7 @@ Every exported symbol of the `Reserve` library target, in source order.
 | `account` | Where the payment goes. |
 | `units` | Slots this line claims. One for a once-per-recipient stream; the number of unclaimed holdings for a per-unit stream. |
 | `baseUnitsAmount` | Smallest units this line pays. |
-| `claimedHoldingIds` | The holding ids this line consumes for the epoch. |
+| `claimedHoldingIds` | The holding ids this line consumes for the epoch. On a once-per-recipient stream that is every holding the person has, on every account of theirs, because their other accounts are skipped and claim nothing of their own. |
 | `ReserveSkippedRecipient` | A recipient left out of a plan, and why. |
 | `ReserveEpochPlan` | One planned epoch: who is paid, how much, and what it consumes. |
 | `entries` | The lines to pay, in account order. |
@@ -150,14 +150,14 @@ Every exported symbol of the `Reserve` library target, in source order.
 | `holdingsAlreadyClaimed` | Every qualifying thing on this account was already paid this epoch, somewhere else. |
 | `holdsNothing` | This account holds nothing that qualifies. |
 | `ReserveEpochRecord` | What one epoch of one stream has already paid. |
-| `paidAccounts` | Accounts already paid this epoch. |
+| `paidAccounts` | Accounts already paid this epoch, in the order they were claimed. |
 | `paidRecipientIds` | People already paid this epoch. A once-per-recipient stream pays a person once however many accounts they spread their holdings across. |
 | `startedAt` | When the epoch first claimed anybody. |
 | `completedAt` | When the epoch ran to the end, or nil while it is unfinished. |
 | `paidAccountSet` | Accounts paid, as a set. |
 | `paidRecipientIdSet` | People paid, as a set. |
 | `claimedHoldingIdSet` | Holdings claimed, as a set. |
-| `claim` | Claims one line's slots, to be called **before** the payment is attempted. |
+| `claim` | Claims one line's slots, to be called **before** the payment is attempted. All three lists only ever grow at the end, so a store keeping them as rows can write the difference instead of the epoch. |
 | `claimingAll` | The record this epoch would end with if every entry were paid. |
 | `release` | Gives a claim back after an attempt that provably moved nothing. |
 | `ReserveEpochSplit` | How one slot's whole-schedule share is cut into epochs. |
@@ -340,6 +340,17 @@ Every exported symbol of the `Reserve` library target, in source order.
     would raise.
 13. The module reads no clock of its own for any decision. `now` and the period
     key are parameters, so every figure in the test suite is pinned.
+14. A once-per-recipient line claims every holding of the person it pays, on
+    every account of theirs, not only on the account the payment goes to.
+    Their other accounts are skipped and claim nothing of their own, so that
+    line's claim is the only handle the ledger keeps on the rest of them once
+    the recipient id stops naming anybody, which is what happens when somebody
+    is forgotten mid-epoch and comes back under a freshly minted one.
+15. `ReserveEpochRecord`'s three claim lists only ever grow at the end. A store
+    keeping them as rows writes the difference rather than the epoch; a list
+    that changes in the middle makes every save rewrite every row, which is
+    quadratic in the slots paid and slow enough for a payout to be killed half
+    way through.
 
 ## Behavioral Examples
 
@@ -376,6 +387,15 @@ Every exported symbol of the `Reserve` library target, in source order.
 - **Then** it throws `ReserveError.spendLimitsExpired`, no claim is written, no
   payment is attempted and the period is not claimed, so the epoch is
   postponed rather than lost; `rehearse` refuses identically (RESERVE-7.d)
+
+### Scenario: Somebody forgotten mid-epoch comes back under a new name
+
+- **Given** a once-per-recipient epoch that paid one of a person's two wallets
+  and skipped the other as the same person, and did not run to the end
+- **When** that person is forgotten, returns under a freshly minted recipient
+  id, and the same epoch is resumed
+- **Then** they are skipped with `ReserveSkipReason.holdingsAlreadyClaimed`,
+  because the line that paid them claimed the second wallet's holding too
 
 ### Scenario: An incomplete eligibility list pays nobody
 
@@ -426,3 +446,4 @@ Every exported symbol of the `Reserve` library target, in source order.
 |------|--------|--------|
 | 2026-09-18 | maintainers | Spec written for the shipped `Reserve` library target. |
 | 2026-09-18 | maintainers | `ReserveSpendLimits.periodEnd` is read rather than carried: `requireWithinLimits` now takes `now` and refuses limits from a period that has ended, before it checks their size. |
+| 2026-09-18 | maintainers | A once-per-recipient line claims the whole person's holdings, and the claim lists became append-only so a store can write the difference. |
