@@ -54,6 +54,24 @@ public enum ChainEnvironment: Sendable {
     /// How many wallets are read in parallel per batch.
     public static let batchSize = "CHAIN_BATCH_SIZE"
 
+    // MARK: - One caller's share of the day
+
+    /// The share of the day's request budget one member may draw, as a
+    /// percentage. Zero turns shares off, and above a hundred is refused.
+    ///
+    /// A percentage rather than a count because budgets differ by orders of
+    /// magnitude between a free tier and a paid one, and one absolute number
+    /// would be wrong at one end or the other. With no daily budget set there
+    /// is no share at all, because there is no day's budget to take a part of.
+    public static let callerSharePercent = "CHAIN_CALLER_SHARE_PERCENT"
+
+    /// The most one member may take before their allowance has to refill.
+    ///
+    /// A burst as well as a rate, because "however fast they type" is a rate
+    /// problem and a daily quota alone locks a member out for the rest of the
+    /// day after a busy morning.
+    public static let callerBurstRequests = "CHAIN_CALLER_BURST_REQUESTS"
+
     // MARK: - Cache lifetimes
 
     /// Seconds a pool's reserves stay usable before they are read again.

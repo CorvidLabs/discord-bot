@@ -8,6 +8,7 @@ files:
   - Sources/Reserve/ReserveCoding.swift
   - Sources/Reserve/ReserveConfiguration.swift
   - Sources/Reserve/ReserveConfigurationError.swift
+  - Sources/Reserve/ReserveEpochCharge.swift
   - Sources/Reserve/ReserveEpochOutcome.swift
   - Sources/Reserve/ReserveEpochPlan.swift
   - Sources/Reserve/ReserveEpochRecord.swift
@@ -123,7 +124,7 @@ Every exported symbol of the `Reserve` library target, in source order.
 | `ReserveEpochOutcome` | What one run of one epoch actually did. |
 | `streamId` | The stream paid. |
 | `epoch` | Epoch number, from 1. |
-| `periodKey` | The period this run claimed. |
+| `cadencePeriodKey` | The **cadence** period this run claimed: the week or month that stops this schedule being paid twice. Named for its sense rather than called `periodKey`, because the other period in this module, the host's spending ceiling, now appears on the same value. |
 | `perUnitBaseUnits` | Smallest units one slot was paid. |
 | `paid` | Lines that were paid, with their evidence. |
 | `failed` | Lines that were not. |
@@ -133,6 +134,11 @@ Every exported symbol of the `Reserve` library target, in source order.
 | `paidCount` | How many lines were paid. |
 | `paidUnits` | Slots paid across every line. |
 | `isClean` | True when every planned line was paid. |
+| `ReserveEpochCharge` | One measurement of a run against the ceiling the host stated: which period it belonged to, what the run was checked for, and when. This is the **spending** period, and it is not the cadence period. |
+| `checkedWholeUnits` | Whole units the run was measured as costing, as the planner computed them for the limits check. The figure the run was checked for rather than the figure that went out: the two are allowed to disagree, and the record says which is which. |
+| `recordedAt` | When a measurement was taken. The order the charges are stored in, not this instant, is what says which came first. |
+| `charges` | The ceilings a run was measured against, in the order they were charged: on the epoch's record, and on the value a finished run hands back so a host reports without reading the store again. Empty means the host stated no ceiling, never that the period is unknown. |
+| `chargedPeriodKeys` | Those periods in order, for a reader that wants the answer without walking the charges. |
 | `ReserveSkipReason` | Why a recipient was left out of a planned epoch. |
 | `ReserveEpochEntry` | One account's line in a planned epoch. |
 | `recipientId` | The person being paid. |
@@ -154,6 +160,7 @@ Every exported symbol of the `Reserve` library target, in source order.
 | `paidRecipientIds` | People already paid this epoch. A once-per-recipient stream pays a person once however many accounts they spread their holdings across. |
 | `startedAt` | When the epoch first claimed anybody. |
 | `completedAt` | When the epoch ran to the end, or nil while it is unfinished. |
+| `recordCharge` | Records that this run was measured against a ceiling, to be called **before** the first payment of the run. Appends rather than overwrites, so an epoch cut short and resumed under a later ceiling names both periods in the order they were charged. |
 | `paidAccountSet` | Accounts paid, as a set. |
 | `paidRecipientIdSet` | People paid, as a set. |
 | `claimedHoldingIdSet` | Holdings claimed, as a set. |
@@ -237,6 +244,7 @@ Every exported symbol of the `Reserve` library target, in source order.
 | `maxPerPaymentWholeUnits` | Most one payment may move. |
 | `maxPerPeriodWholeUnits` | Most the account may move in one period. |
 | `spentThisPeriodWholeUnits` | What has already gone this period, from every source, not just this reserve. That is the point: an ordinary transfer earlier in the same period has already eaten some of the ceiling. |
+| `periodKey` | The **spending** period: the one the host's ceiling belongs to, on the limits the host states and on the charge recorded against the epoch that was measured under them. Never the cadence period, and never derived from a clock or a timestamp. |
 | `periodEnd` | When the period these figures describe rolls over, when the host knows. Read to refuse an epoch whose limits are from a period that is over; nil means the host did not say, and then nothing is checked. |
 | `remainingThisPeriodWholeUnits` | What is left of this period's ceiling. Never negative. |
 | `describesPeriod` | Whether these figures still describe the period the given instant falls in. True when no end was stated: an undated boundary is not an expired one. |
@@ -351,6 +359,24 @@ Every exported symbol of the `Reserve` library target, in source order.
     that changes in the middle makes every save rewrite every row, which is
     quadratic in the slots paid and slow enough for a payout to be killed half
     way through.
+16. **Two different periods live in this module and they never share a word.**
+    The *cadence* period is the week or month that stops a schedule being paid
+    twice; it is `ReserveState.lastPeriodKeys`, the runner's
+    `cadencePeriodKey` and `ReserveError.periodAlreadyPaid`. The *spending*
+    period is the host's own ceiling; it is `ReserveSpendLimits.periodKey`,
+    `ReserveEpochCharge.periodKey` and `ReserveError.spendLimitsExpired`. This
+    repository has already retired a criterion because two resources shared
+    one word, and these two now appear on the same report (SPEND-9.c).
+17. A run measured against stated limits appends exactly one charge to the
+    epoch's record, naming that ceiling's period and the whole-unit figure the
+    planner computed, and it is written **after the limits check and before
+    the first claim of that run**. A charge written afterwards is a charge a
+    crash loses, and the crash is when an operator goes looking. It is one
+    write per run rather than one per recipient. A resumed run appends, so a
+    boundary-crossing epoch names both periods in the order they were charged;
+    a run for a host that states no limits records nothing, and no period is
+    ever derived from a clock, from either timestamp or from the cadence key
+    (SPEND-9.c, SPEND-9.a, RESERVE-6.a).
 
 ## Behavioral Examples
 
@@ -405,6 +431,17 @@ Every exported symbol of the `Reserve` library target, in source order.
   written, and `ReserveAudit.wouldAbortLiveRun` reports the same state on a
   preview
 
+### Scenario: An epoch that ran from one ceiling into the next
+
+- **Given** an epoch measured against a ceiling whose period the host calls
+  `2026-W38`, whose payer dies part way down the list
+- **When** it is re-run a fortnight later, against a ceiling the host now
+  calls `2026-W39`
+- **Then** the epoch's record names both periods, in the order they were
+  charged, each with the whole-unit figure that run was checked for, and an
+  operator reconciling the payout against a weekly cap reads the answer
+  instead of subtracting two timestamps (SPEND-9.c, SPEND-9.a)
+
 ## Error Cases
 
 | Condition | Behavior |
@@ -447,3 +484,4 @@ Every exported symbol of the `Reserve` library target, in source order.
 | 2026-09-18 | maintainers | Spec written for the shipped `Reserve` library target. |
 | 2026-09-18 | maintainers | `ReserveSpendLimits.periodEnd` is read rather than carried: `requireWithinLimits` now takes `now` and refuses limits from a period that has ended, before it checks their size. |
 | 2026-09-18 | maintainers | A once-per-recipient line claims the whole person's holdings, and the claim lists became append-only so a store can write the difference. |
+| 2026-09-19 | maintainers | An epoch's record and a run's outcome carry the ceilings they were measured against, as an ordered list appended before the first payment, so a boundary-crossing epoch names both periods; the cadence period is renamed wherever it sat beside the spending one. |

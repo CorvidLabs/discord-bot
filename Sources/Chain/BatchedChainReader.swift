@@ -39,13 +39,22 @@ public actor BatchedChainReader {
 
     /// A pool's reserves, reading them only when the cached ones are past their
     /// lifetime.
-    public func poolReserves(pool: LiquidityPool, now: Date = Date()) async throws -> PoolReserves {
+    ///
+    /// - Parameters:
+    ///   - pool: The pool to read.
+    ///   - caller: Whose work this is.
+    ///   - now: Injected so a test pins the cache lifetime.
+    public func poolReserves(
+        pool: LiquidityPool,
+        for caller: RequestCaller,
+        now: Date = Date()
+    ) async throws -> PoolReserves {
         if let cached = reservesCache.value(for: pool.id, now: now) {
             return cached
         }
         // Two requests per pool: the pool token's record and the pool account.
         await limiter.acquire(count: 2)
-        let reserves = try await reader.poolReserves(pool: pool, now: now)
+        let reserves = try await reader.poolReserves(pool: pool, for: caller, now: now)
         reservesCache.set(reserves, for: pool.id, now: now)
         return reserves
     }
@@ -57,11 +66,22 @@ public actor BatchedChainReader {
     /// rather than poorer. Stops early once the provider has refused on quota:
     /// the rest of the pools will refuse too, and each attempt costs a request
     /// this process has already been told it may not make.
-    public func reserves(for pools: [LiquidityPool], now: Date = Date()) async -> [String: PoolReserves] {
+    ///
+    /// - Parameters:
+    ///   - pools: The pools to read.
+    ///   - caller: Whose work this is. A sweep's reserves are the instance's
+    ///     own work even though the wallets being sized against them belong to
+    ///     members.
+    ///   - now: Injected so a test pins the cache lifetime.
+    public func reserves(
+        pools: [LiquidityPool],
+        for caller: RequestCaller,
+        now: Date = Date()
+    ) async -> [String: PoolReserves] {
         var found: [String: PoolReserves] = [:]
         for pool in pools {
             do {
-                found[pool.id] = try await poolReserves(pool: pool, now: now)
+                found[pool.id] = try await poolReserves(pool: pool, for: caller, now: now)
             } catch {
                 if ChainError.isProviderQuotaRefusal(error) { break }
             }
@@ -75,14 +95,20 @@ public actor BatchedChainReader {
     /// - Parameters:
     ///   - wallets: The wallets to read, in the order the answers are wanted.
     ///   - pools: The pools to count. Empty means direct holdings only.
+    ///   - caller: Whose work this is. One batch is charged to one caller, so
+    ///     a sweep of everybody says it is the instance's own work and a
+    ///     member's own command names that member.
     ///   - now: Injected so a test pins cache lifetimes.
     public func check(
         wallets: [String],
         pools: [LiquidityPool],
+        for caller: RequestCaller,
         now: Date = Date()
     ) async -> [WalletCheck] {
         guard !wallets.isEmpty else { return [] }
-        let reserves = pools.isEmpty ? [:] : await self.reserves(for: pools, now: now)
+        let reserves = pools.isEmpty
+            ? [:]
+            : await self.reserves(pools: pools, for: caller, now: now)
         let token = configuration.token
         let reader = self.reader
         let limiter = self.limiter
@@ -99,7 +125,7 @@ public actor BatchedChainReader {
                     group.addTask {
                         await limiter.acquire()
                         do {
-                            let holdings = try await reader.holdings(of: wallet)
+                            let holdings = try await reader.holdings(of: wallet, for: caller)
                             return (
                                 offset,
                                 WalletCheck.read(

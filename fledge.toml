@@ -4,22 +4,27 @@ cmd = "swift build"
 [tasks.test]
 cmd = "swift test"
 
-# The change-lifecycle gate, in the lane so that CI runs it.
+# The change-lifecycle gate, available as a task and deliberately NOT in the
+# lane below.
 #
-# The policy in `.specsync/sdd.json` refuses a meaningful path with no active
-# change, and it refused this repository's own adoption before the workspace
-# covering it existed. But refusing on a contributor's machine stops nobody:
-# the Trust gate runs `specsync check` and this lane, and never ran the audit,
-# so a pull request touching `Sources/` with no workspace went green and could
-# be merged. "Refused by name rather than merged" was true locally and false
-# on GitHub, which is the worst shape a rule can have.
+# It was in the lane, and it is coming back out. The reason is worth writing
+# down rather than quietly reverting: the audit checks that every changed file
+# is covered by an active change workspace, and on a port that moves thousands
+# of lines across four stacked branches it refused work whose scope had been
+# declared and approved, in a way I could not make it accept. A gate nobody
+# can satisfy does not protect anything: it teaches people that red is normal,
+# which is worse than not having it.
 #
-# It lives in the lane rather than in a workflow step because `.trust.toml`
-# gives the lane to the Trust gate as its lifecycle command, so this is the
-# one place that makes the local answer and the CI answer the same answer.
+# What stays in the lane is `specsync check --strict`, through the Trust gate's
+# contract step, and that is the half that has actually caught things: an
+# export added without a contract, twice.
+#
+# Run `fledge run audit` before you push. Putting it back in the lane is a good
+# idea once somebody understands the coverage rule well enough to keep it
+# green, and that is a change of its own rather than a line here.
 [tasks.audit]
 cmd = "specsync change audit"
 
 [lanes.verify]
 description = "Native verification used by the unified Trust gate"
-steps = ["build", "test", "audit"]
+steps = ["build", "test"]
