@@ -52,7 +52,10 @@ check the proof, not the need for something to serve the page. The obligations
 that go with the page and the command are written down in REQ-verify-009 and
 REQ-verify-010 so the host that lands them has nothing left to invent, and
 `specs/verify/testing.md` records them as unevidenced rather than claiming
-them.
+them. Most of them now have a host: `specs/verify-http` is the page, the
+routes and the rate limit, in a target that depends on this one and that
+this one still knows nothing about. What is left there is the chat command,
+the pending record and the operator's release path.
 
 ## Public API
 
