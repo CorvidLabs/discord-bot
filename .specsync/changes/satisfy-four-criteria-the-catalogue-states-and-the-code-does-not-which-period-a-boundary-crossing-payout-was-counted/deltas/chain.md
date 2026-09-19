@@ -32,6 +32,23 @@ the same reason. The caller identifier SHALL be opaque to this module,
 SHALL NOT be logged, persisted or repeated in an error or a notice, and this
 module SHALL bound one caller only, never a crowd.
 
+The tracking itself SHALL be bounded in memory. A caller whose share has
+refilled completely carries no information and SHALL be forgotten, so that the
+table holds only callers currently drawing on the day and cannot grow with
+every member who touched the bot since midnight. Forgetting a caller
+SHALL NOT hand them a fresh share beyond what refilling had already restored.
+Where the number of tracked callers reaches a bound, a caller not already
+tracked SHALL be refused rather than admitted untracked, and a caller already
+tracked SHALL NOT be evicted to make room, because evicting the caller who is
+drawing hardest is the way an attacker buys themselves a new allowance.
+
+Throttling SHALL be visible to an operator in the same snapshot every other
+budget figure comes from, naming how many callers are currently held and how
+much of the day their shares have taken. A guard that refuses quietly is one
+an operator cannot tell from a provider outage, and the negative rule above,
+that a share refusal writes no notice, is about not drowning the notice buffer
+rather than about hiding the fact that throttling is happening.
+
 Acceptance Criteria
 - `CallerShareTests` proves one member caller exhausts their own share and is
   then refused, while the day's counter shows only what they actually took
@@ -45,6 +62,13 @@ Acceptance Criteria
   its burst however long a caller has been idle, and that an all-or-nothing
   reservation larger than what a caller has left takes nothing from the caller
   and nothing from the day (RUN-11, SEE-9).
+- `CallerShareTests` proves the tracking is bounded: a caller whose share has
+  refilled is no longer held, a newcomer at the bound is refused rather than
+  admitted untracked, and a caller already drawing is never evicted to make
+  room for one arriving (RUN-11).
+- `CallerShareTests` proves the snapshot an operator reads names the callers
+  currently held and what their shares have taken, so throttling cannot be
+  happening invisibly (RUN-11, SEE-9).
 - `CallerShareTests` proves that with no daily budget configured no caller is
   ever refused by a share, and that a restart hands a caller at most one fresh
   burst while the day's own count is restored from the store (RUN-11,

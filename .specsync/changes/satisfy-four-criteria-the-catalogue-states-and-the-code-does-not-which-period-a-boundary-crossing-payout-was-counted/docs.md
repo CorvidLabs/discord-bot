@@ -224,8 +224,8 @@ This spec carries two of the four criteria and takes the most editing.
 Two new entries:
 
 - `REQ-chain-020`, citing RUN-11, and the two sub-criteria only if they have
-  landed by then: the governor SHALL
-  refuse a member caller who has drawn their share of the day's budget, without
+  landed by then: the governor
+  SHALL refuse a member caller who has drawn their share of the day's budget, without
   pausing the instance, without spending from the day's budget and without
   affecting any other caller; SHALL refill that allowance over the day rather
   than holding it until the next one; and SHALL apply no share to the
