@@ -11,16 +11,21 @@
   "canonical_applied": true,
   "base_commit": "c381eaed999fb232bafcc920f61dd82717309e18",
   "created_at": 1789788970,
-  "updated_at": 1789793274,
+  "updated_at": 1789795274,
   "affected_specs": [],
   "affected_paths": [
+    ".specsync/config.toml",
     ".specsync/sdd.json",
-    ".specsync/config.toml"
+    "fledge.toml"
   ],
   "no_spec_change": true,
   "no_spec_change_rationale": "This turns the lifecycle on. It changes no module behaviour and no canonical spec text; the contracts under specs/ are unchanged by it.",
   "acceptance_criteria": [
-    "specsync change audit passes with the gate on. A change touching Sources, Tests, hi, Package.swift or the workflows without an active workspace is refused by name rather than merged. The verification command is the same fledge verify lane the Trust gate already runs, so the lifecycle and CI cannot disagree about what passing means. Adoption itself is covered by this workspace, which is the first proof the gate works."
+    "The gate is on: a change touching a gated path with no active workspace is refused by name. Proved twice, once locally and once in CI, because a rule that refuses on a contributor machine and passes on GitHub is the worst shape a rule can have.",
+    "CI runs the refusal. `specsync change audit` is a step in the `verify` lane, which is the command `.trust.toml` already gives the Trust gate, so the local answer and the CI answer are the same answer rather than two that can drift.",
+    "The gated paths are the `meaningful_paths` list in `.specsync/sdd.json` and nowhere else; no prose restates a shorter version of it.",
+    "Adoption is covered by this workspace, which the gate refused before the workspace existed, and the lane refused again when `fledge.toml` was outside the scope. Both refusals are the feature.",
+    "No claim is made that SpecSync runs `verification_commands` on `change check`. It does not for this change, whose own verification.json records `specsync check (no spec in scope)`."
   ],
   "selected_artifacts": [
     "context",

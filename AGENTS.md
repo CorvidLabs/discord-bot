@@ -39,9 +39,17 @@ missing; `INTENT.md` says why the engine came first.
    name cites the criterion id it protects.
 
 All three happen inside a **change workspace**, which is the ledger that makes
-the order above checkable rather than aspirational. Anything touching
-`Sources/`, `Tests/`, `hi/`, `Package.swift`, `fledge.toml` or `.github/` needs
-one, and `specsync change audit` refuses by name when it does not have one.
+the order above checkable rather than aspirational. The gated paths are the
+`meaningful_paths` list in `.specsync/sdd.json`, which is the only copy worth
+trusting: it also gates `Package.resolved`, `.trust.toml`, `.augur.toml` and
+the policy files themselves, so bumping the lockfile needs a workspace too.
+`specsync change audit` refuses an uncovered path by name.
+
+**It refuses on your machine, and not yet in CI.** The Trust gate runs
+`specsync check` and the verify lane; it does not run `specsync change audit`,
+so today a pull request that touches `Sources/` with no workspace goes green
+on GitHub. Run the audit before you push, and read `CONTRIBUTING.md` for the
+order. Closing that hole is a change of its own rather than a line here.
 
 ```
 specsync change new "<what you are about to do>" --path Sources/<Module>

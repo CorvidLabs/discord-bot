@@ -40,9 +40,16 @@ approved by the person whose call it is. Then build, with the contract and the
 tests in the same change. Then `check`, then `review`, then `finalize`, and
 only then merge.
 
-The policy lives in `.specsync/sdd.json`. Its verification command is the same
-`fledge lanes run verify` lane the Trust gate runs in CI, so there is one
-definition of passing rather than two that can drift.
+The policy lives in `.specsync/sdd.json`. It names the same
+`fledge lanes run verify` lane the Trust gate runs in CI, so the two are
+configured not to drift, though SpecSync does not run that list on
+`change check` today and the lane is reached through the Trust gate rather
+than through the lifecycle.
+
+Run `specsync change audit` yourself before you push. CI does not run it yet:
+the Trust gate checks contracts and runs the lane, so an uncovered path is
+refused on your machine and merges on GitHub. That is a hole, it is known, and
+it is a change of its own.
 
 You cannot approve your own change, and you cannot record a review you did not
 perform. A ledger holding one invented approval is worth less than no ledger.
