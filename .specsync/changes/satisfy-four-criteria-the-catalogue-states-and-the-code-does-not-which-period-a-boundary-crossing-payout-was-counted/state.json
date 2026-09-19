@@ -7,10 +7,10 @@
   "title": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
   "description": "Satisfy four criteria the catalogue states and the code does not: which period a boundary-crossing payout was counted against, unpausing that cannot hand out a second day of budget, a per-caller share of the day, and a health answer that costs nothing",
   "kind": "feature",
-  "state": "draft",
+  "state": "approved",
   "base_commit": "b848c0ea12f88511c6da86562bf793b407526d35",
   "created_at": 1789789650,
-  "updated_at": 1789789664,
+  "updated_at": 1789831722,
   "affected_specs": [
     "reserve",
     "chain",
