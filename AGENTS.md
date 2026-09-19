@@ -38,6 +38,34 @@ missing; `INTENT.md` says why the engine came first.
 3. **Code.** `Sources/<Module>/`, with a test in `Tests/<Module>Tests/` whose
    name cites the criterion id it protects.
 
+All three happen inside a **change workspace**, which is the ledger that makes
+the order above checkable rather than aspirational. The gated paths are the
+`meaningful_paths` list in `.specsync/sdd.json`, which is the only copy worth
+trusting: it also gates `Package.resolved`, `.trust.toml`, `.augur.toml` and
+the policy files themselves, so bumping the lockfile needs a workspace too.
+`specsync change audit` refuses an uncovered path by name.
+
+**It refuses on your machine, and not yet in CI.** The Trust gate runs
+`specsync check` and the verify lane; it does not run `specsync change audit`,
+so today a pull request that touches `Sources/` with no workspace goes green
+on GitHub. Run the audit before you push, and read `CONTRIBUTING.md` for the
+order. Closing that hole is a change of its own rather than a line here.
+
+```
+specsync change new "<what you are about to do>" --path Sources/<Module>
+specsync change answer <id> <question> <answer>     # until the interview is done
+specsync change approve <id> --actor <who agreed>   # never yourself
+# build it, contract and tests together
+specsync change check <id>
+specsync change review <id> --reviewer <who read it>
+specsync change finalize <id>                       # before merge, not after
+```
+
+Two rules that are not negotiable. **Approval is somebody else's**: you may
+prepare the definition, and you may not record agreement you did not receive.
+**Finalize before merge**: merging first orphans the verification evidence and
+blocks every earlier change sharing a delivery input from archiving.
+
 ## Where things live
 
 | Path | What it holds |

@@ -1,0 +1,72 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1789789123,
+      "digest": "d1d069f4286181897c9405eaa5228cd2183098f74a47d84f7dcd40c810b06a1e",
+      "note": "Approved in session: gate on, meaningful_paths trimmed to this repository's real layout, verification command identical to the Trust gate's lifecycle step.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "adopt-the-verified-specsync-change-lifecycle-so-every-meaningful-change-carries-a-defined-approved-reviewed-and",
+        "title": "Adopt the verified SpecSync change lifecycle so every meaningful change carries a defined, approved, reviewed and archived workspace",
+        "description": "Adopt the verified SpecSync change lifecycle so every meaningful change carries a defined, approved, reviewed and archived workspace",
+        "kind": "operations",
+        "affected_specs": [],
+        "affected_paths": [
+          ".specsync/config.toml",
+          ".specsync/sdd.json"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "This turns the lifecycle on. It changes no module behaviour and no canonical spec text; the contracts under specs/ are unchanged by it.",
+        "acceptance_criteria": [
+          "specsync change audit passes with the gate on. A change touching Sources, Tests, hi, Package.swift or the workflows without an active workspace is refused by name rather than merged. The verification command is the same fledge verify lane the Trust gate already runs, so the lifecycle and CI cannot disagree about what passing means. Adoption itself is covered by this workspace, which is the first proof the gate works."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    },
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1789795274,
+      "digest": "0938d4f1c7ba53effdf879eaa455142c73eef21167c4b0bfb6ccffb61554d6f2",
+      "note": "Renewed in session after an external review found the approved acceptance criterion was false: the gate refused locally and CI never ran the audit, so 'refused by name rather than merged' did not hold on GitHub. Renewal widens scope to fledge.toml and adds 'specsync change audit' to the verify lane, which is the command .trust.toml already gives the Trust gate. Approver was shown both options and chose CI enforcement.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "adopt-the-verified-specsync-change-lifecycle-so-every-meaningful-change-carries-a-defined-approved-reviewed-and",
+        "title": "Adopt the verified SpecSync change lifecycle so every meaningful change carries a defined, approved, reviewed and archived workspace",
+        "description": "Adopt the verified SpecSync change lifecycle so every meaningful change carries a defined, approved, reviewed and archived workspace",
+        "kind": "operations",
+        "affected_specs": [],
+        "affected_paths": [
+          ".specsync/config.toml",
+          ".specsync/sdd.json",
+          "fledge.toml"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "This turns the lifecycle on. It changes no module behaviour and no canonical spec text; the contracts under specs/ are unchanged by it.",
+        "acceptance_criteria": [
+          "Adoption is covered by this workspace, which the gate refused before the workspace existed, and the lane refused again when `fledge.toml` was outside the scope. Both refusals are the feature.",
+          "CI runs the refusal. `specsync change audit` is a step in the `verify` lane, which is the command `.trust.toml` already gives the Trust gate, so the local answer and the CI answer are the same answer rather than two that can drift.",
+          "No claim is made that SpecSync runs `verification_commands` on `change check`. It does not for this change, whose own verification.json records `specsync check (no spec in scope)`.",
+          "The gate is on: a change touching a gated path with no active workspace is refused by name. Proved twice, once locally and once in CI, because a rule that refuses on a contributor machine and passes on GitHub is the worst shape a rule can have.",
+          "The gated paths are the `meaningful_paths` list in `.specsync/sdd.json` and nowhere else; no prose restates a shorter version of it."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    }
+  ],
+  "reopenings": []
+}
