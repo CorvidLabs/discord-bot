@@ -1,0 +1,25 @@
+schema_version = 1
+profile = "standard"
+
+[lifecycle]
+command = ["fledge", "lanes", "run", "verify"]
+
+[contract]
+enabled = true
+require_coverage = 100
+skip_reason = ""
+
+[risk]
+threshold = "block"
+
+# Off rather than soft: soft expects a ledger minted by a signing workflow, and
+# this repository has none yet. Claiming soft would report every run as degraded
+# for a reason that has nothing to do with the change being reviewed, which is
+# how a gate stops being read. Turn this on with the signing workflow, not before.
+[provenance]
+mode = "off"
+skip_reason = "No signing workflow in this repository yet, so there is no ledger to verify"
+
+[atlas]
+enabled = false
+skip_reason = "Trust-managed Atlas publication is disabled during the initial rollout"
