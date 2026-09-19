@@ -290,7 +290,7 @@ assumes the other owns the middle and neither builds it.
 | A pure assembly of a `ChainHealthReport` from values the host already holds, touching no reader and no data source | The listener, the one route, the 200 against 503 mapping, and the bind that precedes any identify |
 | A non-probing read of the last provider proof, so assembling an answer awaits nothing that could reach the network | The component list, which only the composition root knows, and who marks each one reached |
 | The budget and pause facts on the report, and the hand-built JSON body | The probe instance, its URL and when it is refreshed, always off the request path |
-| The tests that assembling an answer reserves nothing | The test that the endpoint answers with the day's budget spent (REQ-runtime-017) |
+| The tests that assembling an answer reserves nothing | The test that the endpoint answers with the day's budget spent (RT-017) |
 
 Two consequences for this change, and both are cheap only if they are known
 now. This change adds **no health vocabulary of its own**: the status, the

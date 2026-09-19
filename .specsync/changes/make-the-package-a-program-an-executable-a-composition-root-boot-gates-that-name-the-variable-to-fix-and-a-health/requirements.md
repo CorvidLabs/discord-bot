@@ -11,6 +11,16 @@ that a supervisor can ask whether it is really working. Nothing below adds a
 Discord client, a wallet or a verification flow: this change is the frame those
 three will be hung on, and the frame has to be honest about being empty.
 
+**Two id namespaces, on purpose.** The requirements below are `RT-<n>`: they
+belong to this workspace, they are how the plan, the tasks and the testing map
+refer to each other, and they are archived with the change. The canonical
+module contract uses `REQ-runtime-<n>`, in `deltas/runtime.md` and later in
+`specs/runtime/`, and it has different numbers because it consolidates these
+thirty two into twenty two guarantees. One numbering for both would have meant
+every reference here pointing at a requirement that says something else, which
+is how a reader ends up building the wrong thing while believing they followed
+the document. The delta names which of these each guarantee carries.
+
 Two rules run through all of it and are worth stating before the list.
 
 **A refusal names the variable.** The package already works this way in every
@@ -58,7 +68,7 @@ up.
 
 ### The package and the graph
 
-#### REQ-runtime-001
+#### RT-001
 
 The package SHALL gain one library target `Runtime`, holding the composition
 root, the boot sequence, the settings catalogue, the startup report, the health
@@ -66,18 +76,18 @@ state and the health listener, and one executable target `BotMain` exported as
 the executable product `bot`. `Runtime` SHALL depend on `Gating`, `Chain` and
 `Store` only: not on `Games` or `Reserve`, which nothing in this change
 reaches, and not on `StoreSQLite`, because it takes `any BotStore`. `BotMain`
-SHALL depend on `Runtime` and on `StoreSQLite` and on nothing else, and SHALL
-contain only argument handling, the process environment snapshot, the
+SHALL depend on `Runtime` and on `StoreSQLite` and on nothing else, and
+SHALL contain only argument handling, the process environment snapshot, the
 construction of the live seams, signal handling and the exit.
 
 - Covered by `Package.swift` and `RuntimeCompositionTests.swift` (ADOPT-4,
   BUILD-4).
 
-#### REQ-runtime-002
+#### RT-002
 
 `Runtime` SHALL declare the chat seam as its own protocols over Foundation
-types, with a role and a member both named by `String`, and this change SHALL
-add no chat client package dependency to the manifest. A chat adapter, when one
+types, with a role and a member both named by `String`, and this change
+SHALL add no chat client package dependency to the manifest. A chat adapter, when one
 arrives, SHALL be a separate target depending on `Runtime`, so that the
 manifest's own cycle rule forbids `Runtime` and therefore `Store` from
 depending on it.
@@ -85,7 +95,7 @@ depending on it.
 - Covered by `Package.swift` and `docs/WHAT-IT-TALKS-TO.md` (TRUST-1.b,
   BUILD-4).
 
-#### REQ-runtime-003
+#### RT-003
 
 `Runtime` SHALL NOT read the process environment. The only reference to
 `ProcessInfo.processInfo.environment` in `Sources/` SHALL be the single
@@ -99,16 +109,16 @@ the machine's settings.
 
 ### Settings, read once and described once
 
-#### REQ-runtime-004
+#### RT-004
 
 `Settings` SHALL be a value built from a dictionary, SHALL answer the
-`(String) -> String?` lookup every existing loader already takes, and SHALL
-record every key it was asked for. A test SHALL build one from a literal
+`(String) -> String?` lookup every existing loader already takes, and
+SHALL record every key it was asked for. A test SHALL build one from a literal
 dictionary with no access to the machine.
 
 - Covered by `SettingsTests.swift` (BUILD-2, BUILD-2.a).
 
-#### REQ-runtime-005
+#### RT-005
 
 The catalogue SHALL describe every variable this build reads exactly once,
 each entry carrying the variable name taken from the module constant that owns
@@ -118,7 +128,7 @@ thirty-two entries each.
 
 - Covered by `SettingsCatalogueTests.swift` (TRUST-1, ADOPT-9).
 
-#### REQ-runtime-006
+#### RT-006
 
 Boot SHALL fail with an internal error when a loader asked `Settings` for a key
 the catalogue does not describe, so that a variable added to a module without
@@ -126,7 +136,7 @@ being described cannot ship undocumented.
 
 - Covered by `SettingsCatalogueTests.swift` (TRUST-1, ADOPT-9).
 
-#### REQ-runtime-007
+#### RT-007
 
 A variable that is set, carries a prefix this build owns, and was read by
 nothing SHALL be reported in the startup report, together with the catalogue
@@ -140,17 +150,17 @@ this build.
 
 ### The boot sequence
 
-#### REQ-runtime-008
+#### RT-008
 
 The boot sequence SHALL run its gates in this order and SHALL NOT be
 reorderable by configuration: the spending banner, the configuration gate, the
 store gate, the request budget restore, the listener bind, the chain gate, the
 chat gate, the loops. Each gate SHALL either pass, or stop the process with the
-exit code in REQ-runtime-029 and a message naming what to change.
+exit code in RT-029 and a message naming what to change.
 
 - Covered by `BootSequenceTests.swift` (RUN-9.a, SEE-11).
 
-#### REQ-runtime-009
+#### RT-009
 
 `bot` with an empty environment SHALL exit non-zero with the configuration code
 and SHALL print the name of the first variable to set, the purpose sentence the
@@ -162,32 +172,32 @@ package as it stands that first variable is `TOKEN_ASSET_ID`, because
 - Covered by `BootSequenceTests.swift` and `CommandLineTests.swift` (ADOPT-2,
   RUN-9.a, BUILD-1).
 
-#### REQ-runtime-010
+#### RT-010
 
 Nothing SHALL be able to identify to a chat service before the listener has
 bound. This SHALL be enforced by the types rather than by the order of two
 statements: a successful bind SHALL return a `ListenerBound` value whose
-initialiser is internal to `Runtime`, and the chat seam's connect call SHALL
-require one, so that identifying first does not compile.
+initialiser is internal to `Runtime`, and the chat seam's connect call
+SHALL require one, so that identifying first does not compile.
 
 - Covered by `BindBeforeIdentifyTests.swift`, which binds on port zero and
   asserts the recorded order on a spy gateway (RUN-7, RUN-7.a, RUN-3).
 
-#### REQ-runtime-011
+#### RT-011
 
 The store gate SHALL open the durable store before any socket is bound, so that
 the exclusive lease (`Sources/StoreSQLite/InstanceLease.swift:43`) is what
 discovers a second instance. `STORE_PATH` SHALL be required and SHALL be
 refused when it is relative, because a supervisor that restarts the process
 from a different working directory would otherwise hand the same command a
-different and empty database. A store already held by another process SHALL
-stop this one with the unavailable code and a message saying the other copy
+different and empty database. A store already held by another process
+SHALL stop this one with the unavailable code and a message saying the other copy
 keeps serving.
 
 - Covered by `BootSequenceTests.swift` and `StoreGateTests.swift` (RUN-7.a,
   SEE-8, ADOPT-2).
 
-#### REQ-runtime-012
+#### RT-012
 
 The day's request count SHALL be restored from the store into the shared
 `RequestGovernor` (`Sources/Chain/RequestGovernor.swift:75`) before the first
@@ -196,7 +206,7 @@ that reads or signs.
 
 - Covered by `BootSequenceTests.swift` (RUN-8.b, RUN-10.a, SEE-9).
 
-#### REQ-runtime-013
+#### RT-013
 
 The chain gate SHALL call `ChainReader.verifyAssetDecimals()`
 (`Sources/Chain/ChainReader.swift:58`) when it is enabled, and SHALL refuse the
@@ -213,7 +223,7 @@ restart.
 - Covered by `ChainGateTests.swift` with a stub data source (ADOPT-12.a,
   ADOPT-2, SEE-10.a, RUN-3).
 
-#### REQ-runtime-014
+#### RT-014
 
 A build with no chat surface SHALL refuse to start when a variable belonging to
 one is set, naming the variable and stating that this build has no chat
@@ -238,7 +248,7 @@ how somebody concludes the bot is ignoring their token.
 
 ### The health listener
 
-#### REQ-runtime-015
+#### RT-015
 
 The listener SHALL answer `GET /health` and nothing else, SHALL return 200 with
 the report body when every enabled component has been reached and 503 with the
@@ -252,17 +262,17 @@ paused SHALL answer **200**, because it is ready: it is serving, and a spent
 budget is a fact in the body for monitoring to alert on, not a reason to take
 the instance out of rotation. Not reached outranks throttled, so an instance
 that is both SHALL answer 503. This mapping is stated here because the sibling
-change (REQ-runtime-032) settles the status at two values and adds the budget
+change (RT-032) settles the status at two values and adds the budget
 as a body field, which leaves the HTTP code for the throttled case belonging
 to nobody unless this sentence exists.
 
 - Covered by `HealthListenerTests.swift` (SEE-1, SEE-1.a, RUN-3).
 
 A body assertion SHALL pin what `ChainHealthReport` renders rather than a
-literal frozen here, because the sibling change in REQ-runtime-032 appends a
+literal frozen here, because the sibling change in RT-032 appends a
 budget section to the same body.
 
-#### REQ-runtime-016
+#### RT-016
 
 The component list SHALL hold one entry per part the operator switched on, and
 a part that is off SHALL contribute no component and SHALL instead be listed as
@@ -274,7 +284,7 @@ change does not make. An instance with nothing to wait for SHALL read as `ok`.
 - Covered by `HealthListenerTests.swift` (BUILD-1.a, ADOPT-10, ADOPT-10.a,
   SEE-10).
 
-#### REQ-runtime-017
+#### RT-017
 
 Answering a health request SHALL cost no chain request, and SHALL still answer
 when the day's budget is spent or the governor is paused. Any provider proof in
@@ -282,7 +292,7 @@ the answer SHALL come from the cached probe
 (`Sources/Chain/ProviderProofProbe.swift:26`), which deliberately does not go
 through the governor, and SHALL be read without probing: `proof(now:)` refreshes
 when its cache is stale, so answering through it would put a network call on the
-request path. The non-probing read is the one piece REQ-runtime-032 names the
+request path. The non-probing read is the one piece RT-032 names the
 sibling change as shipping; until it exists this requirement is met by
 refreshing the probe off the request path and answering from what is held.
 
@@ -292,7 +302,7 @@ handler.
 - Covered by `HealthListenerTests.swift` with a governor whose budget is
   exhausted (SEE-1.b, SEE-10.a).
 
-#### REQ-runtime-018
+#### RT-018
 
 `HEALTH_PORT` SHALL be required, `HEALTH_ADDRESS` SHALL default to the loopback
 address, the bind SHALL report the port actually obtained, and the startup
@@ -303,25 +313,25 @@ choosing a number.
 
 ### The startup report
 
-#### REQ-runtime-019
+#### RT-019
 
 A startup report SHALL be written at every start, including one that then
 refuses, and SHALL NOT be suppressible by any setting. It SHALL contain: the
 spending banner, the version, what the build made of the settings, which parts
 are on and which are off with a reason each, the address and port bound, the
 store migrations applied and whether the store file was created by this start,
-and the settings audit from REQ-runtime-007.
+and the settings audit from RT-007.
 
 - Covered by `StartupReportTests.swift` (ADOPT-9, BUILD-3.b, SEE-12, SEE-8).
 
-#### REQ-runtime-020
+#### RT-020
 
 The report SHALL never contain the value of an entry the catalogue marks as a
 secret. A secret SHALL be reported as set or unset and nothing else: no length,
 no prefix, no hash. A fact derived from a secret SHALL appear only where the
 catalogue entry names that derived fact and the fact is public by construction,
-such as the address belonging to a signing key. Every value that is a URL SHALL
-be reported as scheme, host and port only, because a provider URL can carry a
+such as the address belonging to a signing key. Every value that is a URL
+SHALL be reported as scheme, host and port only, because a provider URL can carry a
 credential in its path and the report is meant to be safe to paste into an
 issue.
 
@@ -329,7 +339,7 @@ issue.
   every secret entry in the catalogue and asserts no sentinel appears anywhere
   in the rendered report (CATALOG-6.a, ADOPT-9.a, TRUST-1).
 
-#### REQ-runtime-021
+#### RT-021
 
 The report SHALL state what was made of the settings and not only that they
 loaded: every rung of the ladder with its name and its threshold in whole
@@ -343,7 +353,7 @@ on it.
 
 ### Spending
 
-#### REQ-runtime-022
+#### RT-022
 
 Whether a build can spend SHALL be a parameter of the composition and never a
 reading of the settings. No code path SHALL exist from `Settings` to the
@@ -354,7 +364,7 @@ passed.
 - Covered by `SpendCapabilityTests.swift` (BUILD-3, BUILD-3.a, HOST-7,
   SPEND-6.c).
 
-#### REQ-runtime-023
+#### RT-023
 
 The spending banner SHALL be the first line of every start, before the
 configuration is even read, and SHALL say either that this build has no way to
@@ -366,7 +376,7 @@ form, and that SHALL be a consequence of the graph rather than of a default.
 - Covered by `SpendCapabilityTests.swift` and `StartupReportTests.swift`
   (BUILD-3.b, SPEND-6.c, HOST-7.a).
 
-#### REQ-runtime-024
+#### RT-024
 
 The catalogue SHALL contain no variable whose effect is to stop money moving,
 and this change SHALL introduce no `TEST_MODE`, `DRY_RUN` or `SAFE_MODE`. A
@@ -378,15 +388,15 @@ moving.
 
 ### What the program does
 
-#### REQ-runtime-025
+#### RT-025
 
-The executable SHALL take `run` as its default with no arguments, and SHALL
-also take `check`, `rehearse` and `help`. An unrecognised argument SHALL exit
+The executable SHALL take `run` as its default with no arguments, and
+SHALL also take `check`, `rehearse` and `help`. An unrecognised argument SHALL exit
 with the usage code and print the four.
 
 - Covered by `CommandLineTests.swift` (ADOPT-4, BUILD-1).
 
-#### REQ-runtime-026
+#### RT-026
 
 `check` SHALL run the configuration gate and print the same startup report the
 boot would, and SHALL open no socket, no store file and no network connection.
@@ -396,7 +406,7 @@ code.
 
 - Covered by `CommandLineTests.swift` (RUN-9, RUN-9.b, ADOPT-9, BUILD-1).
 
-#### REQ-runtime-027
+#### RT-027
 
 `rehearse` SHALL load the operator's own configuration, run the role rules over
 members, accounts and holdings it invents, and print the decision for each, and
@@ -408,7 +418,7 @@ watches is their own ladder rather than somebody else's.
 
 ### Lifecycle
 
-#### REQ-runtime-028
+#### RT-028
 
 On `SIGINT` or `SIGTERM` the process SHALL stop the listener, close the store,
 which releases the lease, and exit zero. A second signal SHALL exit
@@ -416,7 +426,7 @@ immediately.
 
 - Covered by `LifecycleTests.swift` (RUN-7.a, SEE-8).
 
-#### REQ-runtime-029
+#### RT-029
 
 Exit codes SHALL be distinct and documented: 0 for a clean stop, 64 for a usage
 error, 69 for something already here or unusable, being a held store, an
@@ -430,7 +440,7 @@ a full disk from one number.
 
 ### The obligations that come with it
 
-#### REQ-runtime-030
+#### RT-030
 
 Every criterion above SHALL be exercised by a test that needs no Discord, no
 chain, no wallet and no database anybody installed. The store in those tests
@@ -442,7 +452,7 @@ which reaches no real chain, server or account.
 - Covered by the whole of `Tests/RuntimeTests/` (BUILD-2, BUILD-2.a,
   BUILD-2.b).
 
-#### REQ-runtime-031
+#### RT-031
 
 `docs/WHAT-IT-TALKS-TO.md` SHALL be updated in the same pull request to say
 that the package now listens on a socket, which address and port it listens on
@@ -454,7 +464,7 @@ than passing an undescribed target.
 - Covered by `specsync check --strict` and by review of
   `docs/WHAT-IT-TALKS-TO.md` (TRUST-1, TRUST-1.b).
 
-#### REQ-runtime-032
+#### RT-032
 
 This change SHALL add no health vocabulary of its own. The status, the waiting
 list and the JSON body belong to `Chain`, and the change being defined
@@ -468,7 +478,7 @@ refresh, and the test that the endpoint answers with the day's budget spent. A
 spent budget or a live pause SHALL be a fact in the body and SHALL NOT make the
 endpoint fail, so that a deploy gate cannot roll back a working version over a
 provider quota. Where that change makes every public read on `ChainReader` name
-its caller with no default, the chain gate in REQ-runtime-013 SHALL name the
+its caller with no default, the chain gate in RT-013 SHALL name the
 instance's own work rather than a member, and whichever of the two changes
 lands second SHALL carry that edit.
 

@@ -124,7 +124,7 @@ first and opening the store second, on the grounds that the bind is the only
 claim observable from outside the machine, so a duplicate's refusal happens
 where a deploy gate is looking and before migrations touch the operator's file.
 **The change settled the other way**: the store lease is taken first and the
-bind second (`plan.md` D7, REQ-runtime-008, and the gate table in
+bind second (`plan.md` D7, RT-008, and the gate table in
 `design.md`). The deciding arguments were that the lease asks the real question
 rather than a proxy for it, since a port is configuration and two instances on
 one machine legitimately hold two ports over one store; that the lease is the
@@ -213,7 +213,7 @@ anything in a Discord server, and the report should say so rather than implying
 otherwise.
 
 **The order as settled, and why each step is where it is.** This list follows
-`design.md`'s gate table and REQ-runtime-008; steps 4 and 5 are the pair the
+`design.md`'s gate table and RT-008; steps 4 and 5 are the pair the
 section above records a change of mind about.
 
 1. Read the environment once.
@@ -237,7 +237,7 @@ section above records a change of mind about.
    after the bind so a slow node cannot delay the bind, and it counts against
    the request budget like everything else. Where the change being defined
    alongside this one makes a caller required on `ChainReader`, this read names
-   the instance's own work rather than a member (REQ-runtime-032).
+   the instance's own work rather than a member (RT-032).
 8. Identify to the chat gateway. Last, always.
 9. Start the loops.
 
@@ -455,14 +455,14 @@ cached with the day's counter or simply accepted.
 
 **The health listener's default bind address.** Settled as loopback, with
 `HEALTH_ADDRESS` present from the first day for the container case
-(REQ-runtime-018). The judgement recorded above stands: this repository has
+(RT-018). The judgement recorded above stands: this repository has
 usually decided such questions in favour of the person on a laptop, and a
 default of every interface would publish the waiting list and any provider
 proof.
 
 **Whether the executable should have a second mode that checks the
 configuration and exits.** Settled as yes, and as two modes rather than one:
-`check` and `rehearse` (REQ-runtime-025, REQ-runtime-026, REQ-runtime-027).
+`check` and `rehearse` (RT-025, RT-026, RT-027).
 The reasoning recorded here is the argument that won, that the report is most
 useful to somebody iterating on an env file and that making them start and
 stop a bot to read it is friction. `plan.md` records `rehearse` as the most

@@ -14,7 +14,7 @@ normative statements are in `requirements.md`, cited by requirement id.
 
 - [ ] Read the sibling definition,
       `satisfy-four-criteria-the-catalogue-states-and-the-code-does-not-which-period-a-boundary-crossing-payout-was-counted`,
-      and hold to the split in REQ-runtime-032: this change adds no health
+      and hold to the split in RT-032: this change adds no health
       vocabulary of its own, and the chain gate names the instance's own work
       when that change makes a caller required on `ChainReader`.
 - [ ] Write `specs/runtime/runtime.spec.md` with all seven sections
@@ -39,38 +39,38 @@ normative statements are in `requirements.md`, cited by requirement id.
       strict concurrency enabled like every other target.
 - [ ] Add the `BotMain` executable target, strict concurrency enabled.
 - [ ] Add exactly one executable product, `bot`, so bare `swift run` is
-      unambiguous (D1, REQ-runtime-001).
+      unambiguous (D1, RT-001).
 - [ ] Do not add a library product for `Runtime` (D2), and add no new package
       dependency anywhere in this change (D14).
 - [ ] Write the manifest comment for `Runtime` saying what it may never depend
       on and why: no chat SDK, no database, so `Store` keeps the guarantee the
       existing `Store` comment already claims.
 - [ ] Add the `RuntimeTests` target, depending on `Runtime`, `Store` and
-      `StoreSQLite`, because REQ-runtime-030 composes `SQLiteStore.inMemory()`
+      `StoreSQLite`, because RT-030 composes `SQLiteStore.inMemory()`
       and a temporary store directory.
 
 ## Settings, read once and described once
 
 - [ ] Add `Settings`: built from a dictionary, answering both shapes the
       existing loaders want, recording every key it was asked for
-      (REQ-runtime-004).
+      (RT-004).
 - [ ] Put the `ProcessInfo` snapshot in the executable target and nowhere else
-      (D3, REQ-runtime-003).
+      (D3, RT-003).
 - [ ] Add the catalogue: one entry per variable this build reads, each with the
       name taken from the module constant that owns it, a purpose, whether it
-      is required and whether it is a secret (REQ-runtime-005).
+      is required and whether it is a secret (RT-005).
 - [ ] Describe numbered families as families, not as thirty-two entries each.
 - [ ] Fail the boot with the internal error code when a loader asked for a key
-      the catalogue does not describe (REQ-runtime-006).
+      the catalogue does not describe (RT-006).
 - [ ] Report a variable that is set, carries a prefix this build owns and was
       read by nobody, with the catalogue entry it is one edit away from, and do
-      not refuse the boot for it (REQ-runtime-007).
+      not refuse the boot for it (RT-007).
 - [ ] Refuse the boot when a variable belonging to a part this build does not
       have is set, naming it and saying the part is not in this build
-      (REQ-runtime-014).
+      (RT-014).
 - [ ] Add no boolean setting anywhere in this change. The only new variables
       are `STORE_PATH`, `HEALTH_PORT` and `HEALTH_ADDRESS` (D6, D9,
-      REQ-runtime-024).
+      RT-024).
 
 ## The refusal path and the verbs
 
@@ -80,31 +80,31 @@ normative statements are in `requirements.md`, cited by requirement id.
 - [ ] Carry a refusal as a value holding the variable, the sentence and the
       exit code, and render it as one line on stderr.
 - [ ] Refuse a missing `STORE_PATH`, and refuse a relative one, saying why a
-      relative path is refused (REQ-runtime-011).
+      relative path is refused (RT-011).
 - [ ] Refuse a missing or unusable `HEALTH_PORT` by name, default
-      `HEALTH_ADDRESS` to loopback, and accept port zero (REQ-runtime-018).
+      `HEALTH_ADDRESS` to loopback, and accept port zero (RT-018).
 - [ ] Parse the four verbs from `CommandLine.arguments` with no dependency: no
       argument runs, `check`, `rehearse`, `help`; anything else prints the four
-      and exits with the usage code (REQ-runtime-025).
+      and exits with the usage code (RT-025).
 - [ ] Make `check` open no socket, no store file and no network connection, and
       with nothing set print the whole catalogue marked set or unset together
-      with the first refusal (REQ-runtime-026).
+      with the first refusal (RT-026).
 - [ ] Make `rehearse` invent members and holdings only, never configuration, so
-      what a contributor watches is their own ladder (REQ-runtime-027).
-- [ ] Map every outcome to the codes in REQ-runtime-029: 0, 64, 69, 70, 78
+      what a contributor watches is their own ladder (RT-027).
+- [ ] Map every outcome to the codes in RT-029: 0, 64, 69, 70, 78
       (D13).
 
 ## The startup report
 
 - [ ] Print the spending banner first, before the configuration is read, in the
-      words of BUILD-3.b and SPEND-6.c (REQ-runtime-023).
+      words of BUILD-3.b and SPEND-6.c (RT-023).
 - [ ] Print the version the source declares, saying in words that it is what
-      the source claimed rather than what was built (REQ-runtime-019).
+      the source claimed rather than what was built (RT-019).
 - [ ] Print the report at every start, including one that then refuses, and let
-      no setting suppress it (REQ-runtime-019).
+      no setting suppress it (RT-019).
 - [ ] Print the token: asset id, symbol, display name, decimals.
 - [ ] Print every rung with its name and its threshold in whole tokens and in
-      smallest units (REQ-runtime-021).
+      smallest units (RT-021).
 - [ ] Print the variable each numbered list stopped at, for the ladder, the
       collections, the pools, the admin accounts and the token links, so a rung
       a typo dropped is visible before a sweep acts on it (ADOPT-9.a).
@@ -112,7 +112,7 @@ normative statements are in `requirements.md`, cited by requirement id.
       omitting the line (ADOPT-6.b).
 - [ ] Print the admin allowlist by size and by contents, and print an empty one
       as nobody, which `AdminAllowlist` already treats as legitimate.
-- [ ] Print every URL as scheme, host and port only (REQ-runtime-020).
+- [ ] Print every URL as scheme, host and port only (RT-020).
 - [ ] Print a secret as set or unset and nothing else: no length, no prefix, no
       hash.
 - [ ] Print which parts are on and which are off, each off one with a reason
@@ -126,18 +126,18 @@ normative statements are in `requirements.md`, cited by requirement id.
 
 - [ ] Add a readiness value holding one component per enabled part, rendering
       through `ChainHealthReport` rather than a second spelling of the same
-      shape (REQ-runtime-015).
+      shape (RT-015).
 - [ ] Declare no component for a part that is off, and no component for the
-      chat gateway, which does not exist in this build (REQ-runtime-016).
+      chat gateway, which does not exist in this build (RT-016).
 - [ ] Answer `GET /health` and nothing else: 200 when every enabled component
       is reached, 503 otherwise, both with the same body.
 - [ ] Answer from state already in memory, making no request, so a check never
       spends the day's budget and still answers once it is gone
-      (REQ-runtime-017).
+      (RT-017).
 - [ ] Wire `ProviderProofProbe` for the provider proof, and prove by test that
       **with proof headers configured and the cache stale**, answering a health
       request calls no probe: the refresh happens on the runtime's own
-      schedule, off the request path (D10, REQ-runtime-017).
+      schedule, off the request path (D10, RT-017).
       Not "an unset `CHAIN_PROOF_HEADERS` makes no request": that passes
       already, because `proof(now:)` returns early when no header names are
       configured, so a handler that calls `proof(now:)` on every request keeps
@@ -154,22 +154,22 @@ normative statements are in `requirements.md`, cited by requirement id.
 ## The boot sequence
 
 - [ ] Run the eight gates in the fixed order and make them unreorderable by
-      configuration (REQ-runtime-008).
+      configuration (RT-008).
 - [ ] Return `ListenerBound` from a completed bind, initialiser internal to
       `Runtime`, and require one on the chat seam's connect call
-      (REQ-runtime-010).
+      (RT-010).
 - [ ] Declare the chat seam over Foundation types, with a role and a member
-      both `String`, and no conformance in the package (REQ-runtime-002).
+      both `String`, and no conformance in the package (RT-002).
 - [ ] Take the store as a seam the sequence calls at its gate, so the refusal
       is reported by `Runtime` and `Runtime` still links no database.
 - [ ] Open the store before any socket is bound, and stop a second instance
       with the unavailable code and a message saying the other copy keeps
-      serving (REQ-runtime-011).
+      serving (RT-011).
 - [ ] Restore the day's request count into the shared governor before the first
       chain request, and refuse the boot when the stored count cannot be read
-      (REQ-runtime-012, RUN-8.b).
+      (RT-012, RUN-8.b).
 - [ ] Share one governor between everything that reads, and later signs.
-- [ ] Classify the chain gate's failures exactly as REQ-runtime-013 sets out,
+- [ ] Classify the chain gate's failures exactly as RT-013 sets out,
       asking `ChainError.isProviderQuotaRefusal` before treating a 403 as a
       credentials refusal (D11).
 - [ ] Back the chain gate's retry off from five seconds to a fifteen minute
@@ -178,7 +178,7 @@ normative statements are in `requirements.md`, cited by requirement id.
       node was not probed at start and why.
 - [ ] Stop the listener, close the store, which releases the lease, and exit
       zero on `SIGINT` or `SIGTERM`, and exit immediately on a second signal
-      (REQ-runtime-028).
+      (RT-028).
 
 ## Tests, all offline
 
@@ -195,7 +195,7 @@ normative statements are in `requirements.md`, cited by requirement id.
 - [ ] A unique sentinel in every secret catalogue entry, and one inside a node
       URL's query string, appears in neither the report nor any refusal.
 - [ ] The banner says the build cannot spend for every catalogue variable set
-      to a truthy value and again to a falsy one (REQ-runtime-022).
+      to a truthy value and again to a falsy one (RT-022).
 - [ ] A dropped rung reads as a shorter ladder: set two rungs, leave the third
       unset, assert the report names the variable the list stopped at.
 - [ ] The body is `starting` and names what it is waiting for while a component
@@ -214,7 +214,7 @@ normative statements are in `requirements.md`, cited by requirement id.
       fail.
 - [ ] A source scan finds no `ProcessInfo` and no call to
       `ChainConfiguration.loadFromProcessEnvironment(token:)` under
-      `Sources/Runtime` (REQ-runtime-003).
+      `Sources/Runtime` (RT-003).
 - [ ] `swift test` passes on macOS and on Linux with no network.
 
 ## Documentation and the gate
@@ -286,9 +286,9 @@ these documents and somebody may want to reopen one.
   the README still says there is none is worse than a larger diff.
 - **The health body's off list.** The off parts are named in the startup report
   and not in the `/health` body, so no merged module's contract text changes
-  (REQ-runtime-016).
+  (RT-016).
 - **What `BotMain` may depend on.** `Runtime` and `StoreSQLite`, so `Runtime`
-  keeps taking `any BotStore` and links no database (REQ-runtime-001).
+  keeps taking `any BotStore` and links no database (RT-001).
 
 ## Open questions
 
@@ -301,7 +301,7 @@ these documents and somebody may want to reopen one.
   runtime should also hold it as a value a surface could read later. If anybody
   wants JSON for a log pipeline, say so now: retrofitting a machine-readable
   report means changing every line at once.
-- **Which of the two parallel changes lands first.** REQ-runtime-032 names the
+- **Which of the two parallel changes lands first.** RT-032 names the
   split with the follow-ups change. Neither blocks the other, but the second
   one to land carries two one-line edits: naming the caller on the chain gate's
   read, and the body assertion once a budget section is appended.

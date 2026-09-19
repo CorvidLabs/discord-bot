@@ -23,7 +23,7 @@ process environment, a capability printed from a `Bool`.
 
 ## What a test here may touch
 
-`swift test` stays offline (BUILD-2), and REQ-runtime-030 is the requirement
+`swift test` stays offline (BUILD-2), and RT-030 is the requirement
 that says so. Three clarifications a reader will otherwise ask about.
 
 - **A loopback bind is not a network.** `HealthListenerTests` and
@@ -31,7 +31,7 @@ that says so. Three clarifications a reader will otherwise ask about.
   port they got, and connect to that. Nothing leaves the loopback interface, so
   BUILD-2.a, which is about reaching a real chain, a real server or a real
   account, is intact. Those same tests assert the bound address **is** the
-  loopback one, which is how the default in REQ-runtime-018 stays chosen rather
+  loopback one, which is how the default in RT-018 stays chosen rather
   than becoming whatever somebody edited later.
 - **A temporary file is not a database anybody set up.** Tests that do not care
   about durability compose `SQLiteStore.inMemory()`
@@ -86,7 +86,7 @@ Each heading names the requirement and states what it asks, so a drift from
 
 ### The package and the graph
 
-**REQ-runtime-001, one library target and one executable.**
+**RT-001, one library target and one executable.**
 `RuntimeCompositionTests.swift` reads `Package.swift` and asserts: `Runtime`
 appears in no product's target list; the executable product names `BotMain` and
 only `BotMain`; `BotMain`'s source directory holds one file. The last one is
@@ -96,7 +96,7 @@ rests on `BotMain` being too small to hide anything.
 composition root's shape a compatibility promise at the moment it is least
 stable; and an executable target that grows logic nobody can test.
 
-**REQ-runtime-002, the chat seam is Foundation types and no new dependency.**
+**RT-002, the chat seam is Foundation types and no new dependency.**
 `RuntimeCompositionTests.swift` asserts no chat package appears in
 `Package.swift`, and that the seam's protocol names a role and a member as
 `String`. `Package.resolved` is asserted unchanged in review rather than by a
@@ -104,7 +104,7 @@ test, and `docs/WHAT-IT-TALKS-TO.md` is where a reader checks it.
 *Fails against:* a seam declared in terms of a client's own types, which would
 drag the dependency in the first time anybody implemented it.
 
-**REQ-runtime-003, `Runtime` never reads the process environment.**
+**RT-003, `Runtime` never reads the process environment.**
 `SettingsSourceTests.swift` walks the source directories beside its own
 `#filePath`, in the manner of `Tests/StoreSQLiteTests/TargetShapeTests.swift:17`,
 and asserts `ProcessInfo` appears zero times under `Sources/Runtime` and
@@ -124,7 +124,7 @@ message rather than just failing on a path.
 
 ### Settings, read once and described once
 
-**REQ-runtime-004, `Settings` is a value.** `SettingsTests.swift` builds one
+**RT-004, `Settings` is a value.** `SettingsTests.swift` builds one
 from a dictionary literal and drives every loader through it, which is only
 possible if the seam is real. It also pins the two trimming rules the package
 already has, because the report must agree with the loaders: a variable set to
@@ -135,7 +135,7 @@ the bug the shared rule was written for.
 `NumberedEnvironment`, which would make the report describe a configuration
 the loaders did not see.
 
-**REQ-runtime-005, the catalogue describes every variable exactly once.**
+**RT-005, the catalogue describes every variable exactly once.**
 `SettingsCatalogueTests.swift` asserts every key constant exported by `Gating`
 and `Chain` appears in the catalogue: `TokenProfile.assetIdKey`,
 `GatingConfiguration.verifiedRoleKey`, every member of `ChainEnvironment`, and
@@ -147,7 +147,7 @@ library target gains a variable, and takes the README and the disclosure
 document with it. This is the test that lets both documents be read off a
 `check` run instead of maintained by memory.
 
-**REQ-runtime-006, a key read but not described fails the boot.**
+**RT-006, a key read but not described fails the boot.**
 `SettingsCatalogueTests.swift` drives a loader that asks for an undescribed key
 and asserts the internal error and code 70.
 *Fails against:* a catalogue that is merely documentation. The point of the
@@ -157,7 +157,7 @@ same time.
 asked for. Otherwise an optional variable nobody has set is undescribable, and
 the check only bites on machines where the variable happens to be set.
 
-**REQ-runtime-007, owned but unread is reported, reserved refuses.**
+**RT-007, owned but unread is reported, reserved refuses.**
 `SettingsAuditTests.swift`: `TOKEN_ASSETID` and `TIER_4_MIM` are both reported
 as read by nothing, with the near miss named where there is one, and neither
 refuses the boot. `TIER_5_NAME` above a gap at rung 4 is reported the same way,
@@ -181,7 +181,7 @@ not making.
 
 ### The boot sequence
 
-**REQ-runtime-008, eight gates in a fixed order.**
+**RT-008, eight gates in a fixed order.**
 `BootSequenceTests.swift` runs a whole boot against the fixtures and asserts
 the recorded order of the gates, then asserts that no setting reorders them by
 running the same boot under a settings dictionary with every optional variable
@@ -193,7 +193,7 @@ asserts that after a gate 5 or 6 refusal there is no bound socket and no held
 lease, not merely that later gates did not run. A process that exits holding a
 socket is the next restart's failure.
 
-**REQ-runtime-009, an empty environment names one variable.**
+**RT-009, an empty environment names one variable.**
 `BootSequenceTests.swift` and `CommandLineTests.swift`: the empty dictionary
 exits 78, the message contains `TOKEN_ASSET_ID`, the loader's own purpose
 sentence (`Sources/Gating/GatingConfigurationError.swift:80`) and the line
@@ -206,7 +206,7 @@ anything; and an order that reports `CHAIN_NODE_URL` to somebody who has not
 set the token either, because then fixing what you were told changes what you
 are told next, and the operator learns the tool is guessing.
 
-**REQ-runtime-010, identifying before binding does not compile.**
+**RT-010, identifying before binding does not compile.**
 The compiler is the guard: `ListenerBound` has an initialiser internal to
 `Runtime` and the chat seam's connect takes one. A compile failure cannot be a
 test case, so `BindBeforeIdentifyTests.swift` is the failable half: it binds on
@@ -217,11 +217,11 @@ a value manufactured elsewhere would show up.
 arrangement this change exists to end.
 *The correction worth writing into the test names:* the bind is not the
 duplicate guard. The port is configuration, so a second instance on a different
-port binds happily. The lease is the duplicate guard, and REQ-runtime-011 is
+port binds happily. The lease is the duplicate guard, and RT-011 is
 where that is tested. The two are asserted separately so neither can be deleted
 on the grounds that the other covers it.
 
-**REQ-runtime-011, the store gate before the socket.**
+**RT-011, the store gate before the socket.**
 `StoreGateTests.swift`: a relative `STORE_PATH` refuses with 78 naming the
 variable, because a supervisor starting the process from another directory
 would otherwise hand the same command a different, empty database. A store
@@ -236,7 +236,7 @@ which is the ported bot's order and the wrong one once a port is configuration;
 and a runtime that reports a store it invented as one it found, which makes a
 lost volume indistinguishable from a first run.
 
-**REQ-runtime-012, the day's request count is restored before the first
+**RT-012, the day's request count is restored before the first
 request.** `BootSequenceTests.swift`: a store carrying a count from earlier the
 same UTC day produces a governor already holding it, and the restore happens at
 gate 4, before the chain gate at 6. One governor, shared: the test asserts the
@@ -247,7 +247,7 @@ and two governors, which let the process spend twice the ceiling.
 restored into today. `Chain` already tests that rule; the runtime test asserts
 the runtime does not defeat it by restoring unconditionally.
 
-**REQ-runtime-013, only a contradiction stops the boot.**
+**RT-013, only a contradiction stops the boot.**
 `ChainGateTests.swift`, one case per answer: `assetNotFound` refuses,
 `assetDecimalsDisagree` refuses, an `api` refusal with 401 and one with 403
 refuse, each naming the variable to correct. A `network` failure does not
@@ -260,7 +260,7 @@ against a test network (ADOPT-12.a).
 health answer is `starting` with `chain` in `waiting`. That is the whole safety
 of not refusing, and it is only safe if it is true.
 
-**REQ-runtime-014, a chat variable on a build with no chat surface refuses.**
+**RT-014, a chat variable on a build with no chat surface refuses.**
 `SettingsAuditTests.swift`: the reserved prefix refuses with 78, naming the
 variable and saying this build has no chat surface.
 *Fails against:* a build that starts, answers healthy and never appears in the
@@ -268,13 +268,13 @@ server, which is the three hour outage the SEE family opens with.
 
 ### The health listener
 
-**REQ-runtime-015, one path, two codes, one body.**
+**RT-015, one path, two codes, one body.**
 `HealthListenerTests.swift`: `GET /health` answers; every other path and every
 other method answers 404. 200 when every enabled component is reached, 503
 otherwise, with the same body both ways. The body is compared against what
 `ChainHealthReport.jsonBody` renders for the same components rather than
 against a literal frozen here, because the body belongs to `Chain` and the
-sibling change in REQ-runtime-032 appends a budget section to it; what this
+sibling change in RT-032 appends a budget section to it; what this
 suite pins is that the runtime spells nothing itself. A socket bound with
 nothing reached reads `status` `starting` with the unreached components in
 `waiting`.
@@ -283,7 +283,7 @@ the original incident and the reason this requirement exists; and a second
 spelling of the body, which would drift from the type that already gets this
 right.
 
-**REQ-runtime-016, one component per part that is on.**
+**RT-016, one component per part that is on.**
 `HealthListenerTests.swift`: a configuration with the chain gate switched off
 produces no `chain` component and reads `ok` once the store is reached, with
 the chain in the startup report's off list and absent from the body. A
@@ -298,7 +298,7 @@ notices. The test asserts the component list is non-empty for every
 configuration the fixtures can produce, and that the one legitimate empty case
 is reachable only with every part off.
 
-**REQ-runtime-017, answering costs no chain request.**
+**RT-017, answering costs no chain request.**
 `HealthListenerTests.swift`: a governor with the day's budget exhausted still
 answers, and the governor's count is unchanged by the request. Any provider
 proof comes from the cached probe (`Sources/Chain/ProviderProofProbe.swift:26`).
@@ -308,9 +308,9 @@ actually looking (SEE-1.b).
 *This is the endpoint half of SEE-1.b*, and the sibling change's own testing
 document asks for it by name: that change proves an answer can be assembled for
 nothing, this one proves the endpoint serves it for nothing, and without both
-the criterion is proved by neither (REQ-runtime-032).
+the criterion is proved by neither (RT-032).
 
-**REQ-runtime-018, the port is required, the address is loopback, the bound
+**RT-018, the port is required, the address is loopback, the bound
 port is what is reported.** `HealthListenerTests.swift`: port zero binds and
 the report prints the port the kernel gave; the bound address is the loopback
 one when `HEALTH_ADDRESS` is unset; an unset `HEALTH_PORT` refuses with 78; a
@@ -325,7 +325,7 @@ Linux job fails for a reason that has nothing to do with the change.
 
 ### The startup report
 
-**REQ-runtime-019, a report at every start, unsuppressible.**
+**RT-019, a report at every start, unsuppressible.**
 `StartupReportTests.swift` compares the whole rendered report for a known
 configuration against an expected text. Not a spot check of three lines: the
 report is the operator-facing artefact of this change, and a snapshot is the
@@ -335,7 +335,7 @@ written. A third asserts no settings dictionary suppresses it.
 *Fails against:* a report emitted through a logger, where a level or a
 destination can remove it, which would quietly take BUILD-3.b with it.
 
-**REQ-runtime-020, no secret's value, ever.**
+**RT-020, no secret's value, ever.**
 `StartupReportSecretTests.swift` sets a unique sentinel as the value of every
 catalogue entry marked secret, renders the report, and fails if any sentinel
 appears anywhere in it. Written over the catalogue rather than over today's one
@@ -352,7 +352,7 @@ must be safe to paste into a public issue. That is the property the sentinel
 sweep measures, and it holds for the next field too, which a list of fields to
 redact does not.
 
-**REQ-runtime-021, what it made of the settings, not that they loaded.**
+**RT-021, what it made of the settings, not that they loaded.**
 `StartupReportTests.swift`: every rung with its name and its threshold in whole
 tokens **and** in the token's smallest unit; every collection; every pool; the
 admin allowlist in full; the network the node points at. A ladder with a gap at
@@ -367,7 +367,7 @@ the same and nothing may assume six.
 
 ### Spending
 
-**REQ-runtime-022, the capability is a parameter, never a reading.**
+**RT-022, the capability is a parameter, never a reading.**
 `SpendCapabilityTests.swift` sets every catalogue variable to a truthy value,
 then to a falsy one, and asserts the capability is exactly what the caller
 passed, both times. A second case passes the same environment names an operator
@@ -376,7 +376,7 @@ an enable flag, and asserts the same.
 *Fails against:* a capability fed by an environment variable, however carefully
 named.
 
-**REQ-runtime-023, the banner is the first line of every start.**
+**RT-023, the banner is the first line of every start.**
 `SpendCapabilityTests.swift` and `StartupReportTests.swift`: the banner precedes
 the configuration gate, appears on a start that then refuses, and says this
 build has no way to move anything. `RuntimeCompositionTests.swift` asserts no
@@ -387,7 +387,7 @@ with a broken configuration never sees, and who is the person running it most
 often; and a banner omitted when there is nothing to say, where BUILD-3.b asks
 for it every time rather than learned from a transaction.
 
-**REQ-runtime-024, no variable whose effect is to stop money moving.**
+**RT-024, no variable whose effect is to stop money moving.**
 `SettingsCatalogueTests.swift` asserts the catalogue contains no entry named
 `TEST_MODE`, `DRY_RUN` or `SAFE_MODE`, and `SettingsSourceTests.swift` asserts
 none of those strings appears in `Sources/Runtime` or `Sources/BotMain` at all.
@@ -398,13 +398,13 @@ load-bearing only until somebody new does not read it.
 
 ### What the program does
 
-**REQ-runtime-025, four verbs and a default.**
+**RT-025, four verbs and a default.**
 `CommandLineTests.swift`: no arguments is `run`; `check`, `rehearse` and `help`
 each reach their own path; an unrecognised argument exits 64 and prints the
 four. Asserted on the value the executable maps to an exit rather than on a
 process, so it stays a unit test.
 
-**REQ-runtime-026, `check` prints the boot's report and touches nothing.**
+**RT-026, `check` prints the boot's report and touches nothing.**
 `CommandLineTests.swift`: the text `check` prints and the text `run` prints for
 the same settings are identical, compared directly. The journal after `check`
 has no bind, no store open and no probe. With nothing set, `check` prints the
@@ -420,7 +420,7 @@ catalogue tells you everything, because you asked for it.
 looks like proof the node is reachable is worse than no command
 (`plan.md` records the same gap).
 
-**REQ-runtime-027, `rehearse` runs the operator's own rules.**
+**RT-027, `rehearse` runs the operator's own rules.**
 `RehearsalTests.swift`: the decisions printed are produced by `RoleRules` over
 invented members, accounts and holdings, against the ladder in the settings the
 test supplied. No socket, no store, no network. A case asserts that nothing in
@@ -432,7 +432,7 @@ written to be run before anything is configured properly.
 
 ### Lifecycle
 
-**REQ-runtime-028, shutdown releases what it holds.**
+**RT-028, shutdown releases what it holds.**
 `LifecycleTests.swift` drives the shutdown function directly: the listener
 stops, the store closes, the lease is released, the exit is zero, and a second
 signal exits immediately. Driven directly rather than by raising a real signal,
@@ -443,7 +443,7 @@ makes the next restart fail on a store nothing is using.
 *The case somebody would forget:* a health request in flight during shutdown.
 It is answered or the connection is closed, and neither hangs the exit.
 
-**REQ-runtime-029, distinct exit codes.**
+**RT-029, distinct exit codes.**
 `CommandLineTests.swift` and `BootSequenceTests.swift`: the whole mapping, one
 case per outcome, 0, 64, 69, 70 and 78, against the conventional `sysexits`
 meanings.
@@ -455,7 +455,7 @@ restart loop.
 
 ### The obligations that come with it
 
-**REQ-runtime-030, every criterion above is exercised offline.** Asserted by
+**RT-030, every criterion above is exercised offline.** Asserted by
 the whole target, and by `RuntimeFixtures.swift` being the only place a
 dependency is constructed: `SQLiteStore.inMemory()` or a temporary directory,
 a stub `AccountDataSource`, a spy gateway, and a loopback bind on port zero.
@@ -464,7 +464,7 @@ a stub `AccountDataSource`, a spy gateway, and a loopback bind on port zero.
 exported or a node reachable, which is BUILD-2.b: a first contribution must not
 begin with somebody being trusted with a secret.
 
-**REQ-runtime-032, the boundary with the follow-ups change.** Not a test of
+**RT-032, the boundary with the follow-ups change.** Not a test of
 this target's own behaviour but of what it does not contain:
 `RuntimeCompositionTests.swift` asserts no health status, waiting list or JSON
 body is spelled anywhere under `Sources/Runtime`, so a drift into Chain's
@@ -472,7 +472,7 @@ vocabulary shows up here rather than as two spellings in production.
 *Fails against:* a runtime that hand-builds its own body because the shape it
 wanted was one key away.
 
-**REQ-runtime-031, the gate and the disclosure.**
+**RT-031, the gate and the disclosure.**
 `specsync check --strict` covers the spec and the registered source
 directories. The `docs/WHAT-IT-TALKS-TO.md` change is review, not test, and
 `docs.md` lists exactly what it has to say. One assertion is worth adding
@@ -525,7 +525,7 @@ believable.
 - **Two processes.** The suite runs in one. A second bind of the same port and
   a lease refusal are both reachable in-process; the genuine duplicate-instance
   case stays something an operator can reproduce and a test cannot.
-- **A real signal.** See REQ-runtime-028.
+- **A real signal.** See RT-028.
 - **The deploy gate.** Whether an orchestrator holds on 503 and promotes on 200
   is a property of a deployment file this repository does not have yet. It is
   the assumption the decision not to refuse on an unreachable node rests on, so

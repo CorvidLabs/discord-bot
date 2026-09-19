@@ -77,7 +77,7 @@ what a snowflake is will be its own target depending on `Runtime`, and
 manifest, SwiftPM refuses the cycle that would let `Store` acquire one back,
 and `Store` keeps the guarantee `Package.swift` already claims for it, that an
 import of a chat client there is a missing module rather than a review comment
-(REQ-runtime-002).
+(RT-002).
 
 **`Runtime` cannot open a database.** It takes `any BotStore`
 (`Sources/Store/BotStore.swift:120`), so its tests run against
@@ -87,7 +87,7 @@ import of a chat client there is a missing module rather than a review comment
 **`BotMain` is too small to hide anything.** Argument handling, one environment
 snapshot, the construction of the live seams, the signal handlers, the exit.
 Everything that could be wrong is in `Runtime`, where a test can reach it
-(REQ-runtime-001).
+(RT-001).
 
 `Runtime` deliberately does **not** depend on `Games` or `Reserve`. Neither is
 reachable without a surface to play on or a payer to pay with, and a dependency
@@ -146,7 +146,7 @@ never calls `ChainConfiguration.loadFromProcessEnvironment(token:)`
 (`Sources/Chain/ChainConfiguration.swift:165`), which is the other door onto the
 machine. A test builds one from a literal dictionary. Both halves are enforced
 by a source scan rather than by the compiler, and the spec says so plainly
-rather than overclaiming (REQ-runtime-003, REQ-runtime-004).
+rather than overclaiming (RT-003, RT-004).
 
 **D4. The catalogue is the reason `Settings` records its reads.** Every
 variable this build reads is described exactly once, with the name taken from
@@ -155,7 +155,7 @@ it is a secret. Two things then become possible that are otherwise wishes: a
 key read but not described fails the boot as an internal error, so an
 undocumented variable cannot ship, and a variable that is set, carries a prefix
 this build owns and was read by nobody is reported back, which is the typo
-case ADOPT-9.a is about (REQ-runtime-005, REQ-runtime-006, REQ-runtime-007).
+case ADOPT-9.a is about (RT-005, RT-006, RT-007).
 *The cost, stated:* the catalogue is a second place to edit when a module gains
 a variable. That is the point, and the boot failure is what makes it happen.
 
@@ -163,7 +163,7 @@ a variable. That is the point, and the boot failure is what makes it happen.
 `check` is the dry run; `rehearse` shows the operator their own rules over
 invented members; `help` prints the four. `CommandLine.arguments` is enough,
 and a parser dependency for four words would sit in `Package.resolved` forever
-(REQ-runtime-025, REQ-runtime-026, REQ-runtime-027).
+(RT-025, RT-026, RT-027).
 
 **D6. Three new variables, and not one of them is a boolean.** `STORE_PATH`
 required and absolute, `HEALTH_PORT` required, and `HEALTH_ADDRESS` defaulting
@@ -178,7 +178,7 @@ and empty database, with a lease over a different file so neither copy knows
 about the other. The listener defaults to loopback because a health endpoint
 reachable from the internet on a first run is a decision nobody made. Port zero
 is accepted so a test can bind without choosing a number, and the report prints
-the port actually obtained (REQ-runtime-011, REQ-runtime-018).
+the port actually obtained (RT-011, RT-018).
 
 *This is where my own first answer was overruled and it is worth recording.* I
 would have given `HEALTH_PORT` a conventional default on the grounds that a
@@ -189,7 +189,7 @@ operator whose gate is watching a port they did not know about.
 
 **D7. The boot has three parts: the gates that decide whether this process may
 exist, the bind, then the gates that decide whether it is ready.** The order is
-fixed in code and not reorderable by configuration (REQ-runtime-008): the
+fixed in code and not reorderable by configuration (RT-008): the
 spending banner, the configuration gate, the store gate, the request budget
 restore, the bind, the chain gate, the chat gate, the loops.
 
@@ -208,7 +208,7 @@ and readiness is exactly what the health body is for.
 **D8. The order is a compile-time requirement, not a comment.** A completed
 bind returns a `ListenerBound` whose initialiser is internal to `Runtime`, and
 the chat seam's connect call requires one, so identifying first does not
-compile (REQ-runtime-010). The honest limit, which belongs in the spec: this
+compile (RT-010). The honest limit, which belongs in the spec: this
 proves a bound listener exists, not that the bind happened first in wall clock
 time, and a test constructs one to drive the seam.
 
@@ -217,7 +217,7 @@ the first line of every start, printed before the configuration is even read.**
 No type in this package conforms to `ReservePayer`
 (`Sources/Reserve/ReservePayer.swift:38`), `BotMain` passes none, so the process
 has no way to move anything, and the banner says exactly that
-(REQ-runtime-022, REQ-runtime-023).
+(RT-022, RT-023).
 
 The structural part is the part that matters: **this change introduces no
 boolean setting at all**, and nothing named for a mode, a test, a dry run or a
@@ -225,7 +225,7 @@ quieter log. BUILD-3.a says no setting that only quietens output may be
 mistaken for one that stops money moving, and the bot this was ported from had
 to carry a written warning that one of its flags was not a money switch. A
 warning that a flag is not what it sounds like is the failure, not the fix
-(REQ-runtime-024).
+(RT-024).
 
 The forward rule, written here so the next change does not bolt it on: a signer
 arrives as its own target and its own product, named in the manifest, and the
@@ -236,7 +236,7 @@ build can pay stays answerable by reading `Package.swift`.
 is `ChainHealthReport.jsonBody` (`Sources/Chain/ChainHealth.swift:186`), which is
 hand built on purpose so a monitoring check can grep it. `GET /health` is the
 only route, 200 when every enabled component is reached and 503 otherwise, so a
-gate that reads nothing but the code is still right (REQ-runtime-015). The
+gate that reads nothing but the code is still right (RT-015). The
 endpoint answers from state already in memory and makes no request of its own,
 because SEE-1.b says checking must not cost the thing being checked and must
 keep answering once the day's budget is gone.
@@ -264,7 +264,7 @@ rule about mismatches.
 - The node did not answer, or answered with anything else: stay up, leave the
   `chain` component unreached, retry. A node down at three in the morning must
   not stop a restart from coming back, and the health body naming `chain` is
-  how the operator is told which piece is down (REQ-runtime-013, SEE-10).
+  how the operator is told which piece is down (RT-013, SEE-10).
 
 Retries go through the governor like any other read and back off from five
 seconds to a ceiling of fifteen minutes, so a node down overnight cannot spend
@@ -280,8 +280,8 @@ the value: a secret is `set` or `unset` and nothing else, no length, no prefix,
 no hash; a URL is scheme, host and port; a ladder is its rungs with their
 thresholds and the variable the list stopped at. There is no generic dump
 anywhere: no `Mirror`, no `Encodable` configuration, no `description` of a whole
-configuration value, so adding a line is a deliberate act (REQ-runtime-019,
-REQ-runtime-020, REQ-runtime-021).
+configuration value, so adding a line is a deliberate act (RT-019,
+RT-020, RT-021).
 
 The guard is the strongest cheap one available: plant a unique sentinel in every
 catalogue entry marked secret, including one inside a node URL's query, render
@@ -294,7 +294,7 @@ is never read through a loader that puts values in its errors.
 **D13. Exit codes are distinct, and this is the decision I changed my mind
 about.** 0 for a clean stop, 64 for a usage error, 69 for something already here
 or unusable, 70 for an internal error, 78 for a configuration that is wrong
-(REQ-runtime-029). My first answer was a single non-zero code, on the grounds
+(RT-029). My first answer was a single non-zero code, on the grounds
 that every refusal already names its variable and a code table is a second
 vocabulary to keep in step. The argument that wins is the supervisor's: a
 machine restarting the process cannot read the sentence, and a wrong token, a
@@ -394,18 +394,18 @@ settled, and the answers are recorded here rather than deleted.
   `ChainHealthReport.jsonBody` emits status, waiting and provider and nothing
   else (`Sources/Chain/ChainHealth.swift:186`) and a fourth key would change a
   merged module's contract, which the no-spec-change rationale says this change
-  does not do (REQ-runtime-016).
+  does not do (RT-016).
 - **What `BotMain` may depend on.** Settled: `Runtime` and `StoreSQLite`. The
   durable store is a live seam and lives in `StoreSQLite`, and keeping the
   dependency there is what lets `Runtime` take `any BotStore` and link no
-  database (REQ-runtime-001).
+  database (RT-001).
 - **The requirement numbering.** Checked rather than assumed: `testing.md`
-  numbers `REQ-runtime-011` as the store gate and `REQ-runtime-012` as the
+  numbers `RT-011` as the store gate and `RT-012` as the
   budget restore, exactly as `requirements.md` does, and every id from 001 to
   031 appears in both. There is no clash to reconcile.
 
 What could still make this plan wrong is the boundary with the change being
-defined alongside it, `satisfy-four-criteria-...-was-counted`. REQ-runtime-032
+defined alongside it, `satisfy-four-criteria-...-was-counted`. RT-032
 names the split. If that change ships a health value this plan has assumed is
 Chain's today, or makes a caller required on `ChainReader` before this lands,
 the second change to land carries the edit, and both definitions say so.

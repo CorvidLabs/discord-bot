@@ -165,7 +165,7 @@ half of the health answer:
 ships the `Chain` side of SEE-1.b, which is the pure assembly of a report from
 values, a non-probing read of the last provider proof, and the budget and pause
 facts in the body. This change ships the surface: the listener, the route, the
-HTTP mapping, the components and the probe's wiring. REQ-runtime-032 writes the
+HTTP mapping, the components and the probe's wiring. RT-032 writes the
 split down, and the same requirement names the other edge between the two, which
 is that the sibling change makes every public read on `ChainReader` name its
 caller, so the chain gate here names the instance's own work. Neither change

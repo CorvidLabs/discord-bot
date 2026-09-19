@@ -134,7 +134,7 @@ otherwise send somebody looking for an executable it says does not exist.
 
 ## docs/WHAT-IT-TALKS-TO.md
 
-The largest change, and REQ-runtime-031 makes it a condition of the change
+The largest change, and RT-031 makes it a condition of the change
 rather than a courtesy. Eight edits:
 
 1. **The short version table** gains a row: "Does anything talk to it?" The
@@ -273,8 +273,12 @@ What each section must carry that is not obvious from the code:
   every reader of `docs/WHAT-IT-TALKS-TO.md`.
 - **Change Log.** The initial entry.
 
-Companions: `requirements.md` carrying the `REQ-runtime-<n>` ids from this
-workspace unchanged, `context.md` for the decisions and the soft spots, and
+Companions: `requirements.md` carrying the canonical `REQ-runtime-<n>` ids,
+which are the delta's ids and not this workspace's `RT-<n>` ids: the two
+namespaces are deliberately different because the delta consolidates
+thirty two workspace requirements into twenty two module guarantees, and
+reusing one numbering for both meanings would have left every cross-reference
+in this workspace pointing at something else, `context.md` for the decisions and the soft spots, and
 `testing.md`, which is the module's standing test map. That last one is
 distinct from this workspace's `testing.md`: the workspace document is the plan
 for this change and will be archived, the spec document is what the module's
@@ -388,7 +392,7 @@ Still open:
   captures only standard error would lose it, and losing it takes BUILD-3.b
   with it. Settle it before the first deployment file exists, and it may be as
   simple as writing the banner to both.
-- **Which of the two parallel changes lands first.** REQ-runtime-032 names the
+- **Which of the two parallel changes lands first.** RT-032 names the
   split with `satisfy-four-criteria-...-was-counted`: that change owns the
   `Chain` half of SEE-1.b and this one owns the endpoint. The disclosure
   document's inbound section describes the endpoint either way, and the body's
