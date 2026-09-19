@@ -152,6 +152,21 @@ public enum CommandValidator: Sendable {
         guard found.isEmpty else { throw CommandCatalogInvalid(issues: found) }
     }
 
+    /// The catalogue, with proof that it passed.
+    ///
+    /// The only thing in this package that makes a ``ValidatedCatalog``, which
+    /// is what stops a registration running against definitions nothing
+    /// checked: a registrar takes the proof, and the proof cannot be made
+    /// outside this module (`ADOPT-2`).
+    ///
+    /// - Parameter catalog: The catalogue about to be registered.
+    /// - Returns: The same catalogue, in the type a registrar accepts.
+    /// - Throws: ``CommandCatalogInvalid`` when anything is wrong.
+    public static func validated(_ catalog: CommandCatalog) throws -> ValidatedCatalog {
+        try validate(catalog.commands)
+        return ValidatedCatalog(catalog: catalog)
+    }
+
     // MARK: - Private Methods
 
     /// Every issue in one options array, and in everything nested under it.

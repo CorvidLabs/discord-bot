@@ -53,6 +53,14 @@ public enum SettingsGroup: String, Sendable, Equatable, CaseIterable {
 
     /// What this program itself needs.
     case runtime = "This process"
+
+    /// The chat service, when this build has one.
+    ///
+    /// Nothing in this module fills this group. The entries belong to
+    /// whatever conforms to ``ChatGateway`` and arrive through
+    /// ``ChatGateway/settingsEntries``, because a module that links no chat
+    /// library cannot name a chat variable (`BUILD-4`).
+    case chat = "The chat service"
 }
 
 /// One variable this build reads, described exactly once.
@@ -168,9 +176,18 @@ public enum SettingsCatalogue: Sendable {
     /// A variable inside one of these **refuses the boot**. An operator who
     /// sets a chat token believes their members are about to see a bot; they
     /// are not, and a process that starts, answers healthy and never appears
-    /// in the server is exactly the outage the SEE family opens with. The
-    /// moment a chat surface lands, its prefix moves to ``ownedPrefixes`` and
-    /// the refusal disappears on its own.
+    /// in the server is exactly the outage the SEE family opens with.
+    ///
+    /// **A prefix stays on this list once the part exists.** The rule is not
+    /// "this prefix is forbidden", it is "nothing here would read it", and
+    /// the thing that settles that is whether a variable is described. A part
+    /// that is linked hands over its own entries through
+    /// ``ChatGateway/settingsEntries``, those entries describe its variables,
+    /// and a described variable is never reserved. Take the part away and the
+    /// entries go with it and the refusal is back, unchanged, with nothing
+    /// having been edited. That is why the chat prefix is still here even
+    /// though a chat surface now exists: the refusal is for the build that
+    /// has not got one.
     public static let reservedPrefixes: [String] = ["DISCORD_", "VERIFY_"]
 
     /// What a reserved prefix is reserved for, for the refusal's sentence.
@@ -198,6 +215,20 @@ public enum SettingsCatalogue: Sendable {
 
     /// The entry describing `name`, or nil when nothing does.
     public static func entry(for name: String) -> SettingsEntry? {
+        entry(for: name, in: entries)
+    }
+
+    /// The entry describing `name` in this list, or nil when nothing does.
+    ///
+    /// Takes the list rather than reading ``entries``, because a linked part
+    /// contributes entries of its own and every check has to see the same
+    /// list the report does.
+    ///
+    /// - Parameters:
+    ///   - name: The variable as the operator wrote it.
+    ///   - entries: Every entry in play, this build's own and any a linked
+    ///     part supplied.
+    public static func entry(for name: String, in entries: [SettingsEntry]) -> SettingsEntry? {
         entries.first { $0.matches(name) }
     }
 
@@ -214,6 +245,46 @@ public enum SettingsCatalogue: Sendable {
     /// Which of the reserved prefixes `name` carries, if any.
     public static func reservedPrefix(of name: String) -> String? {
         reservedPrefixes.first { name.hasPrefix($0) }
+    }
+
+    /// Which of the reserved prefixes `name` carries and no linked part
+    /// claims, if any.
+    ///
+    /// - Parameters:
+    ///   - name: The variable as the operator wrote it.
+    ///   - entries: Every entry in play.
+    public static func reservedPrefix(of name: String, given entries: [SettingsEntry]) -> String? {
+        let owned = ownedPrefixes(given: entries)
+        guard !owned.contains(where: { name.hasPrefix($0) }) else { return nil }
+        return reservedPrefix(of: name)
+    }
+
+    /// Every prefix this build reads, given what a linked part supplied.
+    ///
+    /// A reserved prefix moves over as soon as one entry under it arrives,
+    /// and it moves **whole**. That is the difference between reserving a
+    /// prefix and describing a variable, and it is what a typo needs: with a
+    /// chat surface linked, `DISCORD_BOT_TOKE` is one edit from something
+    /// this build reads, so it belongs with `TIER_1_MIM` as a probable typo
+    /// that is reported (`ADOPT-9.a`), not with a variable for a part that
+    /// does not exist, which is refused (`RUN-9.a`). Take the part away and
+    /// the entries go with it and the prefix is reserved again.
+    ///
+    /// - Parameter entries: Every entry in play.
+    public static func ownedPrefixes(given entries: [SettingsEntry]) -> [String] {
+        ownedPrefixes + reservedPrefixes.filter { prefix in
+            entries.contains { $0.pattern.hasPrefix(prefix) }
+        }
+    }
+
+    /// Whether `name` carries a prefix this build reads, given what a linked
+    /// part supplied.
+    ///
+    /// - Parameters:
+    ///   - name: The variable as the operator wrote it.
+    ///   - entries: Every entry in play.
+    public static func isOwned(_ name: String, given entries: [SettingsEntry]) -> Bool {
+        ownedPrefixes(given: entries).contains { name.hasPrefix($0) }
     }
 
     /// Whether `name` carries a prefix this build owns.

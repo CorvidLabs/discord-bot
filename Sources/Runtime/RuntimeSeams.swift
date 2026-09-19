@@ -42,8 +42,12 @@ public struct RuntimeSeams: Sendable {
     /// Where the chain reader and the provider probe come from.
     public let chain: any ChainSourceProviding
 
-    /// The chat service, when this build has one. Nothing conforms to
-    /// ``ChatGateway`` at this commit, so this is nil in every real build.
+    /// The chat service, when this build has one.
+    ///
+    /// Nil is a whole answer, not a missing one: the process starts, serves
+    /// its health endpoint and identifies to nothing, which is what a build
+    /// that links no chat adapter does and what an operator who sets no
+    /// token gets.
     public let chat: (any ChatGateway)?
 
     /// Where the report and the refusals go.

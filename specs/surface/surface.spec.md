@@ -13,6 +13,7 @@ files:
   - Sources/Surface/Catalog/CommandCatalog.swift
   - Sources/Surface/Catalog/CommandDefinition.swift
   - Sources/Surface/Catalog/CommandValidator.swift
+  - Sources/Surface/Catalog/ValidatedCatalog.swift
   - Sources/Surface/Commands/HelpCommand.swift
   - Sources/Surface/Commands/PingCommand.swift
   - Sources/Surface/Commands/UnlinkCommand.swift
@@ -33,10 +34,14 @@ files:
   - Sources/Surface/Verify/VerificationCallbackHandler.swift
   - Sources/Surface/Verify/VerificationClient.swift
   - Sources/SurfaceDiscord/CallbackResponder.swift
+  - Sources/SurfaceDiscord/ChatGatewaySeams.swift
+  - Sources/SurfaceDiscord/ChatSurfaceSettings.swift
   - Sources/SurfaceDiscord/CardRendering.swift
   - Sources/SurfaceDiscord/ChainAccountReader.swift
   - Sources/SurfaceDiscord/CommandPayloadMapping.swift
   - Sources/SurfaceDiscord/DiscordBoot.swift
+  - Sources/SurfaceDiscord/DiscordChatGateway.swift
+  - Sources/SurfaceDiscord/DiscordGuildMemberRoles.swift
   - Sources/SurfaceDiscord/DiscordRoleApplier.swift
   - Sources/SurfaceDiscord/DiscordSurface.swift
   - Sources/SurfaceDiscord/HTTPVerificationClient.swift
@@ -103,11 +108,21 @@ send.
 ### What is deliberately not here
 
 - The role sweep and `/resync`. First verification applies roles; staying true
-  when somebody sells is the next change.
+  when somebody sells is the next change. The startup report of which
+  configured roles sit above this bot's own goes with it:
+  ``DiscordSurface`` makes that check because it applies a
+  ``Gating/RoleDecision``, and it opens by returning when no role is
+  managed, which is every role in the surface the executable builds today
+  (`ADOPT-11.a`).
 - Every money command, every game command and every operator command.
 - A second HTTP interface for administration.
-- The `guildMessages` intent and message content. This process asks for
-  `guilds` and `guildMembers` and nothing else.
+- The `guildMessages` intent and message content. Neither boot asks for
+  either: reading every message in a server is a permission this bot has no
+  use for. ``DiscordSurface`` also asks for `guildMembers`, because it
+  handles the leave event that forgets somebody; the surface the executable
+  builds asks for `guilds` alone, because it does not, and a privileged
+  intent that is off in the developer portal closes the websocket while the
+  boot notices nothing.
 - Any default that belonged to another project: no default ladder, no default
   picture, no default presence, no default operator channel.
 
@@ -187,6 +202,9 @@ in the same line.
 | `CatalogEntry` | One command, and what has to be switched on for it to exist. |
 | `ChainAccountReader` | Reads one account through the chain layer's brakes. |
 | `channel` | A channel. |
+| `ChatEvent` | Something the chat service sent, with every snowflake already gone. The gateway is written against this and never against a payload. |
+| `ChatSession` | The gateway connection as the chat gateway needs it: identify, deliver, stop. Three verbs and no payload type, so the whole ordering is exercised against a double. |
+| `ChatSurfaceSettings` | What the chat surface reads from the operator's settings, and how it describes itself to the composition root. |
 | `check` | What one account holds, and what could not be read, with the gaps in the answer. |
 | `choices` | Fixed values, when the member picks rather than types. |
 | `clamp` | The text, shortened to fit and marked as shortened. |
@@ -212,6 +230,7 @@ in the same line.
 | `ComponentHealth` | How one thing this bot leans on is doing. |
 | `components` | A card's buttons, in rows of five. |
 | `configuration` | What the operator configured. |
+| `connect` | Registers the catalogue, subscribes the reader, then identifies. It takes `Runtime.ListenerBound`, so it cannot be reached before a listener is bound, and the closure the session is reported through, because returning from it is not a websocket. |
 | `constantTimeEquals` | Whether two secrets match, without leaking how far they matched. |
 | `contact` | How to reach them, or nil. |
 | `contactKey` | The variable naming how to reach whoever runs it. |
@@ -229,6 +248,7 @@ in the same line.
 | `defersFirst` | Whether the router emits a defer before calling the handler. |
 | `definition` | The command. |
 | `deleteSession` | Forgets this member on the other half too, so an unlinked member keeps nothing a session opened. |
+| `deliver` | Hands every event to a handler until the session ends, and signals once it is subscribed so the caller can identify after that rather than before it. Returning means the session ended, which is what lowers health. |
 | `description` | The body under the heading. |
 | `detail` | What to change. |
 | `directMessage` | The token has expired; the invoker gets a direct message. |
@@ -237,9 +257,12 @@ in the same line.
 | `disagreed` | They do not. |
 | `disclosureCard` | What a member reads before they sign. |
 | `DisclosureSettings` | What a member is told before they sign anything. |
+| `disconnect` | Stops reading the session, waits for the answers already in flight, and closes it. |
 | `discord` | The gateway. |
+| `DiscordChatGateway` | The one conformance to the composition root's chat seam: the join between the two halves. |
 | `DiscordCommandRegistrar` | Registers the catalogue with Discord over HTTP. |
 | `DiscordGatewayConnection` | Identifies to the gateway. |
+| `DiscordGuildMemberRoles` | Reads and writes one member's roles over Discord. A snowflake is made here and nowhere else. |
 | `DiscordPermission` | Discord's permission bits, as the few this package actually reads. |
 | `DiscordRoleApplier` | Applies a decision to a member in one Discord call. |
 | `DiscordSurface` | One running bot. |
@@ -282,6 +305,7 @@ in the same line.
 | `giveUp` | Stop accepting. The listener is not coming back on its own. |
 | `guildId` | The one server this process serves. |
 | `guildKey` | The one server this process serves. |
+| `GuildMemberRoles` | Reading and writing one member's roles, as the flatter pair the composition root's own seam declares. |
 | `handle` | Answers one interaction, or runs one departure, or runs one callback, depending on the type it is on. |
 | `has` | Whether this part is on. |
 | `hasVerification` | Whether a member can prove an account at all. |
@@ -308,9 +332,11 @@ in the same line.
 | `inline` | Whether it sits beside its neighbour rather than under it. |
 | `integer` | A whole number. |
 | `integerValue` | The whole number, when it is one. |
+| `interaction` | A member ran something. |
 | `InteractionDecoding` | Turns what the gateway delivered into a value the rest of this package can take. |
 | `interactionId` | Discord's id for this interaction. |
 | `InteractionKind` | What kind of thing arrived. |
+| `InteractionReplying` | Something that carries out what the router decided. `ReplySending` is the live one. |
 | `InteractionRequest` | One inbound interaction, as a value with no chat-client type on it. |
 | `invalid` | A variable holds something that is not the shape it must be. |
 | `inviteURL` | The invite that grants exactly the permissions this process needs. |
@@ -342,6 +368,7 @@ in the same line.
 | `ListenerBinder` | Claims the ports this process owns, and serves them. |
 | `ListenerError` | Why a listener could not start. |
 | `listenFailed` | The socket bound and would not listen. |
+| `live` | Builds the live chat gateway from the one settings snapshot, or nil when this operator wants no chat surface. |
 | `load` | Reads the environment, or refuses naming the variable. |
 | `longRunning` | Started something long. |
 | `looksUnfinished` | Whether this looks like something nobody meant to leave in. |
@@ -382,6 +409,7 @@ in the same line.
 | `openedStore` | The store opened and its lease was taken. |
 | `operatorName` | Who runs this instance, in their own words. |
 | `operatorNameKey` | The variable naming who runs this instance. |
+| `operatorRoleId` | An extra role allowed to run operator commands, or nil. |
 | `options` | Nested options, for a subcommand or a group. |
 | `OptionValue` | A value an option arrived with. |
 | `parse` | One request as text, or nil when the first line is not a request line. |
@@ -431,9 +459,11 @@ in the same line.
 | `requires` | Every part that must be on. |
 | `respond` | Answers one request on the callback port. |
 | `response` | A message as an immediate interaction response. |
+| `resumed` | A dropped session was picked up again, with nothing missed. |
 | `retry` | Wait this long and accept again. |
 | `role` | A role. |
 | `RoleApplier` | Puts a decision into effect in the chat client. |
+| `roleIds` | Every role a member holds now, as plain strings. |
 | `rolesAboveBot` | Every managed role that sits above this bot's own, highest first. |
 | `rolesAboveBotLine` | What to print when a configured role sits at or above this bot's own. |
 | `rolesOnly` | A community that wants roles and nothing else (`SPEND-6.c`, `PLAY-9`). |
@@ -447,8 +477,11 @@ in the same line.
 | `secretRejected` | It answered `401`. |
 | `sendMessages` | Send Messages, bit eleven. |
 | `servedGuildId` | The one server this process serves. |
+| `serverId` | The one server this process serves. |
 | `setDiscord` | Records how the gateway is doing. |
+| `setRoles` | Sets a member's roles to exactly this set, in one call rather than one per role. |
 | `setStore` | Records how the store is doing. |
+| `settingsEntries` | Every variable this surface reads, described the way the composition root's catalogue describes its own. |
 | `setVerification` | Records how the verification half is doing. |
 | `sharedSecret` | The one secret both halves hold, or nil when verification is off. |
 | `sharedSecretKey` | The one secret both halves hold. |
@@ -486,6 +519,7 @@ in the same line.
 | `SurfaceHealth` | What the health listener answers. |
 | `SurfaceReply` | What a handler answers with. |
 | `SurfaceRouter` | Turns an interaction into the actions that answer it. |
+| `switchKeys` | The variables that mean an operator wants a chat surface at all. `BOT_NAME` is not one of them. |
 | `thumbnailURL` | The picture beside a card's title, or nil. |
 | `title` | The heading. |
 | `token` | The portal's own identifier for the session. |
@@ -511,7 +545,9 @@ in the same line.
 | `userExternalId` | Who ran it, as a plain string. |
 | `userId` | The invoker's id, checked. |
 | `validate` | Nothing, or a refusal naming every rule broken. |
+| `validated` | The catalogue with proof that it passed: the only thing in the package that makes a `ValidatedCatalog`. |
 | `validatedCatalog` | The catalogue passed the validator. |
+| `ValidatedCatalog` | Proof that a catalogue went through the validator. Its initialiser is internal to `Surface`, so registering before validating does not compile. |
 | `ValidationIssue` | One thing wrong with a catalogue, and where. |
 | `value` | The field's body. |
 | `verification` | The half that proves accounts. |
@@ -544,7 +580,47 @@ in the same line.
   and `/help` is generated from it, so a command that is not registered
   cannot be described (`LEARN-8`).
 - **A catalogue is validated before it is registered**, and the validator
-  needs no network.
+  needs no network. This is a type rather than a habit:
+  ``CommandRegistrar/register(_:guildId:)`` takes ``ValidatedCatalog``, whose
+  initialiser is internal to `Surface` and is called by
+  ``CommandValidator/validated(_:)`` and nothing else, so a registrar outside
+  this module can hold the proof and cannot make one.
+- **The composition root's chat seam has one conformance that can reach
+  anybody**, and it is ``DiscordChatGateway``. Its only entry point takes
+  ``Runtime/ListenerBound``, which only a completed bind makes, so the
+  assembled executable cannot identify before it has bound. On that path the
+  order is **register, read, identify**, the same order this module's own
+  boot uses and for the same reason: the registration is an HTTP round trip
+  and is the step that fails for reasons an offline validator cannot catch,
+  and a refusal after the identify spends a session on every restart a
+  supervisor makes. The reader goes between the two, because nothing is
+  delivered before an identify and the opening event arrives a moment after
+  one. It is **subscribed** there rather than merely started: starting a task
+  does not order it against the `await` inside it, so ``ChatSession/deliver``
+  signals once it is reading and the caller waits for that signal.
+- **Returning from connect is not health.** The session's own opening event
+  is the only thing that reports it open, and the session ending reports it
+  closed. The composition root turns those into
+  ``Runtime/HealthComponent/chat``.
+- **No privileged intent is asked for without a consumer.** A privileged
+  intent that is off in the developer portal closes the websocket with 4014
+  and the client will not retry, while the REST registration succeeds
+  regardless, so the boot passes and the process then answers nothing. A test
+  ties the intent list to what ``DiscordGatewayConnection/event(from:)``
+  actually translates.
+- **Both loaders of the chat table refuse a placeholder.**
+  ``ChatSurfaceSettings/load(_:)`` is the one `swift run bot` uses, and it
+  runs every value it reads through ``PlaceholderValues/looksUnfinished(_:)``
+  exactly as ``SurfaceConfiguration/load(_:)`` does, so a copied example file
+  is refused by name rather than identifying with junk.
+- **A role write is read back.** Every type in `SurfaceDiscord` that sends a
+  member update reads the member again and reports what Discord silently
+  dropped, because a `200` does not mean the list landed (`SEE-4`).
+- **The chat surface reads its own variables and describes them back.**
+  ``ChatSurfaceSettings`` owns the reading and
+  ``Runtime/ChatGateway/settingsEntries`` carries the descriptions to the
+  composition root, because a target that links no chat library may not name
+  a chat variable.
 - **Boot order: lease, bind, validate, register, identify, ready.** Identify
   is never reached if the lease or a bind failed.
 - **Health answers `503` until the gateway is ready.** A bound socket is not
@@ -708,3 +784,26 @@ their commands do.
   by the count and total bounds as well as the string ones, `/unlink` never
   turns an unread balance into a zero, a role write is read back, and a
   subcommand inside a subcommand is refused offline.
+- **1**. Joined to the composition root. ``DiscordChatGateway`` is the one
+  conformance to ``Runtime/ChatGateway``, so the executable now identifies,
+  registers and answers instead of binding a health port and stopping. Its
+  only entry point takes ``Runtime/ListenerBound``, which only a completed
+  bind produces, so the wrong order does not compile. Registration takes
+  ``ValidatedCatalog``, a type the validator alone can make, so a catalogue
+  Discord would refuse cannot reach the registration call.
+  ``ChatSurfaceSettings`` reads the chat variables and describes them back to
+  the root, because the root may not name them.
+- **1.1**. Six guards that were in the prior art and did not come across.
+  ``DiscordChatGateway/connect(afterBinding:reporting:)`` registers before it
+  identifies, as this module's own boot always did, and waits for the reader
+  to be subscribed rather than only started. The session's opening event
+  reports the surface open and the session ending reports it closed, which is
+  what the composition root's health component is built from.
+  ``ChatSurfaceSettings/load(_:)`` refuses a placeholder by name.
+  `guildMembers` is no longer requested, because nothing here translates a
+  member event and a privileged intent that is off closes the websocket.
+  The application id the loader worked out is handed to the client rather
+  than left to the client's weaker extraction from the token.
+  ``DiscordGuildMemberRoles/setRoles(ofMember:to:)`` reads back what landed,
+  and ``DiscordGatewayConnection/stop()`` waits for the socket's pending work
+  before the process exits.

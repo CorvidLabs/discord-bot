@@ -55,14 +55,35 @@ internal struct RuntimeCompositionTests {
         #expect(!declared.contains("\"StoreSQLite\""))
     }
 
-    @Test("BotMain depends on Runtime and StoreSQLite, and on nothing else")
+    @Test("BotMain depends on the root, a store and the chat surface, and on nothing else")
     internal func executableDependencies() throws {
         let declared = try Self.declaration(of: "BotMain")
         #expect(declared.contains("\"Runtime\""))
         #expect(declared.contains("\"StoreSQLite\""))
+        // The two halves are joined here and nowhere else: this is the one
+        // target that sees both the composition root and something that
+        // conforms to its chat seam.
+        #expect(declared.contains("\"Surface\""))
+        #expect(declared.contains("\"SurfaceDiscord\""))
+        // Named rather than counted, so adding an edge is a diff somebody
+        // reads (TRUST-1.b).
         #expect(!declared.contains("\"Gating\""))
         #expect(!declared.contains("\"Chain\""))
         #expect(!declared.contains("\"Games\""))
+        #expect(!declared.contains("\"Reserve\""))
+    }
+
+    @Test("The chat adapter depends on the root, and the root never depends back (BUILD-4)")
+    internal func theSeamPointsOneWay() throws {
+        let adapter = try Self.declaration(of: "SurfaceDiscord")
+        #expect(adapter.contains("\"Runtime\""))
+        // SwiftPM refuses a cycle, so this direction is what keeps `Store`
+        // two edges away from ever seeing a chat client. The assertion is
+        // the other half of it, stated where a reader is already looking at
+        // the graph.
+        let root = try Self.declaration(of: "Runtime")
+        #expect(!root.contains("\"Surface\""))
+        #expect(!root.contains("\"SurfaceDiscord\""))
     }
 
     @Test("Every package dependency is one somebody named on purpose (TRUST-1.b)")

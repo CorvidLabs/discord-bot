@@ -78,7 +78,7 @@ internal struct BindBeforeIdentifyTests {
         #expect(bound.port != 0)
 
         let chat = SpyChatGateway()
-        try await chat.connect(afterBinding: bound)
+        try await chat.connect(afterBinding: bound, reporting: { _ in })
         let handed = await chat.boundWhenConnected
         #expect(handed == bound)
         await listener.stop()

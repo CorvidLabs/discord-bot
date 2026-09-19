@@ -50,6 +50,16 @@ spec: runtime.spec.md
   operator edits their environment, which is accepted here rather than
   discovered.
 
+  **What the rule asks was sharpened rather than removed** when a surface
+  landed. It no longer asks whether a prefix is on a list; it asks whether
+  anything linked into this build reads the variable, and a linked part
+  answers by describing its own through ``ChatGateway/settingsEntries``. The
+  prefix stays on the reserved list, and a build without the part refuses
+  exactly as it did with nothing having been edited. The alternative
+  considered and rejected was naming the chat variables in this module's own
+  catalogue, which would have put the words a chat library uses into a target
+  that is not allowed to know them.
+
 - **The reserved prefixes are written down in the code**, as `DISCORD_` and
   `VERIFY_`. There is no chat module yet whose constants could be enumerated,
   so leaving it to whoever implemented the check would have given three
@@ -117,12 +127,17 @@ and the tree disagreed and the tree won.
 
 ## What is missing
 
-- **No chat surface**, no gateway, no slash command, no embed. The seam and
-  the ordering exist; nothing implements them.
+- ~~**No chat surface**~~. The seam is filled: the adapter conforms, the
+  executable builds one when a token is configured, and the boot hands it the
+  value the bind produced. What is still absent is a sweep that would call
+  ``ChatGateway/roleIds(ofMember:)`` and
+  ``ChatGateway/setRoles(ofMember:to:)``, so those two exist and nothing in
+  this module calls them yet.
 - **No wallet verification**, and deliberately no boot gate for one.
 - **No payer.** Nothing in the package can move value.
 - **No sweep loop and no scheduler.** Gate eight is where they go and it is
-  empty, so the health component list is `store` and `chain` and nothing else.
+  empty, so the health component list is `store`, `chain` when the boot was
+  told to confirm the asset, and `chat` when a surface is linked.
 - **No invite link and no permission list.** Both need a chat client to mean
   anything.
 - **No revision stamped from the commit.** The version is a constant, and the

@@ -135,16 +135,21 @@ through it.
 | Answer, defer, follow up or edit an interaction | Whenever a member runs a command or presses a button | `DISCORD_BOT_TOKEN` |
 | Read one member's roles, and set them | On a verification callback and on `/unlink` | `DISCORD_BOT_TOKEN` |
 
-The gateway is opened with two intents, `guilds` and `guildMembers`, and
-deliberately **not** `guildMessages` and not message content: reading every
-message in a server is a permission this bot has no use for.
+The gateway the executable opens asks for one intent, `guilds`. Nothing is
+asked for that nothing reads: `guildMembers` is privileged, and an
+application that has not been granted it in the developer portal has its
+websocket closed while the slash-command registration succeeds, so the boot
+passes and the bot then answers nothing. It comes back with the leave event
+that needs it. Deliberately **not** `guildMessages` and not message content
+either: reading every message in a server is a permission this bot has no use
+for.
 
 ```bash
 # Every chat API method this repository calls.
 grep -rnE "client\.[a-zA-Z]+\(" Sources/SurfaceDiscord/
 
-# The intents asked for.
-grep -n "intents:" Sources/SurfaceDiscord/DiscordSurface.swift
+# The intents asked for, by both of the boots in the tree.
+grep -rn "intents:" Sources/SurfaceDiscord/
 ```
 
 ### 3. Your verification portal

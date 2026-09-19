@@ -5,9 +5,10 @@ import Store
 /// A process that walked the gates and is up.
 ///
 /// Holds the pieces that have to be let go of in the right order when the
-/// process stops: the listener gives the port back, the store's close
-/// releases the lease that keeps a second instance out, and only then is the
-/// exit clean (RT-028, SEE-8).
+/// process stops: the chat service is left first so nothing new arrives, then
+/// the listener gives the port back, then the store's close releases the
+/// lease that keeps a second instance out, and only then is the exit clean
+/// (RT-028, SEE-8).
 public actor RunningInstance {
 
     // MARK: - Properties
@@ -26,6 +27,7 @@ public actor RunningInstance {
 
     private let health: HealthState
     private let listenerSocket: HealthListener
+    private let chat: (any ChatGateway)?
     private let store: any BotStore
     private let governor: RequestGovernor
     private let output: any RuntimeOutput
@@ -42,6 +44,8 @@ public actor RunningInstance {
     ///   - report: What this start printed.
     ///   - health: What the endpoint answers from.
     ///   - listenerSocket: The socket, so it can be given back.
+    ///   - chat: The chat service, so the session is left before anything it
+    ///     could still deliver to is closed.
     ///   - store: What this instance remembers, so its lease can be released.
     ///   - governor: The one request governor, so what it has spent today can
     ///     be read and so its last write lands before the store closes.
@@ -53,6 +57,7 @@ public actor RunningInstance {
         report: StartupReport,
         health: HealthState,
         listenerSocket: HealthListener,
+        chat: (any ChatGateway)?,
         store: any BotStore,
         governor: RequestGovernor,
         output: any RuntimeOutput,
@@ -63,6 +68,7 @@ public actor RunningInstance {
         self.report = report
         self.health = health
         self.listenerSocket = listenerSocket
+        self.chat = chat
         self.store = store
         self.governor = governor
         self.output = output
@@ -104,13 +110,21 @@ public actor RunningInstance {
         }
     }
 
-    /// Stops the listener, closes the store and releases the lease.
+    /// Leaves the chat service, stops the listener, closes the store and
+    /// releases the lease.
     ///
     /// Safe to call more than once, because a second signal arriving while
     /// the first is still unwinding is the ordinary case.
     public func shutDown() async {
         guard !stopped else { return }
         stopped = true
+        // First, and before the store. A handler answering a member holds
+        // the store, and closing it underneath one is how a member's last
+        // command of the day becomes a crash rather than an answer. Leaving
+        // the session first is also what tells the service this process is
+        // gone, so the replacement a supervisor starts is not a duplicate
+        // identify against a session that is still open (RUN-7.a).
+        await chat?.disconnect()
         for task in background {
             task.cancel()
         }

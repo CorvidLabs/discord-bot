@@ -96,6 +96,10 @@ public struct Runtime: Sendable {
     /// that being unhelpful: the refusal says what is wrong, and the listing
     /// says what is still missing.
     private func check(settings: Settings) async -> ExitCode {
+        // The same list a start works from, so a dry run cannot describe a
+        // different build from the one that would start (RT-026).
+        let chatEntries = seams.chat?.settingsEntries ?? []
+        let catalogue = SettingsCatalogue.entries + chatEntries
         var report = StartupReport()
         report.append(StartupReportWriter.opening(capability: seams.spending))
         report.append(
@@ -110,11 +114,14 @@ public struct Runtime: Sendable {
                 ]
             )
         )
-        report.append(StartupReportWriter.catalogue(settings: settings))
+        report.append(StartupReportWriter.catalogue(settings: settings, catalogue: catalogue))
 
         let loaded: LoadedConfiguration
         do {
-            loaded = try LoadedConfiguration.load(settings)
+            loaded = try LoadedConfiguration.load(
+                settings,
+                alsoRead: chatEntries.filter { !$0.isFamily }.map(\.pattern)
+            )
         } catch {
             let failure = BootFailure.configuration(error)
             await write(report)
@@ -126,10 +133,15 @@ public struct Runtime: Sendable {
             StartupReportWriter.parts(
                 configuration: loaded,
                 capability: seams.spending,
-                chainOutcome: nil
+                chainOutcome: nil,
+                hasChat: seams.chat != nil
             )
         )
-        let audit = SettingsAudit.of(settings: settings, keysRead: loaded.keysRead)
+        let audit = SettingsAudit.of(
+            settings: settings,
+            keysRead: loaded.keysRead,
+            catalogue: catalogue
+        )
         report.appendIfAny(StartupReportWriter.audit(audit))
         report.appendIfAny(storeCheck(loaded.runtime))
 

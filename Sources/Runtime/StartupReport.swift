@@ -147,11 +147,18 @@ public enum StartupReportWriter: Sendable {
     /// after it says what was made of it, which is what keeps a value out of
     /// this half entirely.
     ///
-    /// - Parameter settings: The one snapshot.
-    public static func catalogue(settings: Settings) -> ReportSection {
+    /// - Parameters:
+    ///   - settings: The one snapshot.
+    ///   - catalogue: Every entry in play: this build's own, plus any a
+    ///     linked part supplied. An operator reads one listing rather than
+    ///     one per target.
+    public static func catalogue(
+        settings: Settings,
+        catalogue: [SettingsEntry] = SettingsCatalogue.entries
+    ) -> ReportSection {
         var lines: [String] = []
         for group in SettingsGroup.allCases {
-            let entries = SettingsCatalogue.entries.filter { $0.group == group }
+            let entries = catalogue.filter { $0.group == group }
             guard !entries.isEmpty else { continue }
             lines.append("\(group.rawValue):")
             for entry in entries {
@@ -204,10 +211,12 @@ public enum StartupReportWriter: Sendable {
     ///   - configuration: What loaded.
     ///   - capability: Whether this build can move anything.
     ///   - chainOutcome: What the node said, or nil before it was asked.
+    ///   - hasChat: Whether this build was given a chat surface.
     public static func parts(
         configuration: LoadedConfiguration,
         capability: SpendCapability,
-        chainOutcome: ChainGateOutcome?
+        chainOutcome: ChainGateOutcome?,
+        hasChat: Bool = false
     ) -> ReportSection {
         var lines: [String] = []
         lines.append("on   store, at \(configuration.runtime.storePath)")
@@ -247,7 +256,18 @@ public enum StartupReportWriter: Sendable {
                 : "off  spending, because no payer is compiled into this build. No setting can "
                     + "switch it on, and none stops it either: nothing here can move anything."
         )
-        lines.append("off  chat surface, because this build has none: no gateway, no commands")
+        // The off line says "none is configured" rather than "this build has
+        // none", and the difference matters now that a build can have one.
+        // An operator of the assembled program who has set no token would
+        // read "this build has none" and go looking for a different binary.
+        // A build that genuinely has none is told so precisely, by the
+        // refusal a chat variable earns at the configuration gate.
+        lines.append(
+            hasChat
+                ? "on   chat surface, which identifies only after the listener is bound"
+                : "off  chat surface, because none is configured: nothing identifies and no "
+                    + "command is registered"
+        )
         lines.append("off  wallet verification, because this build has none")
         return ReportSection(title: partsTitle, lines: lines)
     }

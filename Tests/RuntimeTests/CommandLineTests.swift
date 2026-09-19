@@ -48,6 +48,20 @@ internal struct CommandLineTests {
         #expect(printed.contains("help"))
     }
 
+    @Test("Only the two verbs that would use one need a chat surface built first")
+    internal func onlyTwoVerbsNeedASurface() {
+        // `help` has to work on a machine where nothing is configured, and
+        // `rehearse` runs the role rules over members it invents and speaks
+        // to nobody. Building the surface before the verb was known made a
+        // chat misconfiguration refuse every verb the binary has, including
+        // the one whose refusal then tells the operator to run `bot check`
+        // (RT-026, RUN-9).
+        #expect(RuntimeCommand.run.needsChatSurface)
+        #expect(RuntimeCommand.check.needsChatSurface)
+        #expect(!RuntimeCommand.help.needsChatSurface)
+        #expect(!RuntimeCommand.rehearse.needsChatSurface)
+    }
+
     @Test("A verb with extra arguments is a usage error rather than a silently ignored one")
     internal func extraArgumentsAreUsage() {
         switch RuntimeCommand.parse(["check", "--verbose"]) {
