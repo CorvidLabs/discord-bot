@@ -11,19 +11,14 @@ Two things are worth knowing before the lists.
 command beside it that checks it, and the commands are meant to be run against
 your own clone rather than believed.
 
-<<<<<<< HEAD
-**It describes this commit only.** The package is seven libraries and one
-program. The program starts, opens a store on your disk, reads one node and
-listens on one socket of your own machine; it has no Discord gateway, no
-verification flow and nothing that can move value. A short true list is worth
-more than a long plausible one.
-=======
-**It describes this commit only.** At this commit there is a Discord surface
-and an executable, so this list is much longer than it was: the package now
-opens a gateway connection, calls a chat API, calls a verification portal you
-run, **listens on two ports of its own**, and writes a database file. Each of
-those is below with the command that checks it.
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
+**It describes this commit only, and it describes two things.** The
+**program** you can run today opens a store on your disk, reads one Algorand
+node and listens on one socket of your own machine. The **package** also
+contains a Discord adapter, built and tested, that would open a gateway, call
+a chat API and call a verification portal you run — and the `bot` executable
+does not link it, so none of that happens when you start the program. Where
+the two differ below, the difference is said rather than smoothed over: a
+short true list is worth more than a long plausible one.
 
 ## The short version
 
@@ -33,56 +28,40 @@ those is below with the command that checks it.
 | Which ones exactly? | `discord.com` and `gateway.discord.gg`, reached by the chat library; whatever you put in `CHAIN_NODE_URL`; whatever you put in `VERIFY_PORTAL_URL`. |
 | Is any hostname compiled in? | One, in one place: the `discord.com` invite URL the boot report prints. It is printed, never fetched. The chat library holds Discord's own API and gateway hosts, which is what a chat library is. |
 | Does it report anything to whoever wrote it? | No. No analytics, no telemetry, no crash reporting, no update check, no licence check. |
-<<<<<<< HEAD
-| Does it write to disk? | Yes, in one place you choose: the store at `STORE_PATH`, and a lock file beside it. Nothing else: no log file, no cache of its own. Foundation's URL loading keeps an HTTP cache and a cookie store of its own, which belongs to `URLSession` rather than to this code. |
-| Does it listen on a socket? | Yes, one: `GET /health`, on `HEALTH_ADDRESS` (the loopback address unless you say otherwise) and `HEALTH_PORT` (required, no default). One route, nothing else, and it accepts no input beyond the request line. |
-| Does it need a secret? | One, optionally: `CHAIN_API_TOKEN`, if your node provider issues tokens. |
-| Does it talk to Discord? | No. There is no Discord code in the package yet. |
-| Does proving a wallet contact anything? | No. `Verify` checks the signature in this process and opens no connection. A page has to serve the member's wallet somewhere, and this package does not serve one yet. |
+| Does it write to disk? | Yes, in one place you choose: the store at `STORE_PATH`, and a lock file beside it. There is no default, because a database somewhere this package chose is a database you do not know to back up. Nothing else: no log file, no cache of its own. Foundation's URL loading keeps an HTTP cache and a cookie store of its own, which belongs to `URLSession` rather than to this code. |
+| Does it listen on a socket? | The program: one, `GET /health`, on `HEALTH_ADDRESS` (the loopback address unless you say otherwise) and `HEALTH_PORT` (required, no default). One route, and it accepts no input beyond the request line. The package holds a second listener, the portal callback in `SurfaceDiscord`, which nothing in this build starts. |
+| Does it need a secret? | The program: one, optionally, `CHAIN_API_TOKEN`, if your node provider issues tokens. The unwired surface would ask for two more, `DISCORD_BOT_TOKEN` and `VERIFY_SHARED_SECRET`. |
+| Does it talk to Discord? | Not when you run it. `SurfaceDiscord` is the only target that can, the manifest is what makes that true, and no executable links it. |
+| Does proving a wallet contact anything? | No. `Verify` checks the signature in this process and opens no connection. A page has to serve the member's wallet somewhere, and this package does not serve one. |
 | Will that stay true? | One host is already decided and not yet reached: a naming service, so a member can type a name instead of an address when they run the verification command. It is optional, it is contacted only when somebody types a name, nothing at startup depends on it, and `Verify` is not the target that will call it. Nothing in this commit reaches it. |
-| Does it sign or send a transaction? | No. Every chain call is a read. Nothing here holds a key. |
-
-## What is in the package
-
-Seven libraries and one executable. One library contains code that opens an
-outbound connection, and one contains code that accepts an inbound one.
-=======
-| Does it listen? | Yes, on two ports you name: `HEALTH_PORT` and `VERIFY_CALLBACK_PORT`. Both bind `LISTEN_ADDRESS`, which defaults to loopback and never to every interface. |
-| Does it write to disk? | Yes: one SQLite database at `STORE_PATH`, which has no default. No log file and no cache of its own. Foundation's URL loading keeps an HTTP cache and a cookie store, which belongs to `URLSession` rather than to this code. |
-| Does it need a secret? | Up to three: `DISCORD_BOT_TOKEN`, always; `VERIFY_SHARED_SECRET`, when you run a portal; `CHAIN_API_TOKEN`, if your node provider issues tokens. |
-| Does it talk to Discord? | Yes. `SurfaceDiscord` is the only target that can, and the manifest is what makes that true. |
 | Does it sign or send a transaction? | No. Every chain call is a read. Nothing here holds a chain key. |
 
 ## What is in the package
 
-Nine targets. Three of them contain code that opens or accepts a connection,
-and one writes a file.
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
+Thirteen targets. Three of them contain code that opens or accepts a
+connection, one writes a file, and the executable links four.
 
 | Target | Dependencies | Opens or accepts a connection? |
 |--------|--------------|--------------------------------|
 | `Reserve` | Foundation | No |
 | `Gating` | Foundation | No |
 | `Games` | Foundation | No |
-<<<<<<< HEAD
-| `Chain` | Foundation, `Gating`, `swift-algorand` | Yes, and it is the only one that makes one |
-| `Store` | Foundation, `Reserve`, `Gating`, `Chain` | No |
-| `StoreSQLite` | `Store`, `CSQLite` (the platform's own `libsqlite3`) | No. It opens a file, not a connection |
-| `Runtime` | `Gating`, `Chain`, `Store` | It **accepts** one: the health listener binds a socket on your machine. It originates none |
-| `BotMain` | `Runtime`, `StoreSQLite` | No. It is the arguments, the environment, the signals and the exit || `Chain` | Foundation, `Gating`, `swift-algorand` | Yes, and it is the only one |
-| `Verify` | Foundation, `swift-algorand`, `swift-crypto` | No. It is one import away from a node client, which is the position `Chain` is also in, and `Tests/VerifyTests/TargetShapeTests.swift` reads its sources and proves no client is constructed, no request type is named and nothing is logged. |
-=======
-| `Chain` | Foundation, `Gating`, `swift-algorand` | Yes, outbound to your node |
+| `Chain` | Foundation, `Gating`, `swift-algorand` | Yes, outbound to your node, and it is the only one the program reaches |
 | `Store` | Foundation, `Reserve`, `Gating`, `Chain` | No |
 | `StoreTestKit` | `Store` | No |
-| `StoreSQLite` | `Store`, the platform's libsqlite3 | No. It writes a file. |
+| `StoreSQLite` | `Store`, `CSQLite` (the platform's own `libsqlite3`) | No. It opens a file, not a connection |
+| `Runtime` | `Gating`, `Chain`, `Store` | It **accepts** one: the health listener binds a socket on your machine. It originates none |
+| `Verify` | Foundation, `swift-algorand`, `swift-crypto` | No. It is one import away from a node client, which is the position `Chain` is also in, and `Tests/VerifyTests/TargetShapeTests.swift` reads its sources and proves no client is constructed, no request type is named and nothing is logged. |
 | `Surface` | Foundation, `Store`, `Gating`, `Chain` | No. It declares no chat client and opens nothing. |
-| `SurfaceDiscord` | `Surface`, `Store`, `Gating`, `Chain`, `DiscordBM` | Yes: the gateway, the chat API, your portal, and two listening sockets |
-| `Bot` (executable) | `Surface`, `SurfaceDiscord`, `StoreSQLite`, `Chain`, `Gating` | Only through the above. It is wiring. |
+| `SurfaceDiscord` | `Surface`, `Store`, `Gating`, `Chain`, `DiscordBM` | Yes: the gateway, the chat API, your portal, and a listening socket. **Nothing links this target**, so none of that runs. |
+| `BotMain` (the `bot` executable) | `Runtime`, `StoreSQLite` | No. It is the arguments, the environment, the signals and the exit |
 
-The split between `Surface` and `SurfaceDiscord` is the one worth checking
-for yourself, because everything else in this document leans on it: the rules
-and the handlers are in a target that does not list the chat library at all.
+Two things in that table are worth checking for yourself, because the rest of
+this document leans on them. The first is the split between `Surface` and
+`SurfaceDiscord`: the rules and the handlers are in a target that does not
+list the chat library at all. The second is what the executable actually
+links, which is the reason every Discord row above is written in the
+conditional.
 
 ```bash
 # The chat library is named once in the manifest, on one target.
@@ -90,8 +69,10 @@ grep -n "DiscordBM" Package.swift
 
 # And imported under one directory.
 grep -rn "^import DiscordBM" Sources/
+
+# What the executable links. Neither surface target is in it.
+grep -n 'name: "BotMain"' -A2 Package.swift
 ```
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
 
 It is worth being careful about what that table proves. "It only imports
 Foundation" is **not** a guarantee on its own: Foundation carries URL loading
@@ -288,54 +269,37 @@ The claim costs nothing to make, so here is how to check it instead.
 # it.
 grep -rniE "analytic|telemetr|crashlytic|\bsentry\b|posthog|mixpanel|amplitude|datadog|segment\.io|phone.?home" Sources/
 
-<<<<<<< HEAD
 # No subprocesses. Anchored for the same reason: `Process\(` on its own
 # matches `alreadyHeldByAnotherProcess(`, which is a store lease.
-grep -rnE "\bProcess\(|NWConnection|CFSocket" Sources/
+grep -rnE "\bProcess\(|NSTask|NWConnection|CFSocket" Sources/
 
-# Every socket call, so the one listener is countable rather than assumed.
+# Every socket call, so the listeners are countable rather than assumed.
 grep -rn "socket(" Sources/
 
 # Every file the package opens, and the paths it opens them at.
 grep -rnE "FileManager|FileHandle|Data\(contentsOf" Sources/
 ```
 
-The first two come back empty. The third finds one file,
-`Sources/Runtime/HealthListener.swift`, which is the one listener; the client
-that speaks to it over loopback is test code and lives under `Tests/`, which
-these commands do not scan. The fourth finds the store's own file handling and
-the report writing to standard output and standard error.
+The first comes back empty. The second finds **two** files:
+`Sources/Runtime/HealthListener.swift`, which the program binds, and
+`Sources/SurfaceDiscord/SocketHTTPListener.swift`, which nothing links and so
+nothing starts. The client that speaks to the health listener over loopback
+is test code under `Tests/`, which these commands do not scan. The third
+finds the store's own file handling and the report writing to standard output
+and standard error.
+
+One claim that used to be on this list and is no longer true, said plainly
+rather than quietly dropped: **it writes a file**, one SQLite database at
+`STORE_PATH`, through `Sources/StoreSQLite`. There is no default path.
 
 **There is a startup now**, and this is what it does before you have typed
-anything else: it prints a report of what it made of your settings as it makes
-it, opens the store at `STORE_PATH`, takes an exclusive lock on a file beside
-it, binds `HEALTH_PORT` on `HEALTH_ADDRESS`, and makes **one** request to your
-node to check that the asset exists and has the precision you configured.
-`CHAIN_VERIFY_ASSET_DECIMALS=false` turns that one off.
-=======
-# No subprocesses.
-grep -rnE "Process\(|NSTask" Sources/
-```
-
-The first comes back empty. The second comes back empty.
-
-Two claims that used to be on this list and are no longer true, said plainly
-rather than quietly dropped:
-
-- **It opens sockets**, in `Sources/SurfaceDiscord/SocketHTTPListener.swift`
-  and nowhere else. What they are for is under
-  [What it listens on](#what-it-listens-on).
-- **It writes a file**, one SQLite database at `STORE_PATH`, through
-  `Sources/StoreSQLite`. There is no default path: a database somewhere this
-  package chose is a database you do not know to back up.
-
-The executable does run at startup now, which is the other half of TRUST-4.a
-becoming real. What it does before it will serve anything is: read the
-environment, open the store, bind two ports, ask your portal whether it is up
-and whether you agree about the secret, validate its own command list
-offline, register that list with Discord, and identify. It fetches nothing
-else, and nothing it needs arrives from anywhere nobody named.
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
+anything else: it prints a report of what it made of your settings as it
+makes it, opens the store at `STORE_PATH`, takes an exclusive lock on a file
+beside it, binds `HEALTH_PORT` on `HEALTH_ADDRESS`, and makes **one** request
+to your node to check that the asset exists and has the precision you
+configured. `CHAIN_VERIFY_ASSET_DECIMALS=false` turns that one off. It
+contacts nothing else, and it does not reach Discord or a portal, because it
+links neither target that could.
 
 A start makes at most one other outbound call, and only if you asked for it:
 when `CHAIN_PROOF_HEADERS` names a header, the provider proof probe above makes
@@ -367,7 +331,6 @@ Exactly one of these is a secret.
 | `VERIFY_SHARED_SECRET` | `Surface`, used by `SurfaceDiscord` | The one secret both halves of verification hold. Sent to your portal as `X-API-Key`, and expected back from it on the callback. One secret, not one per direction: two is how an operator sets half of it and every `/verify` fails with a `401` nobody sees. |
 | `CHAIN_API_TOKEN` | `Chain` | Your node provider's API token, when the provider needs one. Sent to the node in `CHAIN_NODE_URL` and to nowhere else. Unset is fine for a node that does not ask for one. |
 
-<<<<<<< HEAD
 ### This process
 
 | Variable | Required | What it is |
@@ -377,24 +340,25 @@ Exactly one of these is a secret.
 | `HEALTH_ADDRESS` | no | The address the health endpoint binds. The loopback address unless you set it, because the answer carries a waiting list and can carry provider proof headers, and a default of every interface would publish both. |
 
 None of these is a secret.
-=======
-### The chat surface
+
+### The chat surface, which nothing reads yet
+
+`Surface` reads these and the executable does not link `Surface`, so no boot
+you can run today asks for any of them. They are listed because the code that
+reads them is in the repository and you can grep it.
 
 | Variable | Required | What it is |
 |----------|----------|------------|
 | `DISCORD_GUILD_ID` | yes | The one server this process serves. An interaction from any other is refused. |
 | `DISCORD_APPLICATION_ID` | no | Your application id, for the invite URL. Read out of the token when it can be; when it cannot, the report names this variable rather than printing half a URL. |
 | `DISCORD_ADMIN_ROLE_ID` | no | One extra role that may run an operator command. Unset means Administrator only, and an empty value grants nobody. |
-| `HEALTH_PORT` | yes | The port the health check binds. No default: a port is your firewall's business. |
 | `VERIFY_CALLBACK_PORT` | yes | The port your portal's callback arrives on. No default. |
-| `LISTEN_ADDRESS` | no | What both listeners bind. Defaults to `127.0.0.1`. |
+| `LISTEN_ADDRESS` | no | What the surface's listener binds. Defaults to `127.0.0.1`. |
 | `VERIFY_PORTAL_URL` | no | Where the other half of verification lives. Unset switches verification off entirely. |
 | `VERIFY_OPERATOR_NAME` | with a portal | Who runs this instance, shown to a member before they sign. |
 | `VERIFY_VISIBILITY_NOTE` | with a portal | What other members will see, in your words. |
 | `VERIFY_OPERATOR_CONTACT` | no | How to reach you. |
 | `BOT_NAME` | no | What the bot calls itself on a card. Unset becomes a word that names no project. |
-| `STORE_PATH` | yes | Where the database goes. No default. |
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
 
 ### The node and the two brakes
 
@@ -463,37 +427,25 @@ is about call sites in `Sources/`. A dependency can open a connection this
 repository never wrote, and no amount of reading these four targets would show
 it.
 
-<<<<<<< HEAD
-The package has **two** direct dependencies and one that arrives with them.
-These are the versions in `Package.resolved`, which is committed, so your
-build uses exactly these:
+The package has **three** direct dependencies and 25 that arrive with
+them, 28 pins in all. These are the versions in `Package.resolved`, which is
+committed, so your build uses exactly these. The list is read out of that file
+rather than estimated, and the command below regenerates it.
 
 | Package | Version | Why it is here |
 |---------|---------|----------------|
-| `swift-algorand` | 0.4.0 | The node client, and the address and asset types. The only dependency `Chain` calls. |
-| `swift-crypto` | 3.15.1 | **Declared here**, and also used by `swift-algorand`. `Verify` checks an Ed25519 signature against a public key on its own, and the only signature check `swift-algorand` offers is a method on a type that holds a private key, which is precisely what that target must never hold. It was already resolved at this version before it was declared, so declaring it moved nothing; a dependency a package uses and has not declared is one it cannot pin (TRUST-1.b, TRUST-4). |
-| `swift-asn1` | 1.7.3 | Arrives with `swift-crypto`. |
-=======
-The package has **two** direct dependencies and twenty-seven that arrive with
-them. These are the versions in `Package.resolved`, which is committed, so
-your build uses exactly these. The list is read out of that file rather than
-estimated.
-
-| Package | Version | Why it is here |
-|---------|---------|----------------|
-| `swift-algorand` | 0.4.0 | Direct. The node client, and the address and asset types. The only dependency `Chain` calls. |
-| `DiscordBM` | 1.16.2 | Direct. The chat client: the gateway, the HTTP API and the payload types. Reached only from `SurfaceDiscord`. |
 | `async-http-client` | 1.36.1 | With `DiscordBM`. What it makes its HTTP calls through. |
 | `compress-nio` | 1.4.2 | With `DiscordBM`. Gateway compression. |
+| `discordbm` | 1.16.2 | **Direct.** The chat client: the gateway, the HTTP API and the payload types. Reached only from `SurfaceDiscord`, which nothing links. |
 | `multipart-kit` | 4.7.1 | With `DiscordBM`. File uploads on a message. |
+| `swift-algorand` | 0.4.0 | **Direct.** The node client, and the address and asset types. The only dependency `Chain` calls. |
 | `swift-algorithms` | 1.2.1 | With `DiscordBM`. |
 | `swift-asn1` | 1.7.3 | With `swift-crypto`. |
 | `swift-async-algorithms` | 1.1.5 | With `DiscordBM`. |
 | `swift-atomics` | 1.3.1 | With NIO. |
 | `swift-certificates` | 1.20.0 | With `async-http-client`. TLS certificate handling. |
 | `swift-collections` | 1.6.0 | With several. |
-| `swift-configuration` | 1.2.0 | With NIO. |
-| `swift-crypto` | 3.15.1 | With `swift-algorand` and with the TLS stack. |
+| `swift-crypto` | 3.15.1 | **Direct.** `Verify` checks an Ed25519 signature against a public key on its own; the only signature check `swift-algorand` offers is a method on a type that holds a private key, which is precisely what that target must never hold. Also arrives with `swift-algorand` and with the TLS stack. |
 | `swift-distributed-tracing` | 1.5.0 | With `async-http-client`. |
 | `swift-http-structured-headers` | 1.7.0 | With the HTTP stack. |
 | `swift-http-types` | 1.8.0 | With the HTTP stack. |
@@ -511,16 +463,17 @@ estimated.
 | `swift-websocket` | 1.6.1 | With `DiscordBM`. The gateway connection. |
 | `zstd` | 1.5.7 | With `compress-nio`. |
 
-That is twenty-six more entries than this package had before the chat surface
-landed, and saying the number is the point: `TRUST-4` is that you can see
-what else comes with it, and a graph this size arriving without a diff would
-be exactly the thing the narrow version range exists to prevent.
+That is 25 more entries than this package had before the chat surface
+landed, and saying the number is the point: `TRUST-4` is that you can see what
+else comes with it, and a graph this size arriving without a diff would be
+exactly the thing the narrow version range exists to prevent. Most of it is
+reached only from `SurfaceDiscord`, which no executable links today — it is
+compiled and tested, not run.
 
 ```bash
 # The list above, from the lock file rather than from this table.
 python3 -c "import json;[print(p['identity'], p['state'].get('version')) for p in sorted(json.load(open('Package.resolved'))['pins'], key=lambda x: x['identity'])]"
 ```
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
 
 Three specific things a reader should know rather than assume:
 
@@ -558,17 +511,12 @@ rule that permits your node's host and nothing else. If the list above is
 complete, nothing breaks. That test does not require trusting this file, the
 dependency, or the person who wrote either, which is the point.
 
-<<<<<<< HEAD
-`swift test` passes with no network at all, and there is now a binary to point
-an egress rule at. Run `bot check` first, which loads your settings and touches
-nothing, then `bot run` behind the rule. If the list above is complete, the only
-thing that fails is nothing.
-=======
-There is something to run now. `swift test` still passes with no network at
-all, and that is worth keeping true, but the real check is the executable
-under an egress rule that permits Discord, your node and your portal, and
-nothing else. It should be the first thing anybody does with a deployment.
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
+`swift test` passes with no network at all, and there is a binary to point an
+egress rule at. Run `bot check` first, which loads your settings and touches
+nothing, then `bot run` behind the rule. Today that rule only has to permit
+your node: the program reaches nothing else. When the surface is wired in it
+will need Discord and your portal too, and that is the moment to widen it —
+not before.
 
 ## When this changes
 

@@ -9,26 +9,14 @@ That is the product this is meant to become. Some of it is now written.
 
 ## State
 
-<<<<<<< HEAD
-**Early. It starts, and there is no bot in it yet.** This repository is being
-built in the open, a piece at a time, out of a private bot that has been
-running a live community for months. There is now a binary: it reads your
-settings, tells you what it made of them, opens its store, checks your asset
-against your node and answers a health endpoint. What it does not have is the
-part your members would see: no gateway, no slash commands, nothing that can
-move value, and nothing that sweeps.
-**Early. Not runnable yet.** This repository is being built in the open, a piece
-at a time, out of a private bot that has been running a live community for
-months. There is no bot here: no gateway, no slash commands, no executable
-target and nothing you can deploy. What exists is seven library targets, all
-offline, all covered by tests, and none of them wired to anything.
-=======
-**Early, and runnable for the first time.** This repository is being built in
+**Early. It runs, and it is not yet a bot.** This repository is being built in
 the open, a piece at a time, out of a private bot that has been running a live
-community for months. There is now an executable, a gateway connection and
-four slash commands. What is still missing is most of the product, and it is
-listed below rather than implied.
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
+community for months. There is a binary: it reads your settings, tells you what
+it made of them, opens its store, checks your asset against your node and
+answers a health endpoint. The Discord surface is written and tested beside it
+— the command catalogue, the router, the cards and four command handlers — but
+the executable links neither of its targets, so nothing in this build connects
+to a gateway. What is missing is listed below rather than implied.
 
 | Target | What it is |
 |--------|------------|
@@ -38,30 +26,19 @@ listed below rather than implied.
 | `Chain` | Reading what an account holds on an Algorand node, and the three brakes that stop it reading too much: a per-second limiter, a per-UTC-day request budget, and one member's share of that budget. |
 | `Store` | What one instance remembers between restarts: members, the accounts they proved, the sweep baseline, the payout ledger and the day's request count. Records, protocols, and a store in memory that needs nothing installed. No Discord in its package graph. |
 | `StoreSQLite` | The same store on a file, using the SQLite the operating system already ships. One connection, every durability setting read back at start, an exclusive lease so two instances cannot pay the same week, and no new entry in `Package.resolved`. |
-<<<<<<< HEAD
 | `Runtime` | The composition root: eight boot gates in a fixed order, the one description of every variable this build reads, the startup report, and a health endpoint that answers `starting` until the parts that must be up are up. Links no chat client and no database. |
-| `BotMain` | The program, as the `bot` executable. The arguments, the one snapshot of the process environment, the live seams, the signals and the exit. It decides nothing. |
-
-```
-| `Verify` | Deciding whether somebody controls an Algorand account, from a signature their own wallet produced. The five lines they sign, the session those lines belong to, a tolerant reader for what a wallet sends back, and fifteen ordered refusals. It reads nothing: no network, no clock, no key, no setting. There is still no page and no listener to put in front of it. |
-
-swift test    # 1129 tests in 91 suites
-=======
+| `Verify` | Deciding whether somebody controls an Algorand account, from a signature their own wallet produced. The five lines they sign, the session those lines belong to, a tolerant reader for what a wallet sends back, and fifteen ordered refusals. It reads nothing: no network, no clock, no key, no setting. |
 | `Surface` | What a member touches, minus the chat client: the command catalogue, the validator that refuses offline a catalogue Discord would refuse, the interaction router and its acknowledgement rules, the payload bounds counted in UTF-16, the cards, the boot order and four command handlers. It declares no chat client, so all of it is tested with no token, no network and no guild. |
-| `SurfaceDiscord` | The adapter, and the only target that knows what a snowflake is. Payload mapping, interaction decoding, card rendering, role application, the two sockets this process owns and the HTTP client for the verification portal. |
-| `discord-bot` | The executable. Wiring, and no command logic. |
+| `SurfaceDiscord` | The adapter, and the only target that knows what a snowflake is. Payload mapping, interaction decoding, card rendering, role application, a listening socket and the HTTP client for the verification portal. |
+| `BotMain` | The program, as the `bot` executable. The arguments, the one snapshot of the process environment, the live seams, the signals and the exit. It decides nothing, and it links `Runtime` and `StoreSQLite` only — which is why this build has no gateway. |
 
-```
-swift test    # 1129 tests in 91 suites
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
+```bash
+swift test    # 1131 tests in 91 suites
+swift run bot help
 ```
 
 The store's conformance suite is one test with thirty four behaviours, run
-against three backends, so those three lines are a hundred and two checks
-rather than three.
-swift test    # 1129 tests in 91 suites
-swift run bot help
-```
+against three backends, so it is a hundred and two checks rather than one.
 
 ### What the binary takes
 
@@ -97,10 +74,6 @@ and exits 78. A bound socket is **not** health: the endpoint answers
 has been reached, so a deploy gate cannot promote a version that came up half
 way.
 
-The store's conformance suite is one test with thirty three behaviours, run
-against three backends, so those three lines are ninety nine checks rather
-than three.
-
 Everything runs offline. No test reaches a network, and none needs a key, a
 funded wallet or a Discord server.
 
@@ -114,9 +87,12 @@ every environment variable, its default, and what goes wrong when it is wrong,
 ending in a worked example that a test loads through the real loaders.
 [`docs/README.md`](docs/README.md) maps which document owns which fact.
 
-### What you can run
+### The four commands
 
-Four slash commands, and the whole boot around them.
+Written and tested, and **not reachable from the binary yet**: `BotMain` links
+`Runtime` and `StoreSQLite`, so nothing in this build registers a command or
+answers one. They are here because the code is written and under test, not
+because you can type them in a server today.
 
 | Command | What it does |
 |---------|--------------|
@@ -132,69 +108,48 @@ wallet, takes a signature and calls this bot back.
 the other half can be built from it and nothing else, and
 [`docs/decisions/0001-verification-portal.md`](docs/decisions/0001-verification-portal.md)
 is the open question of whether it should stay a separate service at all.
-Until you have one, leave `VERIFY_PORTAL_URL` unset: the bot boots, `/ping`
-and `/help` work, and nothing in your server offers to prove an account.
+Until you have one, leave `VERIFY_PORTAL_URL` unset: the boot skips
+verification entirely rather than failing on it.
 
 ### What is missing
 
 Still most of it, and what is missing is most of what a community would
 actually use:
 
-<<<<<<< HEAD
-- **No Discord surface.** No gateway connection, no slash commands, no embeds,
-  no buttons. A role is a plain string in `Gating` and nothing turns it into a
-  Discord role.
+- **The surface is not wired to the program.** `Surface` and `SurfaceDiscord`
+  are written and tested, and `BotMain` links neither of them, so there is no
+  gateway connection, nothing registers a command, and nothing turns a role
+  string from `Gating` into a Discord role. Wiring them is the next change.
 - **No way for a member to reach wallet verification.** The part that decides
-  whether somebody owns an account is now here, offline and tested: `Verify`
-  mints the challenge, keeps the session, reads the signed transaction a
-  wallet sends back and applies fifteen ordered checks to it, with no second
-  service anywhere in it. What is missing is everything a member would touch:
-  the slash command, the listener, and the page their wallet connects to.
-  Until those land, a stranger who clones this still cannot verify anybody.
+  whether somebody owns an account is here, offline and tested: `Verify` mints
+  the challenge, keeps the session, reads the signed transaction a wallet sends
+  back and applies fifteen ordered checks to it, with no second service
+  anywhere in it. What is missing is the page their wallet connects to, and any
+  link at all from the program to the rest of it.
   [`docs/VERIFICATION.md`](docs/VERIFICATION.md) is the contract, and
   `specs/verify/` is what was built against it, with the host's own
   obligations written down and marked as not yet evidenced.
-=======
-- **No role sweep.** Roles are applied when a member first proves an account
-  and never again. Somebody who sells keeps their rung until the sweep exists,
-  which is the next change.
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
+- **No role sweep.** Nothing re-reads what a member holds after the first
+  time, so somebody who sells would keep their rung.
 - **Only the smallest store.** Six tables: members, accounts, the sweep
   baseline, the payout ledger and the day's request count. No cache of what an
   account holds, no payments table, no audit log, no claim offers, no scheduled
   tasks, no game rows and no saved timezone. `specs/store/store.spec.md` lists
   each absence and what would have to read it.
-<<<<<<< HEAD
-- **No executable.** `Package.swift` declares six libraries and no binary, so
-  there is nothing to run and nothing to deploy.
-- **No health surface, and this is now half true.** The answer can be
-  assembled, with the budget and the pause on it, and nothing serves it:
-  there is no listener, no route and no status code here, because there is no
-  executable. Whoever builds the executable owns that half.
-- **No executable.** `Package.swift` declares seven libraries and no binary,
-  so there is nothing to run and nothing to deploy.
-- **No host.** The targets do not know about each other beyond `Chain`
-  depending on `Gating` and `Store` depending on all three. Nothing sweeps,
-  nothing schedules, nothing pays.
-- **No sweep, no scheduler and nothing that pays.** The boot has a gate where
-  the loops go and it is empty. `Runtime` wires the store, the node and the
-  health endpoint together and stops there.
-- **Nothing that can move value.** No payer is compiled in, every start says
-  so in its first line, and there is no variable that would change it.
-- **No giveaways, no draws, no cards to look at, no announcements.** The
-  `hi/` families describing them have nothing behind them.
-=======
 - **Nothing that moves value.** No payouts, no giveaways, no draws. The
   `Reserve` engine is finished and nothing calls it, which is deliberate: the
   surface that will call it had to exist first, and it has to be trustworthy
-  before it is handed a key.
+  before it is handed a key. No payer is compiled in, every start says so in
+  its first line, and there is no variable that would change it.
 - **No games in the server.** `Games` is finished and no command reaches it.
+- **No sweep, no scheduler and nothing that pays.** The boot has a gate where
+  the loops go and it is empty. `Runtime` wires the store, the node and the
+  health endpoint together and stops there.
 - **No operator surfaces**: nothing to look at holdings with, nothing to make
   an announcement with, nothing to read what the last sweep did.
 - **No schedule.** Nothing recurs. Nothing fires on a timer at all.
 - **No presence**, because this package does not know what your token is
   called until you tell it, and a shipped one would be somebody else's.
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
 
 Seven of the nineteen intent families have code standing behind part of what
 they describe: RESERVE, ROLE, ADOPT, PLAY, VERIFY, LEARN and RUN. The rest are
@@ -202,16 +157,10 @@ wants that have been written down and agreed, not features that work.
 [`INTENT.md`](INTENT.md) indexes them and [`hi/`](hi/) holds them, every line
 with an id that never moves.
 
-<<<<<<< HEAD
-The Discord surface, the half of wallet verification a member can reach, and a
-host that wires the libraries together come next, in that order. Verification
-was written down before it was written:
-[`docs/VERIFICATION.md`](docs/VERIFICATION.md).
-=======
-The role sweep comes next, so a role stays true when somebody sells. After
-that, the surfaces that read rather than write, and then the first thing that
-can spend.
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
+Wiring the surface into the program comes next, so that the four commands
+which already exist can be typed in a server. After that the role sweep, so a
+role stays true when somebody sells; then the surfaces that read rather than
+write; and then the first thing that can spend.
 
 ## Why the engine first
 

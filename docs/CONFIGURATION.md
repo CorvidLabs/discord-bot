@@ -15,19 +15,12 @@ document disagree, the code is right and this is a bug.
 
 ## Before the tables
 
-<<<<<<< HEAD
-**There is no executable yet.** This package is seven libraries, and nothing in
-it starts a process. So "refused" below means the loader throws, naming the
-variable, and a host that calls it gets an error instead of a configuration.
-When there is a bot, that is its boot failing. The refusals are real today and
-every one of them is reachable from a test; the process that would print them
-is not written.
-=======
-**There is an executable now**, `discord-bot`. "Refused" below means the boot
-stops with one sentence naming one variable, before it has bound a port or
-spoken to Discord. Every refusal is also reachable from a test, which is how
-they stay true.
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
+**There is an executable now**, `bot`. "Refused" below means the boot stops
+with one sentence naming one variable, before it has bound a port or opened a
+store. Every refusal is also reachable from a test, which is how they stay
+true. The variables belonging to parts the executable does not link yet —
+the chat surface among them — are read by their own targets and their tests,
+not by a boot you can run today.
 
 **Four loaders read all of this**, and the executable calls them in this
 order:
@@ -45,7 +38,6 @@ order:
    sentences a member is shown before they sign, and is called only when a
    portal is configured.
 
-<<<<<<< HEAD
 `Reserve`, `Store`, `StoreSQLite`, `Games` and `Verify` read **no environment
 variable at all**. For four of them that is a happenstance of what they do;
 for `Verify` it is a security property, and it is asserted rather than
@@ -54,15 +46,9 @@ away from a setting that skips it, so `Tests/VerifyTests/TargetShapeTests.swift`
 reads that target's own sources and fails if anything in it ever reads one.
 The operator's challenge label and which prover route is live are real
 settings that this package does not yet have a place to read, and they arrive
-with the host that serves the page. What that means for storage and for a
-reserve is in [Storage](#storage-no-variables-yet) and
-[The reserve](#the-reserve-no-variables-yet).
-=======
-`Reserve`, `Store`, `StoreSQLite` and `Games` read **no environment variable at
-all**. What that means for a reserve is in
-[The reserve](#the-reserve-no-variables-yet); the database path is read by
-the executable and is in [Storage](#storage).
->>>>>>> 8fd98c9 (Add: the Discord surface, and the four commands that make a bot)
+with the host that serves the page. What that means for a reserve is in
+[The reserve](#the-reserve-no-variables-yet); the database path is read by the
+executable and is in [Storage](#storage).
 
 ### Rules that apply to every variable
 
