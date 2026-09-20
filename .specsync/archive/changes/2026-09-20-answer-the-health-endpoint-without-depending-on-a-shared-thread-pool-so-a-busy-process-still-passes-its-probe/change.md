@@ -1,6 +1,6 @@
 ---
 id: answer-the-health-endpoint-without-depending-on-a-shared-thread-pool-so-a-busy-process-still-passes-its-probe
-state: implementing
+state: archived
 type: bug_fix
 base_commit: 129c7f231b624f250703de257979072b64661d18
 ---
