@@ -17,13 +17,13 @@ struct ListenerTests {
         let bound = try await listener.bind(address: "127.0.0.1", port: 0)
         defer { Task { await listener.stop() } }
 
-        let answer = try LoopbackClient.request("GET /verify HTTP/1.1", to: bound)
+        let answer = try await offCooperativePool { try LoopbackClient.request("GET /verify HTTP/1.1", to: bound) }
         #expect(answer.contains("HTTP/1.1 200 OK"))
         #expect(answer.contains("Referrer-Policy: no-referrer"))
         #expect(answer.contains("Content-Type: text/html; charset=utf-8"))
         #expect(answer.contains("Only go on if that is your own account"))
 
-        let missing = try LoopbackClient.request("GET /metrics HTTP/1.1", to: bound)
+        let missing = try await offCooperativePool { try LoopbackClient.request("GET /metrics HTTP/1.1", to: bound) }
         #expect(missing.contains("HTTP/1.1 404 Not Found"))
     }
 
@@ -43,13 +43,11 @@ struct ListenerTests {
             subject: SurfaceFixtures.subject,
             now: Date()
         )
-        let answer = try LoopbackClient.send(
-            LoopbackClient.split(
-                "POST /verify/card HTTP/1.1",
-                body: "{\"session\":\"\(session.id.value)\"}"
-            ),
-            to: bound
+        let parts = LoopbackClient.split(
+            "POST /verify/card HTTP/1.1",
+            body: "{\"session\":\"\(session.id.value)\"}"
         )
+        let answer = try await offCooperativePool { try LoopbackClient.send(parts, to: bound) }
         #expect(answer.contains("HTTP/1.1 200 OK"))
         #expect(answer.contains(SurfaceFixtures.accountName))
         #expect(!answer.contains(session.id.value))
@@ -66,13 +64,13 @@ struct ListenerTests {
         // for "http" by a method called "not", so it is a path this surface
         // does not serve. Accepting either status here would pass a
         // listener that answered `404` to everything.
-        let parsed = try LoopbackClient.send(["not http at all\r\n\r\n"], to: bound)
+        let parsed = try await offCooperativePool { try LoopbackClient.send(["not http at all\r\n\r\n"], to: bound) }
         #expect(parsed.contains("HTTP/1.1 404 Not Found"))
 
         // This one does not parse: the header block has ended and the line
         // endings are not a request's, so nothing that arrives later could
         // make it one.
-        let unparsed = try LoopbackClient.send(["GET /verify HTTP/1.1\n\n"], to: bound)
+        let unparsed = try await offCooperativePool { try LoopbackClient.send(["GET /verify HTTP/1.1\n\n"], to: bound) }
         #expect(unparsed.contains("HTTP/1.1 400 Bad Request"))
     }
 
@@ -88,7 +86,7 @@ struct ListenerTests {
         let bound = try await listener.bind(address: "127.0.0.1", port: 0)
         defer { Task { await listener.stop() } }
 
-        let answered = try LoopbackClient.drip(["GET /verify HTTP/1.1\n\n"], to: bound, pausing: 0)
+        let answered = try await offCooperativePool { try LoopbackClient.drip(["GET /verify HTTP/1.1\n\n"], to: bound, pausing: 0) }
         #expect(answered.answer.contains("HTTP/1.1 400 Bad Request"))
         #expect(answered.seconds < 1.5, "answered after \(answered.seconds) seconds of a four second budget")
     }
@@ -107,11 +105,13 @@ struct ListenerTests {
         defer { Task { await listener.stop() } }
 
         let head = "POST /verify/card HTTP/1.1\r\nHost: localhost\r\nContent-Length: 9000\r\n\r\n"
-        let dripped = try LoopbackClient.drip(
-            [head, " ", " ", " ", " ", " ", " ", " ", " "],
-            to: bound,
-            pausing: 0.4
-        )
+        let dripped = try await offCooperativePool {
+            try LoopbackClient.drip(
+                [head, " ", " ", " ", " ", " ", " ", " ", " "],
+                to: bound,
+                pausing: 0.4
+            )
+        }
         #expect(dripped.seconds < 2.5, "held for \(dripped.seconds) seconds against a one second budget")
         #expect(dripped.answer.contains("HTTP/1.1 400 Bad Request"))
     }
@@ -132,16 +132,16 @@ struct ListenerTests {
         let bound = try await listener.bind(address: "127.0.0.1", port: 0)
         defer { Task { await listener.stop() } }
 
-        let silent = try [LoopbackClient.hold(to: bound), LoopbackClient.hold(to: bound)]
+        let silent = try await offCooperativePool { try [LoopbackClient.hold(to: bound), LoopbackClient.hold(to: bound)] }
         try await Task.sleep(nanoseconds: 200_000_000)
-        let waited = try LoopbackClient.secondsUntilClosed(to: bound, giveUpAfter: 2)
+        let waited = try await offCooperativePool { try LoopbackClient.secondsUntilClosed(to: bound, giveUpAfter: 2) }
         #expect(waited < 1, "a connection over the bound was held for \(waited) seconds")
 
         // And the slots come back: the silent peers go away, and the page
         // is served again on the same port.
         for connection in silent { LoopbackClient.release(connection) }
         try await Task.sleep(nanoseconds: 200_000_000)
-        let answer = try LoopbackClient.request("GET /verify HTTP/1.1", to: bound)
+        let answer = try await offCooperativePool { try LoopbackClient.request("GET /verify HTTP/1.1", to: bound) }
         #expect(answer.contains("HTTP/1.1 200 OK"))
     }
 

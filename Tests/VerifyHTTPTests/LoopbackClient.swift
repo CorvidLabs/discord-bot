@@ -275,3 +275,30 @@ enum LoopbackClient {
         return [head, body]
     }
 }
+
+/// Runs blocking socket work on a thread of its own.
+///
+/// **A synchronous `recv` called straight from an `async` test holds one of
+/// the cooperative pool's threads**, and that pool has about one thread per
+/// core. On a two-core runner two waiting tests hold all of it, and the
+/// listener's own answer — which reaches an actor and so needs that pool —
+/// can never be scheduled. The connection is accepted, the request is read,
+/// and nobody is left to write the reply: every peer then times out on a
+/// listener that is working perfectly.
+///
+/// It is the test that is at fault rather than the listener. Blocking a
+/// cooperative thread is the one thing a caller may not do, and a test is a
+/// caller. This puts the block on a thread nothing else wants.
+///
+/// - Parameter work: The blocking call.
+/// - Returns: What it returned.
+/// - Throws: Whatever it threw.
+internal func offCooperativePool<Value: Sendable>(
+    _ work: @escaping @Sendable () throws -> Value
+) async throws -> Value {
+    try await withCheckedThrowingContinuation { continuation in
+        Thread.detachNewThread {
+            continuation.resume(with: Result { try work() })
+        }
+    }
+}
