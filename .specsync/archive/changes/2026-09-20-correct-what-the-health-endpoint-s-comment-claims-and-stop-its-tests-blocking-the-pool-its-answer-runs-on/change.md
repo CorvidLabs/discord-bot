@@ -1,6 +1,6 @@
 ---
 id: correct-what-the-health-endpoint-s-comment-claims-and-stop-its-tests-blocking-the-pool-its-answer-runs-on
-state: implementing
+state: archived
 type: bug_fix
 base_commit: 02c2eee20df6387dd339d3ebd59c93b8dac6baed
 ---

@@ -7,11 +7,11 @@
   "title": "Correct what the health endpoint's comment claims, and stop its tests blocking the pool its answer runs on",
   "description": "Correct what the health endpoint's comment claims, and stop its tests blocking the pool its answer runs on",
   "kind": "bug_fix",
-  "state": "verifying",
+  "state": "accepted",
   "canonical_applied": true,
   "base_commit": "02c2eee20df6387dd339d3ebd59c93b8dac6baed",
   "created_at": 1789863488,
-  "updated_at": 1789863525,
+  "updated_at": 1789863537,
   "affected_specs": [
     "runtime"
   ],

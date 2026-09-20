@@ -1,0 +1,92 @@
+{
+  "timestamp": 1789863523,
+  "commit": "411797b97538855fa1db2edfe9b42deaac3452a8",
+  "contract_digest": "85ae05ceb3b88fc17a60fc5c86e2929e8462679e5470f08a241dac39b805dc49",
+  "execution_digest": "50c415191009d1c4fa46b9366d7ff3ebeccdc1df715e49c522996fd0da4e8dd3",
+  "workspace_digest": "c034bfb88c413664356ecc390866c9a9fc2678dc379cec50bd56f2a1349ce74e",
+  "acceptance_input_digest": "4f0769e7ab16de6902160067a07b8534c80f4c55d6cbfb12411e26b4630b43b3",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "Sources/Runtime/HealthListener.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "c01772ac9177f7b175f2c1c349b325357241e7cd3cf9822583941e3b66fa5e25",
+        "entry_digest": "bb27e86afda13c1c8aedb8f37c12137d198a67db212ccfeeb60e5d650efcb537",
+        "owners": [
+          "runtime"
+        ]
+      },
+      {
+        "path": "Tests/RuntimeTests/HealthListenerTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f6d6064883c0f8da31393637f4432bcb23d3524ef1d98cf868638771dfc94e12",
+        "entry_digest": "95655c0cad2a7d9c0803679ed153a2c4552408b453acae0b0246e63a30084117",
+        "owners": [
+          "@exact:test"
+        ]
+      },
+      {
+        "path": "specs/runtime/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "715443791e7f045373e308e397049fbe8a1769362c8d8456f63bc053a4c48aab",
+        "entry_digest": "a6474c6d027fc6a73f85a6cf006c7a065cc59f98125af6a6e3faf916b0633243",
+        "owners": [
+          "runtime"
+        ]
+      },
+      {
+        "path": "specs/runtime/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b4d45d153967d98516f96080c0fd89affa44ae4ade86d32b6c5b70a66ee9ce87",
+        "entry_digest": "b9d4af921c0cdcfcac90579faea71bdc2fce8d8a04fbb765170b3723de80b1d4",
+        "owners": [
+          "runtime"
+        ]
+      },
+      {
+        "path": "specs/runtime/runtime.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "66422ce75ba631ddee8cee62f38a0ad226061b02a47979241c4b8b5b4a3c5c03",
+        "entry_digest": "0c5140d1677a541114f45e8e6f85fc4e26993a4c1a9e9a834ceb5d857ae1cc2c",
+        "owners": [
+          "runtime"
+        ]
+      },
+      {
+        "path": "specs/runtime/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "c18cb6747f2779fdfd2da7587499bcf2da5c650ca886dad225399e0b5970a8d2",
+        "entry_digest": "6a18f68aeac98882290bd2ce2cf02aa0ce756eff0d7998ab9ffed45c15beb4a4",
+        "owners": [
+          "runtime"
+        ]
+      },
+      {
+        "path": "specs/runtime/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1ff72e03fd5c01e369b2ce2d45363d352b9c13c82fb2190016b6fad618363d69",
+        "entry_digest": "c4b627c5fc59aee757d4dc4f3ac7fd815a9e181403eff178c0377b5c0b3fc2df",
+        "owners": [
+          "runtime"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec runtime",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": []
+}
