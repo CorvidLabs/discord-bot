@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "correct-what-the-health-endpoint-s-comment-claims-and-stop-its-tests-blocking-the-pool-its-answer-runs-on",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "411797b97538855fa1db2edfe9b42deaac3452a8",
+  "contract_digest": "85ae05ceb3b88fc17a60fc5c86e2929e8462679e5470f08a241dac39b805dc49",
+  "execution_digest": "50c415191009d1c4fa46b9366d7ff3ebeccdc1df715e49c522996fd0da4e8dd3",
+  "workspace_digest": "c034bfb88c413664356ecc390866c9a9fc2678dc379cec50bd56f2a1349ce74e",
+  "timestamp": 1789863527
+}
