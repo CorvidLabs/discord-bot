@@ -1,0 +1,38 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1789863508,
+      "digest": "85ae05ceb3b88fc17a60fc5c86e2929e8462679e5470f08a241dac39b805dc49",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "correct-what-the-health-endpoint-s-comment-claims-and-stop-its-tests-blocking-the-pool-its-answer-runs-on",
+        "title": "Correct what the health endpoint's comment claims, and stop its tests blocking the pool its answer runs on",
+        "description": "Correct what the health endpoint's comment claims, and stop its tests blocking the pool its answer runs on",
+        "kind": "bug_fix",
+        "affected_specs": [
+          "runtime"
+        ],
+        "affected_paths": [
+          "Sources/Runtime/HealthListener.swift",
+          "Tests/RuntimeTests/HealthListenerTests.swift"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "No requirement changes. One change is a comment that claimed more than the code does, and the other is test code, which the canonical contract does not describe. The endpoint's routes, status codes, body and ordering are untouched.",
+        "acceptance_criteria": [
+          "The comment beside the health endpoint's answer says what the code does rather than what was hoped for it: waiting on the connection's own thread gives back the read slot only once the answer is out, and does not make answering independent of the cooperative pool, because the answer reaches an actor and must run there. The endpoint's tests no longer block that pool: the loopback request helper runs on a thread of its own rather than a dispatch queue, and the two direct blocking calls go through the same helper. Verified by the suite passing on Linux with two visible cores, which is the condition under which blocking the pool deadlocks the listener."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    }
+  ],
+  "reopenings": []
+}

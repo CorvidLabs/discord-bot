@@ -209,7 +209,7 @@ internal struct HealthListenerTests {
         let bound = try await listener.bind(address: "127.0.0.1", port: 0)
         var silent: [Int32] = []
         for _ in 0..<3 {
-            silent.append(try LoopbackClient.connectSilently(to: bound))
+            silent.append(try await Self.offCooperativePool { try LoopbackClient.connectSilently(to: bound) })
         }
         defer {
             for handle in silent {
@@ -258,7 +258,7 @@ internal struct HealthListenerTests {
         defer { Task { await listener.stop() } }
 
         for _ in 0..<10 {
-            try LoopbackClient.sendAndAbort("GET /health HTTP/1.1", to: bound)
+            try await Self.offCooperativePool { try LoopbackClient.sendAndAbort("GET /health HTTP/1.1", to: bound) }
             try await Task.sleep(for: .milliseconds(20))
         }
         let answered = try await Self.request("GET /health HTTP/1.1", to: bound)
@@ -299,15 +299,32 @@ internal struct HealthListenerTests {
     // MARK: - Private Methods
 
     /// One request over loopback, and the whole answer.
+    ///
+    /// **On a thread of its own, not a dispatch queue.** `send` blocks until
+    /// the answer is in, and libdispatch's pool is bounded by the machine's
+    /// cores: on a two-core runner a handful of waiting tests hold all of
+    /// it, and the endpoint's own answer, which reaches an actor, is then
+    /// never scheduled. The connection is accepted and read and nobody is
+    /// left to reply.
     private static func request(_ line: String, to bound: ListenerBound) async throws -> String {
         try await withCheckedThrowingContinuation { continuation in
-            let queue = DispatchQueue(label: "health.test.client")
-            queue.async {
-                do {
-                    continuation.resume(returning: try LoopbackClient.send(line, to: bound))
-                } catch {
-                    continuation.resume(throwing: error)
-                }
+            Thread.detachNewThread {
+                continuation.resume(with: Result { try LoopbackClient.send(line, to: bound) })
+            }
+        }
+    }
+
+    /// Runs a blocking call on a thread of its own, for the same reason.
+    ///
+    /// - Parameter work: The blocking call.
+    /// - Returns: What it returned.
+    /// - Throws: Whatever it threw.
+    private static func offCooperativePool<Value: Sendable>(
+        _ work: @escaping @Sendable () throws -> Value
+    ) async throws -> Value {
+        try await withCheckedThrowingContinuation { continuation in
+            Thread.detachNewThread {
+                continuation.resume(with: Result { try work() })
             }
         }
     }
