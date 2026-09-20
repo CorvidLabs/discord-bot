@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "answer-the-health-endpoint-without-depending-on-a-shared-thread-pool-so-a-busy-process-still-passes-its-probe",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "e6125e48afe23b6ef36be7516a7c206560e14a35",
+  "contract_digest": "33e720c1a72b2e68524115ed646cb75f3d15b9bc4f4ab682607b0649930e2bcc",
+  "execution_digest": "23fb4d6d5e4e076286908332a040b33b0feee54072a3901bbdbaffdd12793642",
+  "workspace_digest": "f2dc48dd732f055e1593be1b5fce98ae3d5c8725ccea2a61f09b1930befa8554",
+  "timestamp": 1789862835
+}

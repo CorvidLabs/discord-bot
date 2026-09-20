@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "answer-the-health-endpoint-without-depending-on-a-shared-thread-pool-so-a-busy-process-still-passes-its-probe",
+  "implementation_commit": "e6125e48afe23b6ef36be7516a7c206560e14a35",
+  "implementation_tree": "84156b80c0343c45b29de956937e881d51d37443",
+  "contract_digest": "33e720c1a72b2e68524115ed646cb75f3d15b9bc4f4ab682607b0649930e2bcc",
+  "workspace_digest": "f2dc48dd732f055e1593be1b5fce98ae3d5c8725ccea2a61f09b1930befa8554",
+  "closing_digest": "414287a0b7d0385802d5c9d5e3c471f973d4b694f949fbc762d9a80fb415e8b3",
+  "review_digest": "4e442ee62bc81e3db61872060d9ced1d4cdd8a03a2d252c8286e8477f54a7100",
+  "finalization_digest": "ee3319d6a726f706229c880048bbedb28b03bbb75ce0d037b6795a3e09daf489",
+  "timestamp": 1789862859
+}
