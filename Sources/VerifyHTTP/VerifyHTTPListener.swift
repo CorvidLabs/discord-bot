@@ -453,9 +453,22 @@ public actor VerifyHTTPListener {
                     close(connection)
                     return
                 }
+                // Answered on this thread, waiting for the async work
+                // rather than handing the socket to a detached task.
+                //
+                // `Task { }` runs on the cooperative pool, and the whole
+                // point of this endpoint is to answer when the process is
+                // busy. A pool saturated by the program's own async work —
+                // or, in a test run, by other tests — meant the answer was
+                // never scheduled and the peer timed out having connected
+                // successfully. Waiting here costs the thread this
+                // connection already owns and nothing shared.
+                let done = DispatchSemaphore(value: 0)
                 Task {
                     await answer(raw: raw, from: source, on: connection, by: service)
+                    done.signal()
                 }
+                done.wait()
             }
         }
     }
