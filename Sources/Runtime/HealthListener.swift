@@ -126,22 +126,6 @@ public actor HealthListener {
     public static let maximumConsecutiveAcceptFailures = 50
 
     private let state: HealthState
-    private let acceptQueue = DispatchQueue(label: "health.accept", qos: .utility)
-
-    /// Where a connection is read.
-    ///
-    /// Not the accept queue, because `recv` blocks for up to
-    /// ``readTimeoutSeconds`` and a client that connects and sends nothing
-    /// would otherwise hold the whole endpoint for that long, and ten of them
-    /// for ten times that, which is past any orchestrator's probe timeout. Not
-    /// a cooperative task either: a blocking read there holds one of the
-    /// pool's few threads, so the same client would starve everything else
-    /// this process is doing rather than only the endpoint.
-    private let connectionQueue = DispatchQueue(
-        label: "health.connection",
-        qos: .utility,
-        attributes: .concurrent
-    )
 
     /// The write end of the pipe that wakes the accept loop.
     ///
@@ -272,13 +256,23 @@ public actor HealthListener {
 
         let answering = state
         let listener = self
-        let connections = connectionQueue
-        acceptQueue.async {
+        // A detached thread rather than a dispatch queue, for both this
+        // loop and each connection it hands on. Both block: the loop until
+        // the endpoint is stopped, a read for up to
+        // ``readTimeoutSeconds``. On a queue each one holds a worker from
+        // libdispatch's pool for exactly that long, and that pool is
+        // bounded by the machine's cores. It survived on a developer's
+        // laptop and starved on a two-core runner, where the accept loop
+        // never got a thread and every probe waited out its timeout.
+        //
+        // The rule this now follows is the one already written down for the
+        // chat surface's listener: nothing that blocks runs on a shared
+        // pool.
+        Thread.detachNewThread {
             let death = HealthListener.acceptLoop(
                 on: handle,
                 wokenBy: wakeReadEnd,
                 answering: answering,
-                handlingOn: connections
             )
             // Closed here and nowhere else, which is what makes the number
             // safe to reuse: nothing can be accepting on it any more.
@@ -370,7 +364,6 @@ public actor HealthListener {
         on handle: Int32,
         wokenBy wake: Int32,
         answering state: HealthState,
-        handlingOn connections: DispatchQueue
     ) -> HealthListenerDeath? {
         // A listening socket that has gone bad makes accept fail instantly
         // and for ever. Backing off stops the loop spinning a core, and the
@@ -441,14 +434,29 @@ public actor HealthListener {
             // The answer is assembled from state the process already holds,
             // so that part is a hop rather than a request. The socket is
             // handed over with it and closed there, after exactly one answer.
-            connections.async {
+            // A thread of its own, for the same reason as the loop above:
+            // this read blocks for up to the client's whole budget.
+            Thread.detachNewThread {
                 guard let line = requestLine(from: connection) else {
                     close(connection)
                     return
                 }
+                // Answered on this thread, waiting for the async work
+                // rather than handing the socket to a detached task.
+                //
+                // `Task { }` runs on the cooperative pool, and the whole
+                // point of this endpoint is to answer when the process is
+                // busy. A pool saturated by the program's own async work —
+                // or, in a test run, by other tests — meant the answer was
+                // never scheduled and the peer timed out having connected
+                // successfully. Waiting here costs the thread this
+                // connection already owns and nothing shared.
+                let done = DispatchSemaphore(value: 0)
                 Task {
                     await answer(line: line, on: connection, from: state)
+                    done.signal()
                 }
+                done.wait()
             }
         }
     }
