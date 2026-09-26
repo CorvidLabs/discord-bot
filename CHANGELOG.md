@@ -225,6 +225,14 @@ compare against.
   every secret it asks for, derived from the source, with the commands that
   check each claim and a plain statement of what a reader cannot check by
   grepping this repository (TRUST-1).
+- `docs/HLD.md`: how the targets fit together, drawn in Mermaid. It covers the
+  context, the target graph and the seams each target declares with what
+  fills them, the boot and four flows as sequence diagrams (proving an
+  account, the portal route, the role sweep, a payout epoch), the store's
+  schema, the trust boundaries and the failure modes. Every part is marked as
+  running, built and not wired, or not built (BUILD-4). It owns the shape and
+  links every other fact to its owner. The README has an Architecture section
+  pointing at it.
 - A Linux job in the test workflow, on a GitHub-hosted runner in an official
   Swift container image. The deployment target is a Linux container, and until
   now nothing had ever been built for one.

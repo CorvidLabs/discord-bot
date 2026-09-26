@@ -18,6 +18,7 @@ everything else links to it.**
 | [`WHAT-IT-TALKS-TO.md`](WHAT-IT-TALKS-TO.md) | Every outside service this reaches, every secret it asks for, every port it listens on, the dependency graph, and the commands that check each claim. | What a variable means or what a sensible value is. |
 | [`VERIFICATION.md`](VERIFICATION.md) | The wire contract between this bot and the portal that takes a signature: every call, every status, the transport constraint, and what a conforming portal must do. Written so the other half can be built from it and nothing else. | Whether the portal should be a separate service at all. That is the next row. |
 | [`decisions/`](decisions/) | One open question per file, with what has been decided and what has not. | Anything already decided and built, which belongs in a spec. |
+| [`HLD.md`](HLD.md) | The shape: which target depends on which, which seam each declares and what fills it, the order the boot and the main flows run in, drawn as diagrams, and which parts the executable runs and which are only built. | Any fact another row owns. It links to the owner: a variable, a host, a wire format, a figure, a criterion. |
 | [`../AGENTS.md`](../AGENTS.md) | The order of work (intent, then contract, then code) and the rules that bite while writing it. | Process: branches, commits, pull requests, releases. |
 | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | How a change arrives: branches, commit prefixes, the gates to run, the pull request template, how a release is cut. | The rules about the code itself. |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | What changed between two versions. New work under `Unreleased`. | Why a rule exists. That belongs in `hi/` or in a spec. |
@@ -34,6 +35,7 @@ everything else links to it.**
 | Trying to run the bot | [`CONFIGURATION.md`](CONFIGURATION.md) for the chat surface and storage, then [`VERIFICATION.md`](VERIFICATION.md) if you want `/verify` to work |
 | Setting it up for your own community | [`CONFIGURATION.md`](CONFIGURATION.md), starting at the worked example and reading upward |
 | Trying to understand the payout arithmetic | [`../README.md`](../README.md), then [`../hi/reserve.md`](../hi/reserve.md), then [`../specs/reserve/`](../specs/reserve/) |
+| Trying to see how the pieces fit together | [`HLD.md`](HLD.md), then the spec of the module you care about |
 | About to write code | [`../AGENTS.md`](../AGENTS.md), then the `hi/` family you are touching, then that module's spec |
 | About to open a pull request | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) |
 

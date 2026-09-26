@@ -172,6 +172,41 @@ which already exist can be typed in a server. After that the role sweep, so a
 role stays true when somebody sells; then the surfaces that read rather than
 write; and then the first thing that can spend.
 
+## Architecture
+
+One process for one server, with one store on disk and one node it reads.
+Solid lines are what `swift run bot` does at this commit. Dotted lines are
+built and tested, and are not yet part of the executable.
+
+```mermaid
+flowchart TB
+    member(["Member"])
+    wallet(["Their wallet, in a browser"])
+    supervisor(["Your supervisor"])
+    discord["Discord"]
+
+    subgraph machine["Your machine"]
+        bot["bot"]
+        store[("SQLite store")]
+    end
+
+    node["Your Algorand node"]
+
+    member -->|"/ping and /help"| discord
+    discord <-->|"gateway and commands"| bot
+    supervisor -->|"GET /health"| bot
+    bot <--> store
+    bot -->|"reads only"| node
+    member -.-> wallet
+    wallet -.->|"proof of an account, not wired"| bot
+```
+
+[`docs/HLD.md`](docs/HLD.md) is the long version. It covers every target and
+the seams between them, the boot, and the flows behind verification, the role
+sweep and a payout, drawn as sequence diagrams. It also has the store's
+schema, the trust boundaries, and what each part refuses. It owns the shape
+and nothing else, and links every other fact to the document that owns it.
+
 ## Why the engine first
 
 Paying a whole community at once is the most useful thing a bot like this does
