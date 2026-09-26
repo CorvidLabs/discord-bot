@@ -33,13 +33,13 @@ a short true list is worth more than a long plausible one.
 | Does it listen on a socket? | One, whatever you configure: `GET /health`, on `HEALTH_ADDRESS` (the loopback address unless you say otherwise) and `HEALTH_PORT` (required, no default). One route, and it accepts no input beyond the request line. A second listener exists in the tree, the portal callback used by `DiscordSurface`, and nothing reaches `DiscordSurface` from the executable, so the program never binds it. |
 | Does it need a secret? | One if you run it without a chat surface: `CHAIN_API_TOKEN`, and only if your node provider issues tokens. Two with one: `DISCORD_BOT_TOKEN` as well. `VERIFY_SHARED_SECRET` is not read by anything the executable assembles. |
 | Does it talk to Discord? | Only when you give it a token. `SurfaceDiscord` is the only target that can, and the manifest is what makes that true; `BotMain` links it and builds a gateway only when a `DISCORD_` variable is set. With none set the program identifies to nothing. |
-| Does proving a wallet contact anything? | No. `Verify` checks the signature in this process and opens no connection. A page has to serve the member's wallet somewhere, and this package does not serve one. |
+| Does proving a wallet contact anything? | No. `Verify` checks the signature in this process and opens no connection. The page a wallet signs against is now in this package too, in `VerifyHTTP`, and it is served from your own machine rather than fetched: it interpolates no value, loads no third-party script, and nothing links the target into the executable yet. |
 | Will that stay true? | One host is already decided and not yet reached: a naming service, so a member can type a name instead of an address when they run the verification command. It is optional, it is contacted only when somebody types a name, nothing at startup depends on it, and `Verify` is not the target that will call it. Nothing in this commit reaches it. |
 | Does it sign or send a transaction? | No. Every chain call is a read. Nothing here holds a chain key. |
 
 ## What is in the package
 
-Fourteen targets. Three of them contain code that opens or accepts a
+Fifteen targets. Four of them contain code that opens or accepts a
 connection, one writes a file, and the executable links four of them.
 
 | Target | Dependencies | Opens or accepts a connection? |
@@ -56,6 +56,7 @@ connection, one writes a file, and the executable links four of them.
 | `Verify` | Foundation, `swift-algorand`, `swift-crypto` | No. It is one import away from a node client, which is the position `Chain` is also in, and `Tests/VerifyTests/TargetShapeTests.swift` reads its sources and proves no client is constructed, no request type is named and nothing is logged. |
 | `Surface` | Foundation, `Store`, `Gating`, `Chain` | No. It declares no chat client and opens nothing. |
 | `SurfaceDiscord` | `Surface`, `Store`, `Gating`, `Chain`, `DiscordBM` | Yes: the gateway and the chat API, when you have configured a token. It also holds a listening socket used only by `DiscordSurface`, which the executable does not reach. |
+| `VerifyHTTP` | Foundation, `Verify`, `swift-crypto` | It **accepts** one: the page a member's wallet signs against, and the route their signature comes back on. It originates none, reads no environment, and imports no other target in this package. Nothing links it, so the program never binds it. |
 | `BotMain` (the `bot` executable) | `Runtime`, `StoreSQLite`, `Surface`, `SurfaceDiscord` | Only through the above. It is the arguments, the environment, the signals and the exit, and it is the one place the four are linked together |
 
 Two things in that table are worth checking for yourself, because the rest of
@@ -287,11 +288,12 @@ grep -rn "socket(" Sources/
 grep -rnE "FileManager|FileHandle|Data\(contentsOf" Sources/
 ```
 
-The first comes back empty. The second finds **two** files:
-`Sources/Runtime/HealthListener.swift`, which the program binds, and
+The first comes back empty. The second finds **three** files:
+`Sources/Runtime/HealthListener.swift`, which the program binds;
 `Sources/SurfaceDiscord/SocketHTTPListener.swift`, which only `DiscordSurface`
-uses and which nothing reaches from the executable, so the program never binds
-it. The client that speaks to the health listener over loopback
+uses and which nothing reaches from the executable; and
+`Sources/VerifyHTTP/VerifyHTTPListener.swift`, which nothing links at all. The
+program binds the first and never the other two. The client that speaks to the health listener over loopback
 is test code under `Tests/`, which these commands do not scan. The third
 finds the store's own file handling and the report writing to standard output
 and standard error.

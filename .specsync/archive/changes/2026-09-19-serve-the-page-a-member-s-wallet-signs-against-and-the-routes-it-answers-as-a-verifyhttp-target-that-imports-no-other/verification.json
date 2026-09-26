@@ -1,0 +1,443 @@
+{
+  "timestamp": 1789858644,
+  "commit": "37faffff926ea495e708d31b69d614771e1da844",
+  "contract_digest": "0d114403a29ca751bed1572a61497e6dc427b90bed94276d28b6a50bd8781859",
+  "execution_digest": "77eeaff3192bab26a1f303072f2f31294d57c498028b7d6c011d6de454f927ae",
+  "workspace_digest": "cc065706ed5f497efbcfb1dde2db567def8bc4314b227487406a8fe168ede26f",
+  "acceptance_input_digest": "6616159d08929f67fab0e55488de9c415020cc06515a2225db833546abba4fe3",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": ".specsync/config.toml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2e738879a9c337137bbf5040dd542a6694d084d72e2c5612540023617643eec1",
+        "entry_digest": "1e85ec5e21901981844b2e983ff08e5f87af4f71981359e60be71bf6d8640527",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "Package.resolved",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9b804d9161920cca0b97f53aaac6030cc09e617bd3a37c6f7f1137f7bd403183",
+        "entry_digest": "f3d7c54efa28f1296bf11ba8a83083b7ecc14429bab69906142ea92ac736f342",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "Package.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "32c1add48cf3543b8d190f04f51f8257ad360f99ff544e89478f6135d635b496",
+        "entry_digest": "5816c5129d64c6bf5d4083b2f0cc821e4451f07b3b1cb7493718d2aa2a8666e4",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "Sources/VerifyHTTP",
+        "kind": "non_file",
+        "mode": 0,
+        "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "entry_digest": "a105613c167f7ef4686b80ff66f375758b0341702634f772ecf576de4e745686",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "Sources/VerifyHTTP/VerifyHTTPHost.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "6f3725bc32e9048cf678cdee4b97c7d1c62a1d6d40937adcd19d5bf5145c63f5",
+        "entry_digest": "581937bd9c8aa4465ddc38331daf714ffa3a5407fccd061dd50966349a753eaf",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "Sources/VerifyHTTP/VerifyHTTPLimits.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "589d2d91f9fb43e5638b5e50fcf55942f7ba0ae0e29031b42dca0dab1e52e7c3",
+        "entry_digest": "eb19ce9852701d79f9ce0a6d2fe1014f64b1f10a5da3886f52ccfed6f579590f",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "Sources/VerifyHTTP/VerifyHTTPListener.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a041d2c71a067db63a5d144194ed080a30f6028f47ef88f08ecf8f296cd68ed1",
+        "entry_digest": "d7cb57a3956b70f4850dc62b42638844a17b5f0b79240d9eb9882d32d09e1960",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "Sources/VerifyHTTP/VerifyHTTPReporting.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "bd07544faccbe6cb6ca137cd8d0f5bdad0fd0fe3db79c93e61a9c7e96d9b4262",
+        "entry_digest": "286a7e2be62a48ce7a4c5f41e44775eb249f384c188275424cdac05aced72f26",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "Sources/VerifyHTTP/VerifyHTTPRequest.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "fb22ed87da88cd9014e26a8beb5e4a2b465f406efdb209212302ef4e4ea19e3a",
+        "entry_digest": "87639eec0bef318a109640529aec130af15aeccce213a076c07d3f6aabd3e60e",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "Sources/VerifyHTTP/VerifyHTTPResponse.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "869b5e591c3d737090fe96ef1754052db778d531ba7d0e3f374f9fbe74351933",
+        "entry_digest": "4f2c8ff0065c3b6f522e6cc2c51d4776fdbc6d8c7a6a7cde27a09d2611c048a3",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "Sources/VerifyHTTP/VerifyHTTPRoute.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b37327ac358be963c484e91c44eb1eaba04bcedab7fbd38647c7e07542c9da47",
+        "entry_digest": "5e5886225126886d6455cffe0f9f2a874ecd180ec992489bf30780aa80efcd8d",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "Sources/VerifyHTTP/VerifyHTTPService.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "32016a6536f65a9365a23fa295df8d16250ae41946a8a43e148465e5fba79bfa",
+        "entry_digest": "f44b2f3fbf66e58bbb613f7aa6c1deb86b264837a65ab2f434fa506e6afbb4a7",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "Sources/VerifyHTTP/VerifyLink.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "126a8dadb11396fe485edcc862302240df0c842e2f19666fc1a7fef2553f146a",
+        "entry_digest": "4c25a7d40c3305703c89d4862adf4620c0d6a3d7c2d6e86399790d080d8de45f",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "Sources/VerifyHTTP/VerifyPage.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "8566ef65c938355e81db66f9fd1888d260d9c27615fc77bf8615d8a432e632ea",
+        "entry_digest": "8e9c27f83ffc9ec0cffb4193679cf6258606d9c01c9626b3cc6cc0569b051fd2",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "Sources/VerifyHTTP/VerifyPageScript.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b2ac44d7cd11c3624bdd81e9e2d11e60734148aba135b0788fcf59b74fe3a025",
+        "entry_digest": "68d00279ead9083588a8ec6714394bbd82cf5f32f9c3a0ed781657a19f9dd509",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "Sources/VerifyHTTP/VerifyRateLimiter.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "08ee9ac847b092d0f2b2088e0ec410b159de2e73d4f8279980b93edaef2eef6c",
+        "entry_digest": "003c3c3096e773f000fac84aaf856133880f0dd4dac358af9c1f4ce81064251a",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "Sources/VerifyHTTP/VerifySessionHandle.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "cae6a1276966d75f6fd7ea42b28ba554f6925aeae6faa478f4ec53ad94d6c857",
+        "entry_digest": "3b7006cd783385c6cb855a6a7b783779fc457f2ee4d173b7934d6b4464cfbed9",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "Tests/VerifyHTTPTests",
+        "kind": "non_file",
+        "mode": 0,
+        "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "entry_digest": "7ef5f092d460d87c047aec604cece2ff11aead4d1b317ac999f2310c77bd2ac6",
+        "owners": [
+          "@exact:test"
+        ]
+      },
+      {
+        "path": "Tests/VerifyHTTPTests/BearerCredentialTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "8817835602a0d7553346641cd476e1b047ceb7b83cdce06d40a8719f41d2a182",
+        "entry_digest": "faac8fded2fc9b3f200bbc30e4bbab9430b7cd2ae3e5a1f27213e410d042f005",
+        "owners": [
+          "@exact:test"
+        ]
+      },
+      {
+        "path": "Tests/VerifyHTTPTests/CardTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "5659d5a62090b5c63654539e9cfe06fb9633a87616823ddc9f79e03f238997a2",
+        "entry_digest": "79d77a8f8881bdb6313802eb13f6471b13ebcdabb0e08e8a612af196cdee7ee2",
+        "owners": [
+          "@exact:test"
+        ]
+      },
+      {
+        "path": "Tests/VerifyHTTPTests/ConnectTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "566413db68119a1c58dde5d83ce920a205dbbb1910f0c5de7a6e04cff47d9b0b",
+        "entry_digest": "bb0494992a2029b16138882f93346209424dd720b35d8fc2f15353d5e3723708",
+        "owners": [
+          "@exact:test"
+        ]
+      },
+      {
+        "path": "Tests/VerifyHTTPTests/ListenerTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "edc5373bf747dfb2e47bbf49faddec4bd21c35ec7d6b490a4bcd08a5a9119cfe",
+        "entry_digest": "6ffe82199d932bf07312f7feae5c46b3f3f1a564898b25021365767c6845398c",
+        "owners": [
+          "@exact:test"
+        ]
+      },
+      {
+        "path": "Tests/VerifyHTTPTests/LoopbackClient.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b57ff21a8a4d632a4dc10379b5683be5dcf0914492a6a4d106ef32573e1cbbe1",
+        "entry_digest": "ba68c2dfe57eac3d91495b59eac612293519a7b9f04398ef3a44e562f4ab37d4",
+        "owners": [
+          "@exact:test"
+        ]
+      },
+      {
+        "path": "Tests/VerifyHTTPTests/PageTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "e59e8b21a691ade65fa5fbe25360a115e66abdb2913d086cd0b8a71c529f7e80",
+        "entry_digest": "d0e4d1e9cb1d61612189d4edd4d3fa8a21142cc38564367271118b38e8a56319",
+        "owners": [
+          "@exact:test"
+        ]
+      },
+      {
+        "path": "Tests/VerifyHTTPTests/RateLimitTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "7b215953831f426f09ffba44ac44bb05ee00b41f6328e8d2a3021164ac3f2428",
+        "entry_digest": "83f8b87d199787357d96eb75454d35a7bfbefbbb0c03b70da1f947f56ea0b947",
+        "owners": [
+          "@exact:test"
+        ]
+      },
+      {
+        "path": "Tests/VerifyHTTPTests/RoutingTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "745d34378eade4bae265284c36c09c455308ed7e10730c94f3fda254fff491a9",
+        "entry_digest": "7a44f05010b22227d514a024d98984913d61d1b182c2f46a45126849f8cce443",
+        "owners": [
+          "@exact:test"
+        ]
+      },
+      {
+        "path": "Tests/VerifyHTTPTests/SubmitTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "e836eaac3e07ebbd6e2854f99dcf19f5ba05c58bc66a8339e60d86058d9951ad",
+        "entry_digest": "4228a9eca8abb47e7ef961075d34b16c7613ea31d3a7efa641b900689474c2a8",
+        "owners": [
+          "@exact:test"
+        ]
+      },
+      {
+        "path": "Tests/VerifyHTTPTests/SurfaceFixtures.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "41b23b66e665727cdf2062bafc5426fa3a60c38996e01b2fa9d703abf1900fee",
+        "entry_digest": "8a09c3a92ef4c9eb54c8f5d676422e40254addd0bbb46528ccbc245d18db2907",
+        "owners": [
+          "@exact:test"
+        ]
+      },
+      {
+        "path": "Tests/VerifyHTTPTests/TargetShapeTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3f5e819a36abe24521044a38ad37ef0b1633c80ff9d588356ada914b4bf1e71d",
+        "entry_digest": "ae79568a3fa3a6603890579b35344cfe70ad60d594eb77336d68da536fc82cc5",
+        "owners": [
+          "@exact:test"
+        ]
+      },
+      {
+        "path": "specs/verify",
+        "kind": "non_file",
+        "mode": 0,
+        "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "entry_digest": "5d73fb756d5452d6493ae2ed15e33efddd9b1ae9114e5ac3a1e5420187546336",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "specs/verify-http",
+        "kind": "non_file",
+        "mode": 0,
+        "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "entry_digest": "3aa93bcd3d4f68dc1c0d46e93e662a0dbe03452988d275d7627fe777f3cce666",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "specs/verify-http/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9b795a11a5321ca1a09e0989703e9730a3756fae7a4ff2b40f33ded33808b242",
+        "entry_digest": "c5dd8f27ca2ad4ed1a44ac85dc8829f340ebdd6af7215917544e86596f5999ec",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "specs/verify-http/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "7769aa9f54911440d990c52b11a6d441a5f65d0ec4a51c0dd58ce890961307b9",
+        "entry_digest": "f9f858363de5bc9cd428f0dc11151e7a5531af7baaaf741808611dd740222f24",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "specs/verify-http/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a1a661917397ca7594f3632dce6428598413de2a2964c93c5e8bb89a4e976527",
+        "entry_digest": "2be08996834b8981fd8159b6a5f99de8cd73f2793670df6329f93c456db18256",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "specs/verify-http/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "79b23b730b380b4c317c263dbf8ddbbd7f94835da692aa07fbae891293b50733",
+        "entry_digest": "4aaea6ffde111dbf826c10dd8c676f88d0a0a11b7657ebf7ef6593aaf4ec3121",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "specs/verify-http/verify-http.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ee877eb6103568e69569769a41047d728905f52fc625f78a1e064185c5e15488",
+        "entry_digest": "eaaa2b5f6fa41c5b36a730e4a3f8878a369d8931284565085c1ed038f23f017d",
+        "owners": [
+          "verify-http"
+        ]
+      },
+      {
+        "path": "specs/verify/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9f366cefb4c11388a7433d5d0440aaf0671c20b528cbf4cd63ee2c4b9f6f0d0e",
+        "entry_digest": "4b1ebffcc7ee43695eaa0a2dc0eaf31cda74def9e4b2c6c61ca0a03f6aa83f0c",
+        "owners": [
+          "verify"
+        ]
+      },
+      {
+        "path": "specs/verify/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b448effd0336031c667c45146d643225a1d9506fdf2d36eff7f436a1bc38b3e1",
+        "entry_digest": "74478990db3495cff60ebe6c5acb2c7259e3d48129526fb6f99391dcfd74c161",
+        "owners": [
+          "verify"
+        ]
+      },
+      {
+        "path": "specs/verify/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "cabcd4c7d4cc2b1a049e5794356dcc4c2716c383c96d72916eafe7e8c27ac1f1",
+        "entry_digest": "2a2c480092037196a453f8172064b2ba82a1c2a682df425f6f4fb009e8acb5a8",
+        "owners": [
+          "verify"
+        ]
+      },
+      {
+        "path": "specs/verify/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "db975905a6d16de718b3717d3739681e408644d86a06d3eb9cc00480ba1563d9",
+        "entry_digest": "fd5ae14ae0005805189b8e61c68447de729412c91153503f9af1076a560ef922",
+        "owners": [
+          "verify"
+        ]
+      },
+      {
+        "path": "specs/verify/verify.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1734718b57fb63d1f0d6bc18e5b28b6152be1c792973afc49423ec05ab341886",
+        "entry_digest": "8c6c8450c7501b517ce1779ca1b500b18709623f191b624a3cbd3280ee342e83",
+        "owners": [
+          "verify"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec verify --spec verify-http",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": [
+    "REQ-verify-009",
+    "REQ-verify-http-001",
+    "REQ-verify-http-002",
+    "REQ-verify-http-003",
+    "REQ-verify-http-004",
+    "REQ-verify-http-005",
+    "REQ-verify-http-006",
+    "REQ-verify-http-007",
+    "REQ-verify-http-008",
+    "REQ-verify-http-009"
+  ]
+}

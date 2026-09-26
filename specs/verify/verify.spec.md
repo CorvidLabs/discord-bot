@@ -1,6 +1,6 @@
 ---
 module: verify
-version: 1
+version: 2
 status: active
 files:
   - Sources/Verify/AssertedAccount.swift
@@ -52,7 +52,10 @@ check the proof, not the need for something to serve the page. The obligations
 that go with the page and the command are written down in REQ-verify-009 and
 REQ-verify-010 so the host that lands them has nothing left to invent, and
 `specs/verify/testing.md` records them as unevidenced rather than claiming
-them.
+them. Most of them now have a host: `specs/verify-http` is the page, the
+routes and the rate limit, in a target that depends on this one and that
+this one still knows nothing about. What is left there is the chat command,
+the pending record and the operator's release path.
 
 ## Public API
 
@@ -449,3 +452,4 @@ contract even though how they refuse it is not.
 | 2026-09-19 | maintainers | Small-order public keys are refused before the cryptography library is asked, because an all-zero key with an all-zero signature verifies anything and the libraries this builds against return true for it. |
 | 2026-09-19 | maintainers | A session is claimed for the length of a call. Actor reentrancy left single use, both submission bounds and the one authorising key retry readable before a store hop and writable after it, so calls arriving together walked past all four. |
 | 2026-09-19 | maintainers | The reader no longer requires a map's keys to ascend. It was a rule the reader this was ported from never had, it refuses the shape that reader was patched to accept after a live outage, and unique keys already say one thing in any order. |
+| 2026-09-19 | SpecSync | serve-the-page-a-member-s-wallet-signs-against-and-the-routes-it-answers-as-a-verifyhttp-target-that-imports-no-other: Serve the page a member's wallet signs against, and the routes it answers, as a VerifyHTTP target that imports no other target in this package and that nothing links yet |

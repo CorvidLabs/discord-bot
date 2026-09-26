@@ -5,9 +5,9 @@ spec: verify.spec.md
 ## Automated Testing
 
 `swift test --filter VerifyTests` runs this target's suite: 130 tests in 8
-suites, all offline. The whole package runs 1131 tests in 91 suites, across
-`Reserve`, `Gating`, `Games`, `Chain`, `Store`, `StoreSQLite` and `Verify`
-(130). The suite is run on Linux as well as on macOS, because Foundation is a
+suites, all offline. The whole package runs 1203 tests in 100 suites, across
+`Reserve`, `Gating`, `Games`, `Chain`, `Store`, `StoreSQLite`, `Verify`
+(130), `Surface` and `VerifyHTTP`. The suite is run on Linux as well as on macOS, because Foundation is a
 different implementation there and the module has already been caught by the
 difference twice.
 
@@ -58,7 +58,10 @@ tell which parts are built.
   races calls inside one coordinator, which is what the claim covers. A host
   that backs the store with a database several instances share owes the same
   claim at that level, and nothing here can show whether it has one.
-- **Nothing here is evidence about a page**, because there is no page.
+- **Nothing here is evidence about a page**, because there is no page in
+  this target. There is one in `VerifyHTTP`, and `specs/verify-http`
+  carries its evidence; nothing in this suite is affected by it either
+  way.
 
 ## Manual Testing
 

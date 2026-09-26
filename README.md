@@ -32,6 +32,7 @@ offering it. What is missing is listed below rather than implied.
 | `Sweep` | Re-reading what every member holds and moving their roles to match: the loop, the batching, the per-member reasons and the run record. The decision itself stays in `Gating`. It declares its own chat seam over `String`, so it links no chat SDK, and nothing calls it yet. |
 | `Runtime` | The composition root: eight boot gates in a fixed order, the one description of every variable this build reads, the startup report, and a health endpoint that answers `starting` until the parts that must be up are up. Links no chat client and no database. |
 | `Verify` | Deciding whether somebody controls an Algorand account, from a signature their own wallet produced. The five lines they sign, the session those lines belong to, a tolerant reader for what a wallet sends back, and fifteen ordered refusals. It reads nothing: no network, no clock, no key, no setting. |
+| `VerifyHTTP` | The other half a member touches: the page their wallet signs against, the routes it answers, and the rate limit in front of them. The page interpolates no value and loads no third-party script — the name, the code and the expiry are fetched and written as text nodes — so there is no escaping rule to get wrong. It imports no other target in this package and reads no setting. Nothing links it yet. |
 | `Surface` | What a member touches, minus the chat client: the command catalogue, the validator that refuses offline a catalogue Discord would refuse, the interaction router and its acknowledgement rules, the payload bounds counted in UTF-16, the cards, the boot order and four command handlers. It declares no chat client, so all of it is tested with no token, no network and no guild. |
 | `SurfaceDiscord` | The adapter, and the only target that knows what a snowflake is. Payload mapping, interaction decoding, card rendering, role application, a listening socket and the HTTP client for the verification portal. |
 | `BotMain` | The program, as the `bot` executable. The arguments, the one snapshot of the process environment, the live seams, the signals and the exit. It decides nothing: it is the only place that links `Runtime`, `StoreSQLite`, `Surface` and `SurfaceDiscord` together, and it builds a chat gateway only when you have configured one. |
@@ -129,8 +130,9 @@ actually use:
   whether somebody owns an account is here, offline and tested: `Verify` mints
   the challenge, keeps the session, reads the signed transaction a wallet sends
   back and applies fifteen ordered checks to it, with no second service
-  anywhere in it. What is missing is the page their wallet connects to, and any
-  link at all from the program to the rest of it.
+  anywhere in it. The page their wallet signs against is here too, in
+  `VerifyHTTP`, served from your own machine. What is missing is the link: no
+  executable assembles either target, so `/verify` stays unregistered.
   [`docs/VERIFICATION.md`](docs/VERIFICATION.md) is the contract, and
   `specs/verify/` is what was built against it, with the host's own
   obligations written down and marked as not yet evidenced.

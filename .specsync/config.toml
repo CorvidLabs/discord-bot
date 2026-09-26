@@ -18,6 +18,7 @@ source_dirs = [
     "Sources/Runtime",
     "Sources/BotMain",
     "Sources/Verify",
+    "Sources/VerifyHTTP",
     "Sources/Surface",
     "Sources/SurfaceDiscord"
 ]

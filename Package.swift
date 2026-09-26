@@ -61,6 +61,14 @@ let package = Package(
         // the in-memory backend never links a database at all.
         .library(name: "StoreSQLite", targets: ["StoreSQLite"]),
         .library(name: "Verify", targets: ["Verify"]),
+
+        // The host half of `Verify`: the page a wallet signs against, the
+        // routes that page calls, and the rate limit the module below
+        // deliberately does not have. A product rather than a plain target
+        // because `Verify` on its own cannot be reached by a member, and
+        // somebody who is not this bot should be able to serve the same
+        // flow without reimplementing the five obligations it carries.
+        .library(name: "VerifyHTTP", targets: ["VerifyHTTP"]),
         .library(name: "Surface", targets: ["Surface", "SurfaceDiscord"])
     ],
     // Up to the next *minor*, not the next major. Semantic versioning gives a
@@ -294,6 +302,38 @@ let package = Package(
         .testTarget(
             name: "VerifyTests",
             dependencies: ["Verify"],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+
+        // What a member can actually reach: the page, the three calls it
+        // makes, the socket underneath them and the rate limit on all four.
+        //
+        // It depends on `Verify` and on `Crypto`, and on nothing else in
+        // this package. Not `Store`, so it cannot record a member; not
+        // `Chain`, so serving a page cannot spend a chain request; not
+        // `Surface`, which would drag all three in through one import. The
+        // four reads it cannot make for itself arrive as closures the
+        // program fills in, which is also what lets the whole surface be
+        // exercised with no token, no node and no database.
+        //
+        // `Crypto` is here for one thing: the truncated digest that stands
+        // in for a session id in a log line and a rate limiter's key. It is
+        // already resolved for `Verify`, so it moves no version.
+        .target(
+            name: "VerifyHTTP",
+            dependencies: [
+                "Verify",
+                .product(name: "Crypto", package: "swift-crypto")
+            ],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+        .testTarget(
+            name: "VerifyHTTPTests",
+            dependencies: [
+                "VerifyHTTP",
+                "Verify",
+                .product(name: "Algorand", package: "swift-algorand")
+            ],
             swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
         ),
 
