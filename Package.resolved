@@ -1,5 +1,5 @@
 {
-  "originHash" : "2a0053d4283a25ce924bc43e0d22192973dd2eb13f2e35a820ecd1561dc50028",
+  "originHash" : "a8a4a017342b2b2139a2d52bb989e664eeb8141d97cac80ec5738e55f4d5ba14",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/DiscordBM/DiscordBM.git",
       "state" : {
-        "revision" : "b01d40baf434cc968b113ff44c9eecd40bfb6e9e",
-        "version" : "1.16.2"
+        "revision" : "d6ec9e8aca8718246b0ede22bea625b6f31ccf3a",
+        "version" : "1.17.0"
       }
     },
     {
@@ -98,6 +98,15 @@
       "state" : {
         "revision" : "a0cb0954ecb21e4e31b0070e6ed5674e8556685a",
         "version" : "1.6.0"
+      }
+    },
+    {
+      "identity" : "swift-configuration",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-configuration.git",
+      "state" : {
+        "revision" : "0b0c23215764302f7db752b079c024fbaff12e62",
+        "version" : "1.5.0"
       }
     },
     {
