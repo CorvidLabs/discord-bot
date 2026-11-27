@@ -102,7 +102,7 @@ let package = Package(
         // you can read what it depends on, so it is declared here where a
         // reader sees it rather than arriving inside a feature, and only one
         // target may name it.
-        .package(url: "https://github.com/DiscordBM/DiscordBM.git", .upToNextMinor(from: "1.16.0"))
+        .package(url: "https://github.com/DiscordBM/DiscordBM.git", .upToNextMinor(from: "1.17.0"))
     ],
     targets: [
         .target(
